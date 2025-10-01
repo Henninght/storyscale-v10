@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { FileText, CheckCircle2, Clock, Megaphone, Grid3x3, List } from "lucide-react";
 import { DraftCard } from "@/components/DraftCard";
 import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { useAuth } from '@/contexts/auth-context';
 
 type DraftStatus = 'idea' | 'in_progress' | 'ready_to_post' | 'posted' | 'archived';
 type Language = 'en' | 'no';
@@ -18,6 +18,7 @@ interface Draft {
 }
 
 export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [statusFilter, setStatusFilter] = useState<DraftStatus | 'all'>('all');
   const [languageFilter, setLanguageFilter] = useState<Language | 'all'>('all');
@@ -33,10 +34,12 @@ export default function DashboardPage() {
   // Fetch drafts
   useEffect(() => {
     const fetchDrafts = async () => {
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
+      // Wait for auth to initialize
+      if (authLoading) {
+        return;
+      }
 
+      try {
         if (!user) {
           setLoading(false);
           return;
@@ -83,7 +86,7 @@ export default function DashboardPage() {
     };
 
     fetchDrafts();
-  }, []);
+  }, [user, authLoading]);
 
   const handleEdit = (id: string) => {
     window.location.href = `/app/drafts/${id}`;
