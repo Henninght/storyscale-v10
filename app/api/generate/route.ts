@@ -37,9 +37,22 @@ export async function POST(req: NextRequest) {
     const subscription = userData?.subscription || { tier: 'free' };
     const postsUsedThisMonth = userData?.postsUsedThisMonth || 0;
 
+    // Check if trial has expired
+    if (subscription.tier === 'trial' && subscription.trialEndDate) {
+      const trialEndDate = subscription.trialEndDate.toDate ? subscription.trialEndDate.toDate() : new Date(subscription.trialEndDate);
+      if (new Date() > trialEndDate) {
+        // Trial expired, revert to free tier
+        await adminDb.collection('users').doc(userId).update({
+          'subscription.tier': 'free',
+        });
+        subscription.tier = 'free';
+      }
+    }
+
     // Check usage limits
     const limits = {
       free: 5,
+      trial: 50,
       pro: 50,
       enterprise: Infinity,
     };
