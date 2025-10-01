@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 import {
   LayoutDashboard,
   PenSquare,
@@ -13,6 +14,7 @@ import {
   CreditCard,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 
 const navigation = [
@@ -27,6 +29,29 @@ const navigation = [
 
 export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  const getUserInitials = () => {
+    if (!user) return "U";
+    if (user.displayName) {
+      return user.displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return user.email?.[0]?.toUpperCase() || "U";
+  };
 
   return (
     <>
@@ -71,17 +96,36 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* User Profile Section (placeholder) */}
-        <div className="border-t border-secondary/20 p-4">
+        {/* User Profile Section */}
+        <div className="border-t border-secondary/20 p-4 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-sm font-semibold text-primary">U</span>
-            </div>
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={user.displayName || "User"}
+                className="h-10 w-10 rounded-full flex-shrink-0"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-semibold text-primary">
+                  {getUserInitials()}
+                </span>
+              </div>
+            )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-secondary truncate">User</p>
-              <p className="text-xs text-secondary/60">Free Plan</p>
+              <p className="text-sm font-medium text-secondary truncate">
+                {user?.displayName || user?.email?.split("@")[0] || "User"}
+              </p>
+              <p className="text-xs text-secondary/60 truncate">Free Plan</p>
             </div>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-secondary hover:bg-background hover:text-primary rounded-lg transition-colors border border-secondary/20"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
 

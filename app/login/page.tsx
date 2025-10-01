@@ -20,7 +20,18 @@ export default function LoginPage() {
       setError("");
       setLoading(true);
       await signInWithGoogle();
-      router.push("/app");
+      // Check if user needs onboarding
+      const user = await import("firebase/auth").then(m => m.getAuth().currentUser);
+      if (user) {
+        const { doc, getDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists() || !userDoc.data()?.profile) {
+          router.push("/onboarding");
+        } else {
+          router.push("/app");
+        }
+      }
     } catch (err: any) {
       setError(err.message || "Failed to sign in with Google");
     } finally {
@@ -40,7 +51,18 @@ export default function LoginPage() {
       setError("");
       setLoading(true);
       await signInWithEmail(email, password);
-      router.push("/app");
+      // Check if user needs onboarding
+      const user = await import("firebase/auth").then(m => m.getAuth().currentUser);
+      if (user) {
+        const { doc, getDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists() || !userDoc.data()?.profile) {
+          router.push("/onboarding");
+        } else {
+          router.push("/app");
+        }
+      }
     } catch (err: any) {
       setError(err.message || "Failed to sign in");
     } finally {

@@ -22,7 +22,7 @@ export default function SignupPage() {
       setError("");
       setLoading(true);
       await signInWithGoogle();
-      router.push("/app");
+      router.push("/onboarding");
     } catch (err: any) {
       setError(err.message || "Failed to sign in with Google");
     } finally {
