@@ -395,9 +395,164 @@
 
 ---
 
-## Phase 10: Security & Optimization
+## Phase 10: Design & UX Enhancement 🎨
 
-### 10.1 Security Hardening ⚪
+### 10.1 Welcome/Onboarding Wizard Visual Upgrade ⚪
+- ⚪ Add gradient backgrounds and visual hierarchy
+  - ⚪ Implement subtle gradient overlays on wizard steps
+  - ⚪ Add visual progress animations (step completion effects)
+  - ⚪ Create modern card shadows with soft depth
+  - ⚪ Add smooth transitions between steps (slide/fade effects)
+- ⚪ Enhance typography and spacing
+  - ⚪ Implement better heading hierarchy (larger, bolder step titles)
+  - ⚪ Add descriptive subtitles with improved color contrast
+  - ⚪ Increase whitespace for breathing room
+  - ⚪ Add decorative icons for each step
+- ⚪ Add micro-interactions and feedback
+  - ⚪ Checkbox/radio button animations (checkmark animation, ripple effect)
+  - ⚪ Input field focus animations (border glow, label lift)
+  - ⚪ Button hover effects (lift, color shift, shadow expansion)
+  - ⚪ Progress bar pulse animation on step completion
+- ⚪ Implement contextual illustrations
+  - ⚪ Add welcome hero illustration/icon
+  - ⚪ Step-specific decorative graphics
+  - ⚪ Success celebration animation on completion
+  - ⚪ Background patterns or shapes for visual interest
+
+### 10.2 Draft Creation Wizard Visual Upgrade ⚪
+- ⚪ Enhanced step indicators
+  - ⚪ Animated progress ring/circle design
+  - ⚪ Step icons with state changes (pending, active, completed)
+  - ⚪ Smooth color transitions between steps
+  - ⚪ Add step preview breadcrumbs
+- ⚪ Step 1 (Input) improvements
+  - ⚪ Character counter with visual feedback (color changes at milestones)
+  - ⚪ Animated placeholder text rotation
+  - ⚪ Textarea auto-expand with smooth animation
+  - ⚪ URL input with validation icons (checkmark/error)
+  - ⚪ Add example snippets as quick-fill options
+- ⚪ Step 2 (Configuration) improvements
+  - ⚪ Replace dropdowns with modern card-based selectors
+  - ⚪ Add visual icons for each option
+  - ⚪ Implement hover preview cards with descriptions
+  - ⚪ Active state with accent border and background tint
+  - ⚪ Smooth scale/elevation on hover
+- ⚪ Step 3 (Preferences) improvements
+  - ⚪ Toggle switches with smooth animations
+  - ⚪ Visual length indicators (word count visualization)
+  - ⚪ Language selector with flag icons
+  - ⚪ CTA toggle with preview example
+  - ⚪ Emoji usage slider with live preview
+- ⚪ Step 4 (Review) improvements
+  - ⚪ Summary cards with collapsible sections
+  - ⚪ Edit quick-links with smooth scroll back
+  - ⚪ Credit usage visualization (progress bar/gauge)
+  - ⚪ Generate button with loading animation
+  - ⚪ Success confetti/celebration animation
+
+### 10.3 Interactive Tooltips & Descriptions ⚪
+- ⚪ Implement tooltip system
+  - ⚪ Add @radix-ui/react-tooltip or similar library
+  - ⚪ Create reusable Tooltip component
+  - ⚪ Design consistent tooltip styling (dark theme with arrow)
+  - ⚪ Add smooth fade-in animations (200-300ms delay)
+- ⚪ Tone option tooltips
+  - ⚪ **Professional**: "Formal, polished language that establishes credibility. Best for corporate audiences, thought leadership, and executive networking. Uses industry terminology appropriately."
+  - ⚪ **Casual**: "Conversational and approachable tone. Perfect for building authentic connections, sharing personal stories, and engaging with peers. Uses everyday language."
+  - ⚪ **Inspirational**: "Motivating and uplifting language that energizes readers. Great for sharing success stories, lessons learned, and encouraging action. Focuses on possibility and growth."
+  - ⚪ **Educational**: "Clear, informative tone focused on teaching. Ideal for how-to content, industry insights, and knowledge sharing. Breaks down complex topics simply."
+- ⚪ Purpose option tooltips
+  - ⚪ **Engagement**: "Designed to spark conversations and comments. Uses questions, relatable stories, and interactive elements to encourage audience participation."
+  - ⚪ **Lead Generation**: "Strategically drives reader action toward your services. Includes subtle CTAs, value demonstrations, and problem-solution framing."
+  - ⚪ **Brand Awareness**: "Increases visibility and recognition of your expertise. Focuses on memorable content, consistent messaging, and shareability."
+  - ⚪ **Thought Leadership**: "Establishes you as an industry authority. Shares unique insights, forward-thinking perspectives, and expert analysis."
+- ⚪ Audience option tooltips
+  - ⚪ **Executives**: "C-suite and senior decision-makers. Content emphasizes strategic value, ROI, and high-level insights. Respects their time with concise, impactful messaging."
+  - ⚪ **Entrepreneurs**: "Business owners and startup founders. Focuses on growth strategies, practical advice, and real-world challenges. Action-oriented and results-focused."
+  - ⚪ **Professionals**: "Individual contributors and specialists in their fields. Balances tactical tips with career development insights. Peer-to-peer conversational tone."
+  - ⚪ **Industry-Specific**: "Tailored to your niche audience. Uses industry terminology, references sector trends, and addresses specialized challenges."
+- ⚪ Style option tooltips
+  - ⚪ **Story-Based**: "Narrative structure with beginning, middle, and end. Highly engaging and memorable. Perfect for sharing experiences, case studies, and lessons learned."
+  - ⚪ **List Format**: "Organized bullet points or numbered lists. Easy to scan and digest. Great for tips, frameworks, and step-by-step processes."
+  - ⚪ **Question-Based**: "Opens with a thought-provoking question. Drives curiosity and engagement. Ideal for sparking discussions and challenging assumptions."
+  - ⚪ **How-To**: "Educational, instructional format. Walks readers through a process or solution. Provides actionable, practical value."
+- ⚪ Length option tooltips
+  - ⚪ **Short (50-150 words)**: "Quick, punchy posts that grab attention fast. Perfect for single insights, quotes, or quick updates. High engagement rate, easy to consume."
+  - ⚪ **Medium (150-300 words)**: "Balanced length for most content types. Enough space to develop an idea without losing attention. Optimal for LinkedIn algorithm."
+  - ⚪ **Long (300-500 words)**: "In-depth explorations of complex topics. Best for thought leadership, detailed case studies, and comprehensive guides. Demonstrates expertise."
+- ⚪ Additional setting tooltips
+  - ⚪ **Include CTA**: "Adds a call-to-action encouraging readers to engage. Can be a question, invitation to comment, or request to share. Increases post interaction by 30-50%."
+  - ⚪ **Emoji Usage**:
+    - "None - Professional, text-only approach"
+    - "Minimal - 1-2 strategic emojis for visual breaks"
+    - "Moderate - 3-5 emojis to add personality and improve scannability"
+
+### 10.4 Visual Design System Enhancements ⚪
+- ⚪ Color palette expansion
+  - ⚪ Add success/warning/error semantic colors
+  - ⚪ Create light/dark variants for all colors
+  - ⚪ Define gradient combinations for accents
+  - ⚪ Add subtle background patterns
+- ⚪ Typography improvements
+  - ⚪ Define complete type scale (12px - 48px)
+  - ⚪ Add font weight variations (300, 400, 500, 600, 700)
+  - ⚪ Set line-height and letter-spacing standards
+  - ⚪ Create heading/body text pairings
+- ⚪ Spacing system refinement
+  - ⚪ Document 8px grid usage patterns
+  - ⚪ Define component spacing constants
+  - ⚪ Create margin/padding utility classes
+  - ⚪ Establish container max-widths
+- ⚪ Shadow and elevation system
+  - ⚪ Define 5 elevation levels (sm, md, lg, xl, 2xl)
+  - ⚪ Create hover state shadows
+  - ⚪ Add focus ring styles
+  - ⚪ Implement subtle inner shadows for depth
+
+### 10.5 Animation & Transition Library ⚪
+- ⚪ Page transitions
+  - ⚪ Fade-in on route change
+  - ⚪ Slide transitions for wizard steps
+  - ⚪ Scale animations for modals
+- ⚪ Component animations
+  - ⚪ Card hover lift effect (translateY + shadow)
+  - ⚪ Button press animation (scale down)
+  - ⚪ Loading spinner variations
+  - ⚪ Skeleton screen placeholders
+- ⚪ Feedback animations
+  - ⚪ Success checkmark animation
+  - ⚪ Error shake animation
+  - ⚪ Copy-to-clipboard confirmation
+  - ⚪ Save indicator pulse
+- ⚪ Decorative animations
+  - ⚪ Background gradient shifts
+  - ⚪ Floating particles/shapes
+  - ⚪ Progress bar fills
+  - ⚪ Confetti on milestone completion
+
+### 10.6 Accessibility & Polish ⚪
+- ⚪ ARIA labels and roles
+  - ⚪ Add proper labels to all interactive elements
+  - ⚪ Implement focus management for wizards
+  - ⚪ Add screen reader announcements
+- ⚪ Keyboard navigation
+  - ⚪ Tab order optimization
+  - ⚪ Enter/Space key support for custom controls
+  - ⚪ Escape key to close modals/tooltips
+- ⚪ Color contrast compliance
+  - ⚪ Verify WCAG AA compliance for all text
+  - ⚪ Add high-contrast mode support
+  - ⚪ Test with color blindness simulators
+- ⚪ Responsive refinements
+  - ⚪ Mobile-optimized touch targets (min 44px)
+  - ⚪ Tablet layout adjustments
+  - ⚪ Desktop large-screen optimizations
+
+---
+
+## Phase 11: Security & Optimization
+
+### 11.1 Security Hardening ⚪
 - ⚪ Write Firestore security rules:
   - ⚪ Users can only read/write their own documents
   - ⚪ Draft access restricted to owner

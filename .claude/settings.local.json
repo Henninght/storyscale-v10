@@ -16,7 +16,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Read(//Users/henningtorp/Desktop/**)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_wKxQJz/**)"
     ],
     "deny": [],
     "ask": []
