@@ -47,10 +47,11 @@ export default function DashboardPage() {
 
         const db = getFirestore();
         const draftsRef = collection(db, 'drafts');
+        // Note: Removed orderBy to avoid requiring composite index
+        // Sorting is done in-memory instead
         const q = query(
           draftsRef,
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
+          where('userId', '==', user.uid)
         );
 
         const querySnapshot = await getDocs(q);
@@ -66,6 +67,9 @@ export default function DashboardPage() {
             createdAt: data.createdAt?.toDate() || new Date(),
           });
         });
+
+        // Sort by createdAt descending in-memory
+        fetchedDrafts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
         setDrafts(fetchedDrafts);
 
