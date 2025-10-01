@@ -58,7 +58,7 @@ export default function DraftPage() {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-secondary">Draft Not Found</h1>
-          <p className="mt-2 text-secondary/80">{error || 'The draft you're looking for doesn't exist.'}</p>
+          <p className="mt-2 text-secondary/80">{error || 'The draft you are looking for does not exist.'}</p>
         </div>
         <button
           onClick={() => router.push('/app')}
