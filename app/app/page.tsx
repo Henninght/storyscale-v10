@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<any>({ tier: 'free' });
   const [stats, setStats] = useState({
     postsThisMonth: 0,
     draftsInProgress: 0,
@@ -46,6 +47,22 @@ export default function DashboardPage() {
         }
 
         const db = getFirestore();
+
+        // Fetch user subscription and stats
+        const { doc: firestoreDoc, getDoc } = await import('firebase/firestore');
+        const userRef = firestoreDoc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setSubscription(userData.subscription || { tier: 'free' });
+
+          // Update stats with actual postsUsedThisMonth from user doc
+          const postsUsed = userData.postsUsedThisMonth || 0;
+          setStats(prev => ({ ...prev, postsThisMonth: postsUsed }));
+        }
+
+        // Fetch drafts
         const draftsRef = collection(db, 'drafts');
         // Note: Removed orderBy to avoid requiring composite index
         // Sorting is done in-memory instead
@@ -77,11 +94,11 @@ export default function DashboardPage() {
         const inProgress = fetchedDrafts.filter(d => d.status === 'in_progress').length;
         const ready = fetchedDrafts.filter(d => d.status === 'ready_to_post').length;
 
-        setStats({
-          postsThisMonth: fetchedDrafts.length,
+        setStats(prev => ({
+          ...prev,
           draftsInProgress: inProgress,
           readyToPost: ready,
-        });
+        }));
       } catch (error) {
         console.error('Error fetching drafts:', error);
       } finally {
@@ -145,9 +162,9 @@ export default function DashboardPage() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Posts This Month"
-          value={`${stats.postsThisMonth} / 5`}
+          value={`${stats.postsThisMonth} / ${subscription.tier === 'trial' || subscription.tier === 'pro' ? '50' : subscription.tier === 'enterprise' ? '∞' : '5'}`}
           icon={FileText}
-          description="Free plan limit"
+          description={subscription.tier === 'trial' ? 'Trial plan limit' : subscription.tier === 'pro' ? 'Pro plan limit' : subscription.tier === 'enterprise' ? 'Unlimited' : 'Free plan limit'}
         />
         <StatCard
           title="Drafts in Progress"
