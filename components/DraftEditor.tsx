@@ -20,6 +20,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
   const [tags, setTags] = useState<string[]>(draft.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -34,6 +35,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
 
   const handleSave = async (redirectToWorkspace = false) => {
     setIsSaving(true);
+    setJustSaved(false);
     try {
       const db = getFirestore();
       const draftRef = doc(db, 'drafts', draft.id);
@@ -48,7 +50,8 @@ export function DraftEditor({ draft }: DraftEditorProps) {
       if (redirectToWorkspace) {
         router.push('/app');
       } else {
-        alert('Draft saved successfully!');
+        setJustSaved(true);
+        setTimeout(() => setJustSaved(false), 2000);
       }
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -221,6 +224,11 @@ export function DraftEditor({ draft }: DraftEditorProps) {
             <>
               <Save className="h-4 w-4 animate-pulse" />
               Saving...
+            </>
+          ) : justSaved ? (
+            <>
+              <Check className="h-4 w-4 text-green-600" />
+              Saved!
             </>
           ) : (
             <>
