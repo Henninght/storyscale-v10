@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Check, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -41,6 +41,58 @@ export function PostWizard() {
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialData);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load saved draft on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('wizardDraft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        setData(parsed.data);
+        setCurrentStep(parsed.step || 1);
+        setLastSaved(new Date(parsed.timestamp));
+      } catch (error) {
+        console.error('Failed to load saved draft:', error);
+      }
+    }
+  }, []);
+
+  // Auto-save every 30 seconds
+  useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      saveDraft();
+    }, 30000); // 30 seconds
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [data, currentStep]);
+
+  const saveDraft = () => {
+    setIsSaving(true);
+    try {
+      const draftData = {
+        data,
+        step: currentStep,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem('wizardDraft', JSON.stringify(draftData));
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const updateData = (updates: Partial<WizardData>) => {
     setData(prev => ({ ...prev, ...updates }));
@@ -108,6 +160,9 @@ export function PostWizard() {
 
       const result = await response.json();
 
+      // Clear saved draft on successful generation
+      localStorage.removeItem('wizardDraft');
+
       // Navigate to editor
       window.location.href = `/app/drafts/${result.draftId}`;
     } catch (error) {
@@ -120,6 +175,27 @@ export function PostWizard() {
 
   return (
     <div className="mx-auto max-w-4xl">
+      {/* Auto-save indicator */}
+      {lastSaved && (
+        <div className="mb-4 flex items-center justify-end gap-2 text-sm text-slate-500">
+          {isSaving ? (
+            <>
+              <Save className="h-4 w-4 animate-pulse" />
+              <span>Saving...</span>
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4 text-green-600" />
+              <span>
+                Saved {new Date().getTime() - lastSaved.getTime() < 60000
+                  ? 'just now'
+                  : `${Math.floor((new Date().getTime() - lastSaved.getTime()) / 60000)} min ago`}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
