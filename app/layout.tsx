@@ -1,0 +1,39 @@
+import type { Metadata } from "next";
+import { Inter, Outfit } from "next/font/google";
+import { AuthProvider } from "@/contexts/auth-context";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "Storyscale - Create Viral LinkedIn Content with AI",
+  description: "AI-powered SaaS platform to help professionals create engaging LinkedIn content",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${inter.variable} ${outfit.variable} antialiased`}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
