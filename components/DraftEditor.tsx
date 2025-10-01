@@ -32,7 +32,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (redirectToWorkspace = false) => {
     setIsSaving(true);
     try {
       const db = getFirestore();
@@ -45,7 +45,11 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         updatedAt: new Date(),
       });
 
-      alert('Draft saved successfully!');
+      if (redirectToWorkspace) {
+        router.push('/app');
+      } else {
+        alert('Draft saved successfully!');
+      }
     } catch (error) {
       console.error('Error saving draft:', error);
       alert('Failed to save draft');
@@ -208,8 +212,9 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         </Button>
 
         <Button
-          onClick={handleSave}
+          onClick={() => handleSave(false)}
           disabled={isSaving}
+          variant="outline"
           className="ml-auto gap-2"
         >
           {isSaving ? (
@@ -221,6 +226,24 @@ export function DraftEditor({ draft }: DraftEditorProps) {
             <>
               <Save className="h-4 w-4" />
               Save Draft
+            </>
+          )}
+        </Button>
+
+        <Button
+          onClick={() => handleSave(true)}
+          disabled={isSaving}
+          className="gap-2"
+        >
+          {isSaving ? (
+            <>
+              <Save className="h-4 w-4 animate-pulse" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save & Go to Workspace
             </>
           )}
         </Button>
