@@ -1,4 +1,4 @@
-import { PenSquare } from "lucide-react";
+import { PostWizard } from '@/components/PostWizard';
 
 export default function CreatePostPage() {
   return (
@@ -10,17 +10,7 @@ export default function CreatePostPage() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-secondary/10 bg-white p-12 text-center">
-        <div className="mx-auto mb-4 inline-flex rounded-full bg-primary/10 p-4">
-          <PenSquare className="h-8 w-8 text-primary" />
-        </div>
-        <h3 className="mb-2 text-xl font-semibold text-secondary">
-          Post Creation Wizard
-        </h3>
-        <p className="mb-6 text-secondary/80">
-          This feature is coming soon. You'll be able to create AI-powered LinkedIn posts here.
-        </p>
-      </div>
+      <PostWizard />
     </div>
   );
 }
