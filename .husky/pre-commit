@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 echo ""
 echo "🔒 Running security checks..."
@@ -11,7 +10,7 @@ echo ""
 # ====================================
 
 # Check if .env.local is being committed
-if git diff --cached --name-only | grep -E "^\.env\.local$" > /dev/null 2>&1; then
+if git diff --cached --name-only | grep -E "(^|/)\.env\.local$" > /dev/null 2>&1; then
     echo "❌❌❌ CRITICAL ERROR ❌❌❌"
     echo ""
     echo "You are trying to commit .env.local!"
@@ -41,21 +40,16 @@ if git diff --cached --name-only | grep -E "\.env.*\.local$" > /dev/null 2>&1; t
     exit 1
 fi
 
-# Check if any API keys are in staged files (basic check)
-if git diff --cached | grep -E "(ANTHROPIC_API_KEY|STRIPE_SECRET_KEY|FIREBASE_ADMIN_PRIVATE_KEY|sk-ant-|sk_live_|sk_test_)" | grep -v "ANTHROPIC_API_KEY=" | grep -v "#" > /dev/null 2>&1; then
-    echo "⚠️  WARNING: Possible API key detected in staged files"
+# Check for actual API key values (not just env var references)
+if git diff --cached | grep -E "(sk-ant-[a-zA-Z0-9]{20,}|sk_live_[a-zA-Z0-9]{20,}|sk_test_[a-zA-Z0-9]{20,})" > /dev/null 2>&1; then
+    echo "❌❌❌ CRITICAL ERROR ❌❌❌"
     echo ""
-    echo "Please review your changes to ensure no secrets are being committed."
+    echo "Actual API key values detected in staged files!"
+    echo "These appear to be real credentials, not environment variable references."
     echo ""
-    echo "If this is a false positive, you can proceed."
-    echo "Otherwise, please remove the sensitive data before committing."
+    echo "Please remove the actual key values before committing."
     echo ""
-    read -p "Do you want to proceed? (yes/no): " response
-    if [ "$response" != "yes" ]; then
-        echo ""
-        echo "Commit aborted."
-        exit 1
-    fi
+    exit 1
 fi
 
 echo "✅ Security checks passed - no sensitive files detected"
