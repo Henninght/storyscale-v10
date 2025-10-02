@@ -7,6 +7,7 @@ import { ActiveCampaignWidget } from "@/components/ActiveCampaignWidget";
 import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import type { Campaign } from '@/types';
 
 type DraftStatus = 'idea' | 'in_progress' | 'ready_to_post' | 'posted' | 'archived';
 type Language = 'en' | 'no';
@@ -109,7 +110,7 @@ export default function DashboardPage() {
         const campaignsData = campaignsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        })) as (Campaign & { id: string })[];
 
         // Create campaign map (id -> name)
         const newCampaignMap = new Map<string, string>();
