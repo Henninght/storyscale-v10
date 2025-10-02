@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, CheckCircle2, Clock, Megaphone, Grid3x3, List } from "lucide-react";
+import { FileText, CheckCircle2, Clock, Megaphone, Grid3x3, List, Plus } from "lucide-react";
 import { DraftCard } from "@/components/DraftCard";
-import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { ActiveCampaignWidget } from "@/components/ActiveCampaignWidget";
+import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 type DraftStatus = 'idea' | 'in_progress' | 'ready_to_post' | 'posted' | 'archived';
 type Language = 'en' | 'no';
@@ -15,13 +17,16 @@ interface Draft {
   status: DraftStatus;
   language: Language;
   createdAt: Date;
+  campaignId?: string;
 }
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [statusFilter, setStatusFilter] = useState<DraftStatus | 'all'>('all');
   const [languageFilter, setLanguageFilter] = useState<Language | 'all'>('all');
+  const [campaignFilter, setCampaignFilter] = useState<'all' | 'campaign' | 'single'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +35,10 @@ export default function DashboardPage() {
     postsThisMonth: 0,
     draftsInProgress: 0,
     readyToPost: 0,
+    activeCampaigns: 0,
   });
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [campaignMap, setCampaignMap] = useState<Map<string, string>>(new Map());
 
   // Fetch drafts
   useEffect(() => {
@@ -82,6 +90,7 @@ export default function DashboardPage() {
             status: data.status,
             language: data.language,
             createdAt: data.createdAt?.toDate() || new Date(),
+            campaignId: data.campaignId,
           });
         });
 
@@ -89,6 +98,29 @@ export default function DashboardPage() {
         fetchedDrafts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
         setDrafts(fetchedDrafts);
+
+        // Fetch all campaigns (not just active)
+        const campaignsRef = collection(db, 'campaigns');
+        const campaignsQuery = query(
+          campaignsRef,
+          where('userId', '==', user.uid)
+        );
+        const campaignsSnapshot = await getDocs(campaignsQuery);
+        const campaignsData = campaignsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Create campaign map (id -> name)
+        const newCampaignMap = new Map<string, string>();
+        campaignsData.forEach(campaign => {
+          newCampaignMap.set(campaign.id, campaign.name);
+        });
+        setCampaignMap(newCampaignMap);
+
+        // Set active campaigns for stats
+        const activeCampaigns = campaignsData.filter(c => c.status === 'active');
+        setCampaigns(activeCampaigns);
 
         // Calculate stats
         const inProgress = fetchedDrafts.filter(d => d.status === 'in_progress').length;
@@ -98,6 +130,7 @@ export default function DashboardPage() {
           ...prev,
           draftsInProgress: inProgress,
           readyToPost: ready,
+          activeCampaigns: campaignsData.length,
         }));
       } catch (error) {
         console.error('Error fetching drafts:', error);
@@ -109,30 +142,45 @@ export default function DashboardPage() {
     fetchDrafts();
   }, [user, authLoading]);
 
-  const handleEdit = (id: string) => {
-    window.location.href = `/app/drafts/${id}`;
+  const handleDelete = async (id: string) => {
+    // Refresh drafts after delete
+    const db = getFirestore();
+    const draftsRef = collection(db, 'drafts');
+    const q = query(draftsRef, where('userId', '==', user?.uid));
+    const snapshot = await getDocs(q);
+
+    const draftsData = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        content: data.content || '',
+        status: data.status || 'idea',
+        language: data.language || 'en',
+        createdAt: data.createdAt?.toDate() || new Date(),
+        tags: data.tags || [],
+      };
+    });
+
+    setDrafts(draftsData);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this draft?')) {
-      return;
-    }
+  const handlePauseCampaign = async (campaignId: string) => {
+    if (!confirm('Are you sure you want to pause this campaign?')) return;
 
     try {
       const db = getFirestore();
-      await deleteDoc(doc(db, 'drafts', id));
-      setDrafts(drafts.filter(d => d.id !== id));
-    } catch (error) {
-      console.error('Error deleting draft:', error);
-      alert('Failed to delete draft');
-    }
-  };
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      await updateDoc(campaignRef, {
+        status: 'archived',
+        updatedAt: new Date(),
+      });
 
-  const handleCopy = (id: string) => {
-    const draft = drafts.find(d => d.id === id);
-    if (draft) {
-      navigator.clipboard.writeText(draft.content);
-      alert('Copied to clipboard!');
+      // Refresh campaigns
+      setCampaigns(campaigns.filter(c => c.id !== campaignId));
+      setStats(prev => ({ ...prev, activeCampaigns: prev.activeCampaigns - 1 }));
+    } catch (error) {
+      console.error('Error pausing campaign:', error);
+      alert('Failed to pause campaign');
     }
   };
 
@@ -140,6 +188,12 @@ export default function DashboardPage() {
   const filteredDrafts = drafts
     .filter(draft => statusFilter === 'all' || draft.status === statusFilter)
     .filter(draft => languageFilter === 'all' || draft.language === languageFilter)
+    .filter(draft => {
+      if (campaignFilter === 'all') return true;
+      if (campaignFilter === 'campaign') return draft.campaignId !== undefined;
+      if (campaignFilter === 'single') return draft.campaignId === undefined;
+      return true;
+    })
     .sort((a, b) => {
       if (sortBy === 'date') {
         return b.createdAt.getTime() - a.createdAt.getTime();
@@ -158,33 +212,65 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Posts This Month"
-          value={`${stats.postsThisMonth} / ${subscription.tier === 'trial' || subscription.tier === 'pro' ? '50' : subscription.tier === 'enterprise' ? '∞' : '5'}`}
-          icon={FileText}
-          description={subscription.tier === 'trial' ? 'Trial plan limit' : subscription.tier === 'pro' ? 'Pro plan limit' : subscription.tier === 'enterprise' ? 'Unlimited' : 'Free plan limit'}
-        />
-        <StatCard
-          title="Drafts in Progress"
-          value={stats.draftsInProgress.toString()}
-          icon={Clock}
-          description="Unfinished posts"
-        />
-        <StatCard
-          title="Ready to Post"
-          value={stats.readyToPost.toString()}
-          icon={CheckCircle2}
-          description="Completed drafts"
-        />
-        <StatCard
-          title="Active Campaign"
-          value="None"
-          icon={Megaphone}
-          description="No campaigns running"
-        />
-      </div>
+      {/* Active Campaign Widget or Stats Cards */}
+      {campaigns.length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Active Campaign Widget - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <ActiveCampaignWidget
+              campaign={campaigns[0]}
+              onPause={() => handlePauseCampaign(campaigns[0].id)}
+            />
+          </div>
+
+          {/* Alternative Path Card */}
+          <div className="rounded-2xl border border-secondary/10 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="rounded-lg bg-secondary/10 p-2">
+                <Plus className="h-5 w-5 text-secondary" />
+              </div>
+              <h3 className="text-lg font-semibold text-secondary">Create Single Post</h3>
+            </div>
+            <p className="mb-4 text-sm text-secondary/70">
+              Not part of a campaign? Create a standalone post instead.
+            </p>
+            <button
+              onClick={() => router.push('/app/create')}
+              className="w-full rounded-lg border-2 border-primary bg-white px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary hover:text-white"
+            >
+              Create Standalone Post
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Stats Cards - Show when no active campaign */
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Posts This Month"
+            value={`${stats.postsThisMonth} / ${subscription.tier === 'trial' || subscription.tier === 'pro' ? '50' : subscription.tier === 'enterprise' ? '∞' : '5'}`}
+            icon={FileText}
+            description={subscription.tier === 'trial' ? 'Trial plan limit' : subscription.tier === 'pro' ? 'Pro plan limit' : subscription.tier === 'enterprise' ? 'Unlimited' : 'Free plan limit'}
+          />
+          <StatCard
+            title="Drafts in Progress"
+            value={stats.draftsInProgress.toString()}
+            icon={Clock}
+            description="Unfinished posts"
+          />
+          <StatCard
+            title="Ready to Post"
+            value={stats.readyToPost.toString()}
+            icon={CheckCircle2}
+            description="Completed drafts"
+          />
+          <StatCard
+            title="Active Campaigns"
+            value={stats.activeCampaigns.toString()}
+            icon={Megaphone}
+            description={stats.activeCampaigns === 1 ? "Campaign running" : "Campaigns running"}
+          />
+        </div>
+      )}
 
       {/* Recent Drafts Section */}
       <div>
@@ -217,6 +303,19 @@ export default function DashboardPage() {
 
           {/* Filters and Sort */}
           <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-secondary">Type:</label>
+              <select
+                value={campaignFilter}
+                onChange={(e) => setCampaignFilter(e.target.value as 'all' | 'campaign' | 'single')}
+                className="rounded-lg border border-secondary/20 px-3 py-1.5 text-sm text-secondary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="all">All Posts</option>
+                <option value="campaign">Campaign Posts</option>
+                <option value="single">Single Posts</option>
+              </select>
+            </div>
+
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-secondary">Status:</label>
               <select
@@ -296,14 +395,10 @@ export default function DashboardPage() {
             {filteredDrafts.map((draft) => (
               <DraftCard
                 key={draft.id}
-                id={draft.id}
-                content={draft.content}
-                status={draft.status}
-                language={draft.language}
-                createdAt={draft.createdAt}
-                onEdit={handleEdit}
+                draft={draft}
                 onDelete={handleDelete}
-                onCopy={handleCopy}
+                viewMode={viewMode}
+                campaignName={draft.campaignId ? campaignMap.get(draft.campaignId) : undefined}
               />
             ))}
           </div>

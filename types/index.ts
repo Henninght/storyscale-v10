@@ -1,13 +1,19 @@
 import { Timestamp } from "firebase/firestore";
 
+// Account Type
+export type AccountType = "private" | "company";
+
 // User Profile Types
 export interface UserProfile {
+  accountType: AccountType;
   background: string;
   expertise: string[];
   targetAudience: string;
   goals: string;
   writingStyle: string;
   brandVoice: string;
+  companyName?: string; // For company accounts only
+  companyIndustry?: string; // For company accounts only
 }
 
 // Subscription Types

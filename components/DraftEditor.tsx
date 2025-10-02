@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { VersionHistory } from '@/components/VersionHistory';
 
 interface DraftEditorProps {
   draft: any;
@@ -19,6 +20,9 @@ export function DraftEditor({ draft }: DraftEditorProps) {
   const [status, setStatus] = useState<DraftStatus>(draft.status);
   const [tags, setTags] = useState<string[]>(draft.tags || []);
   const [tagInput, setTagInput] = useState('');
+  const [scheduledDate, setScheduledDate] = useState<string>(
+    draft.scheduledDate ? new Date(draft.scheduledDate.seconds * 1000).toISOString().split('T')[0] : ''
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -40,10 +44,19 @@ export function DraftEditor({ draft }: DraftEditorProps) {
       const db = getFirestore();
       const draftRef = doc(db, 'drafts', draft.id);
 
+      // Save current content as a version
+      const versionsRef = collection(db, 'drafts', draft.id, 'versions');
+      await addDoc(versionsRef, {
+        content,
+        createdAt: serverTimestamp(),
+      });
+
+      // Update the draft
       await updateDoc(draftRef, {
         content,
         status,
         tags,
+        scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
         updatedAt: new Date(),
       });
 
@@ -81,7 +94,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         },
         body: JSON.stringify({
           draftId: draft.id,
-          content,
+          currentContent: content,
         }),
       });
 
@@ -91,7 +104,16 @@ export function DraftEditor({ draft }: DraftEditorProps) {
       }
 
       const result = await response.json();
-      setContent(result.content);
+
+      // Save enhanced content as a version
+      const db = getFirestore();
+      const versionsRef = collection(db, 'drafts', draft.id, 'versions');
+      await addDoc(versionsRef, {
+        content: result.enhancedContent,
+        createdAt: serverTimestamp(),
+      });
+
+      setContent(result.enhancedContent);
     } catch (error) {
       console.error('Enhancement failed:', error);
       alert(error instanceof Error ? error.message : 'Failed to enhance content');
@@ -130,6 +152,15 @@ export function DraftEditor({ draft }: DraftEditorProps) {
       }
 
       const result = await response.json();
+
+      // Save regenerated content as a version
+      const db = getFirestore();
+      const versionsRef = collection(db, 'drafts', draft.id, 'versions');
+      await addDoc(versionsRef, {
+        content: result.content,
+        createdAt: serverTimestamp(),
+      });
+
       setContent(result.content);
     } catch (error) {
       console.error('Regeneration failed:', error);
@@ -295,6 +326,18 @@ export function DraftEditor({ draft }: DraftEditorProps) {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-secondary">
+              Scheduled Date
+            </label>
+            <input
+              type="date"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+              className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:w-auto"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-secondary">
               Tags
             </label>
             <div className="flex gap-2">
@@ -336,6 +379,13 @@ export function DraftEditor({ draft }: DraftEditorProps) {
           </div>
         </div>
       </div>
+
+      {/* Version History */}
+      <VersionHistory
+        draftId={draft.id}
+        onLoadVersion={(versionContent) => setContent(versionContent)}
+        currentContent={content}
+      />
     </div>
   );
 }

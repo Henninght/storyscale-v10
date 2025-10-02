@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/auth-context";
 import {
   LayoutDashboard,
   PenSquare,
-  FileText,
   Megaphone,
   Calendar,
   Settings,
@@ -20,7 +19,6 @@ import {
 const navigation = [
   { name: "Workspace", href: "/app", icon: LayoutDashboard },
   { name: "Create New Post", href: "/app/create", icon: PenSquare },
-  { name: "All Drafts", href: "/app/drafts", icon: FileText },
   { name: "Campaigns", href: "/app/campaigns", icon: Megaphone },
   { name: "Calendar View", href: "/app/calendar", icon: Calendar },
   { name: "Settings", href: "/app/settings", icon: Settings },

@@ -113,6 +113,181 @@
 - ✅ Add account settings section
 - ✅ Link to billing management
 - ✅ Save and validation logic
+- ✅ **Settings ARE working** - All profile fields (background, expertise, targetAudience, goals, writingStyle, brandVoice) are used in AI generation
+- ✅ **Bug Fixed:** Goals field type inconsistency - changed from `string | string[]` to `string` consistently
+- ✅ **Bug Fixed:** Replaced `window.location.href` with Next.js router.push() for navigation
+- ✅ **Bug Fixed:** Improved save confirmation UX - now shows green button with checkmark for 5 seconds
+- ✅ Add password change functionality (Firebase Auth updatePassword API with re-authentication)
+  - Only shown for email/password users (not Google OAuth)
+  - Validates password strength (min 6 characters)
+  - Confirms password match
+  - Proper error handling for wrong password and requires-recent-login
+- ✅ Add profile photo upload (Firebase Storage integration)
+  - Upload to Firebase Storage at `profile-photos/{uid}/{timestamp}-{filename}`
+  - Image preview with loading spinner
+  - Validates file type (images only) and size (max 5MB)
+  - Updates both Firebase Auth and Firestore user document
+- ✅ Add delete account option with confirmation dialog
+  - Danger Zone section with clear warnings
+  - Two-step confirmation (button click + type "DELETE")
+  - Deletes all user data: drafts, campaigns, user document, and Firebase Auth account
+  - Proper error handling for requires-recent-login
+- ✅ Add data export feature (download user data as JSON - GDPR compliance)
+  - Exports complete user data: profile, subscription, drafts, campaigns, metadata
+  - Downloads as JSON file with timestamp
+  - GDPR-compliant data portability
+- ⚪ Add email notification preferences (future enhancement)
+- ⚪ Add default content preferences (pre-fill wizard settings - future enhancement)
+
+### 3.3 LinkedIn Integration (Authentication + Profile Enhancement) ✅
+**Difficulty Assessment:** ⭐⭐☆☆☆ Easy (2-3 hours implementation)
+
+**Sign In with LinkedIn (OAuth) - FULLY IMPLEMENTED ✅**
+- ✅ Add LinkedIn OAuth provider to Firebase Auth using OAuthProvider('oidc.linkedin')
+- ✅ Update login page with "Continue with LinkedIn" button
+- ✅ Update signup page with "Continue with LinkedIn" button
+- ✅ Display LinkedIn connection status in settings page
+- ✅ Show active sign-in methods (Google/LinkedIn/Email) in Connected Accounts section
+- ✅ Allow unlinking/relinking provider accounts
+  - Link providers: `linkWithPopup()` for Google and LinkedIn
+  - Unlink providers: `unlink()` with safety check (must keep at least 1 provider)
+  - Real-time provider status using `user.providerData`
+- ✅ Automatic user document creation for new LinkedIn sign-ins
+- ✅ Redirect to onboarding for new users, app for returning users
+
+**LinkedIn Profile Data Integration ✅ (ADDS REAL VALUE)**
+- ✅ Extract and store LinkedIn profile data in Firestore
+  - Stores: name, email, photoURL, connectedAt timestamp
+  - Saved in `users/{uid}/linkedinProfile` document
+- ✅ Pre-populate onboarding form for LinkedIn sign-ups
+  - Detects `?source=linkedin` URL parameter
+  - Shows LinkedIn connection notification banner on step 3
+  - Pre-fills background field with intelligent starter text
+  - Displays personalized welcome message with user's LinkedIn name
+- ✅ Display LinkedIn profile in settings
+  - Shows LinkedIn profile photo, name, email
+  - Displays connection date
+  - Expands when LinkedIn is linked, collapses when not
+  - Branded LinkedIn blue (#0A66C2) styling
+
+**Implementation Details:**
+- Uses Firebase OAuthProvider with LinkedIn OIDC provider (`oidc.linkedin`)
+- Scopes: `openid`, `profile`, `email`
+- Auth context provides `signInWithLinkedIn()` method
+- Login/signup pages store LinkedIn profile metadata:
+  ```typescript
+  linkedinProfile: {
+    connectedAt: new Date().toISOString(),
+    name: user.displayName,
+    email: user.email,
+    photoURL: user.photoURL,
+  }
+  ```
+- Onboarding page:
+  - Detects LinkedIn sign-in via URL parameter
+  - Pre-populates background: `"I'm {name} looking to share insights..."`
+  - Shows branded notification banner with checkmark
+- Settings page shows Connected Accounts section with:
+  - Google account (link/unlink)
+  - LinkedIn account with profile preview when connected
+  - Email/Password (shown as "Primary Method")
+  - Visual status indicators (Connected/Not connected)
+
+**LinkedIn Posting API - NOT FEASIBLE ❌**
+- LinkedIn has deprecated consumer posting APIs
+- Requires LinkedIn Marketing Developer Platform partnership (enterprise only)
+- **Current Solution:** Users manually copy-paste content to LinkedIn (workflow is fine)
+
+**Value Proposition:**
+LinkedIn authentication now adds genuine value by:
+1. Streamlining onboarding with auto-populated profile data
+2. Professional brand alignment (LinkedIn users on a LinkedIn content tool)
+3. Multiple sign-in options for convenience and account recovery
+4. Future potential: could request additional LinkedIn scopes for deeper profile data (job title, company, industry)
+
+### 3.4 Firebase & LinkedIn OAuth Configuration ⚪
+**Status:** Implementation complete in code, Firebase/LinkedIn portal setup pending
+
+**Prerequisites:**
+- Firebase project created and configured
+- LinkedIn Developer account access
+
+**Step 1: Create LinkedIn OAuth Application**
+1. Go to [LinkedIn Developers](https://developer.linkedin.com/)
+2. Navigate to "My Apps" → "Create App"
+3. Fill in application details:
+   - App name: "Storyscale" (or your app name)
+   - LinkedIn Page: Associate with your company page or create one
+   - App logo: Upload your app logo
+   - Privacy policy URL: Your privacy policy URL
+   - Terms of use URL: Your terms of use URL
+4. Click "Create app"
+5. Navigate to the "Auth" tab
+6. Under "OAuth 2.0 settings", add redirect URLs:
+   - Development: `http://localhost:3000/__/auth/handler`
+   - Production: `https://your-app.firebaseapp.com/__/auth/handler`
+   - Production custom domain: `https://your-domain.com/__/auth/handler`
+7. Under "OAuth 2.0 scopes", ensure these scopes are available:
+   - `openid` (required for OIDC)
+   - `profile` (for name, photo)
+   - `email` (for email address)
+8. **Save your Client ID and Client Secret** - you'll need these for Firebase
+
+**Step 2: Configure OpenID Connect Provider in Firebase**
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your Storyscale project
+3. Navigate to **Authentication** → **Sign-in method**
+4. Click "Add new provider"
+5. Select **OpenID Connect** from the list
+6. Configure the provider:
+   - **Name:** `LinkedIn` (user-facing name)
+   - **Client ID:** Paste from LinkedIn app (Step 1.8)
+   - **Client Secret:** Paste from LinkedIn app (Step 1.8)
+   - **Issuer (Discovery document URL):** `https://www.linkedin.com/oauth`
+   - **Provider ID:** `oidc.linkedin` (must match code implementation)
+7. Click "Save"
+
+**Step 3: Verify Authorized Domains**
+1. In Firebase Console → Authentication → Settings → Authorized domains
+2. Ensure these domains are listed:
+   - `localhost` (for development)
+   - `your-app.firebaseapp.com` (default Firebase hosting)
+   - `your-app.web.app` (default Firebase hosting)
+   - Your custom domain (if using one)
+3. Add any missing domains
+
+**Step 4: Test the Integration**
+1. Run your app locally: `npm run dev`
+2. Navigate to signup or login page
+3. Click "Continue with LinkedIn"
+4. You should be redirected to LinkedIn authorization page
+5. After authorization:
+   - New users → redirected to `/onboarding?source=linkedin`
+   - Existing users → redirected to `/app`
+6. Verify profile data is saved in Firestore:
+   - Check `users/{uid}` document
+   - Confirm `linkedinProfile` object exists with name, email, photoURL, connectedAt
+
+**Step 5: Production Deployment Checklist**
+- [ ] Update LinkedIn app redirect URLs with production domain
+- [ ] Verify Firebase OIDC provider configuration in production project
+- [ ] Test OAuth flow in production environment
+- [ ] Confirm Firestore security rules allow linkedinProfile writes
+- [ ] Test link/unlink functionality in settings page
+- [ ] Monitor Firebase Authentication logs for errors
+
+**Troubleshooting:**
+- **"redirect_uri_mismatch" error**: Verify redirect URLs in LinkedIn app match Firebase Auth URLs exactly
+- **"invalid_client" error**: Check Client ID and Client Secret are correct in Firebase OIDC config
+- **Profile data not saving**: Check browser console and Firestore rules for permission errors
+- **Provider not showing**: Ensure Provider ID is exactly `oidc.linkedin` (case-sensitive)
+
+**Security Notes:**
+- Never commit Client Secret to version control
+- Store Client Secret securely in Firebase Console only
+- Regularly rotate Client Secret in production
+- Monitor LinkedIn API usage and rate limits
+- Review LinkedIn app permissions quarterly
 
 ---
 
@@ -223,25 +398,25 @@
 - ✅ Loading states for AI actions
 - ⚪ Success/error notifications (using alerts for now)
 
-### 6.2 Enhance Functionality ⏳
-- ⚪ Create `/api/enhance` route
-- ⚪ Send current content to Claude with improvement prompt
-- ⚪ Maintain user's original settings and context
-- ⚪ Update editor with enhanced content
-- ⚪ Create new version entry
+### 6.2 Enhance Functionality ✅
+- ✅ Create `/api/enhance` route
+- ✅ Send current content to Claude with improvement prompt
+- ✅ Maintain user's original settings and context
+- ✅ Update editor with enhanced content
+- ✅ Create new version entry
 
 ### 6.3 Regenerate Functionality ✅
 - ✅ Load original wizard settings
 - ✅ Call generate API with same parameters
 - ✅ Replace content in editor
-- ⚪ Create new version entry
+- ✅ Create new version entry
 
-### 6.4 Version Management ⚪
-- ⚪ Version history sidebar component
-- ⚪ Create `/drafts/{draftId}/versions` subcollection on save
-- ⚪ Display version list with timestamps
-- ⚪ Load previous version functionality
-- ⚪ Track which version is current
+### 6.4 Version Management ✅
+- ✅ Version history sidebar component
+- ✅ Create `/drafts/{draftId}/versions` subcollection on save
+- ✅ Display version list with timestamps
+- ✅ Load previous version functionality
+- ✅ Track which version is current
 - ⚪ Diff view (optional enhancement)
 
 ### 6.5 Draft Metadata ✅
@@ -254,86 +429,293 @@
 
 ---
 
-## Phase 7: Draft Management
+## Phase 7: Draft Management ✅
 
-### 7.1 All Drafts Page ⚪
-- ⚪ Create drafts list layout
-- ⚪ Search functionality (title/content)
-- ⚪ Filter controls:
-  - ⚪ Status filter
-  - ⚪ Language filter
-  - ⚪ Tag filter
-- ⚪ Sort controls:
-  - ⚪ Date created
-  - ⚪ Last modified
-  - ⚪ Status
-- ⚪ Grid/list view toggle
+### 7.1 All Drafts Page ✅
+- ✅ Create drafts list layout
+- ✅ Search functionality (title/content)
+- ✅ Filter controls:
+  - ✅ Status filter
+  - ✅ Language filter
+  - ✅ Tag filter
+- ✅ Sort controls:
+  - ✅ Date created
+  - ✅ Last modified
+  - ✅ Status
+- ✅ Grid/list view toggle
 - ⚪ Bulk selection checkboxes
 - ⚪ Bulk action buttons (status change, tag, delete)
 - ⚪ Pagination or infinite scroll
-- ⚪ Empty state component
+- ✅ Empty state component
 
-### 7.2 Calendar View ⚪
-- ⚪ Create monthly calendar component
-- ⚪ Fetch drafts with scheduled dates
-- ⚪ Display draft indicators on dates
-- ⚪ Color-code indicators by status
-- ⚪ Day detail modal/popover
-- ⚪ Show all drafts for selected date
-- ⚪ Navigate to draft editor from calendar
+### 7.2 Calendar View ✅
+- ✅ Create monthly calendar component
+- ✅ Fetch drafts with scheduled dates
+- ✅ Display draft indicators on dates
+- ✅ Color-code indicators by status
+- ✅ Day detail modal/popover
+- ✅ Show all drafts for selected date
+- ✅ Navigate to draft editor from calendar
 - ⚪ Optional: Drag-and-drop reschedule
 
 ---
 
-## Phase 8: Campaign Planning
+## Phase 8: Campaign Planning & Intelligence 🎯
 
-### 8.1 Campaign Creation ⚪
-- ⚪ Create campaign modal/page
-- ⚪ Campaign form fields:
-  - ⚪ Name input
-  - ⚪ Theme and description textarea
-  - ⚪ Language selection (EN/NO)
-  - ⚪ Start and end date pickers
-  - ⚪ Posting frequency dropdown (Daily, 3x/week, Weekly)
-  - ⚪ Target number of posts input
-  - ⚪ Content style dropdown
-  - ⚪ Optional template selection
-- ⚪ Enforce one active campaign limit
-- ⚪ Generate first post immediately on creation
-- ⚪ Store campaign in Firestore `/campaigns/{campaignId}`
+### 8.1 Campaign Creation ✅
+- ✅ Create campaign modal/page
+- ✅ Campaign form fields:
+  - ✅ Name input
+  - ✅ Theme and description textarea
+  - ✅ Language selection (EN/NO)
+  - ✅ Start and end date pickers
+  - ✅ Posting frequency dropdown (Daily, 3x/week, Weekly)
+  - ✅ Target number of posts input
+  - ✅ Content style dropdown
+  - ✅ Optional template selection
+- ✅ **Multiple active campaigns support** - removed single campaign limit
+- ✅ Store campaign in Firestore `/campaigns/{campaignId}`
 
-### 8.2 Campaign Detail Page ⚪
-- ⚪ Campaign header with name and description
-- ⚪ Progress bar (posts completed/target)
-- ⚪ Timeline component showing all posts
-- ⚪ Status indicators for each post
-- ⚪ Scheduled dates (calculated from frequency)
-- ⚪ "Generate Next Post" button:
-  - ⚪ Show only after previous post marked Posted/Ready
-  - ⚪ Include campaign context in generation
-  - ⚪ Pass previous post content for continuity
-  - ⚪ Display post number (e.g., "Post 3 of 10")
-- ⚪ Edit campaign settings button
-- ⚪ Complete/archive campaign action
+### 8.2 Campaign Detail Page ✅
+- ✅ Campaign header with name and description
+- ✅ Progress bar (posts completed/target)
+- ✅ Timeline component showing all posts
+- ✅ Status indicators for each post
+- ✅ Scheduled dates (calculated from frequency)
+- ✅ "Generate Next Post" button:
+  - ✅ Show only after previous post marked Posted/Ready
+  - ✅ Include campaign context in generation
+  - ✅ Pass previous post content for continuity
+  - ✅ Display post number (e.g., "Post 3 of 10")
+- ✅ Edit campaign settings button
+- ✅ Complete/archive campaign action
 
-### 8.3 Campaign Templates ⚪
-- ⚪ Create `/campaignTemplates` collection in Firestore
-- ⚪ Seed templates:
-  - ⚪ Product Launch
-  - ⚪ Thought Leadership Series
-  - ⚪ Educational Series
-  - ⚪ Company Updates
-- ⚪ Template selection UI in campaign creation
-- ⚪ Pre-populate campaign settings from template
-- ⚪ Template preview component
+### 8.3 Campaign Templates ✅
+- ✅ Create campaign templates library
+- ✅ Seed templates:
+  - ✅ Product Launch (8 posts, 3x/week)
+  - ✅ Thought Leadership Series (10 posts, weekly)
+  - ✅ Educational Series (12 posts, 3x/week)
+  - ✅ Company Updates (6 posts, weekly)
+  - ✅ Case Study Series (5 posts, weekly)
+  - ✅ Industry Insights (10 posts, 3x/week)
+- ✅ Template selection UI in campaign creation
+- ✅ Pre-populate campaign settings from template
+- ✅ Template preview component
 
-### 8.4 Sequential Post Generation ⚪
-- ⚪ Update generate API to handle campaign context
-- ⚪ Pass campaign theme to Claude
-- ⚪ Include previous post content
-- ⚪ Add post sequence number (e.g., "This is post 3 of 10")
-- ⚪ Maintain continuity in tone and messaging
-- ⚪ Link generated draft to campaign
+### 8.4 Sequential Post Generation ✅
+- ✅ Update generate API to handle campaign context
+- ✅ Pass campaign theme to Claude
+- ✅ Include previous post content
+- ✅ Add post sequence number (e.g., "This is post 3 of 10")
+- ✅ Maintain continuity in tone and messaging
+- ✅ Link generated draft to campaign
+- ✅ Increment campaign post counter
+
+### 8.5 AI Campaign Strategist (Marketing Manager Brain) ✅
+- ✅ **Campaign Brief Generator API** (`/api/campaigns/brief`)
+  - ✅ Analyze campaign goal input from user
+  - ✅ Generate strategic overview (3-4 sentence campaign approach)
+  - ✅ Create post-by-post blueprint with specific topics
+  - ✅ Define narrative arc (how posts build on each other)
+  - ✅ Suggest success markers to watch for
+  - ✅ Return structured JSON with strategy + post topics
+- ✅ **Dynamic Strategy Adaptation API** (`/api/campaigns/[id]/restrategize`)
+  - ✅ Accept user edits to any post topic
+  - ✅ Re-analyze campaign flow with change
+  - ✅ Update subsequent posts to maintain narrative coherence
+  - ✅ Preserve locked posts (already generated/posted)
+  - ✅ Return updated topics with change reasons
+  - ✅ Implement cascade logic (early edits = more impact)
+- ✅ **Next Post Guidance API** (`/api/campaigns/[id]/next-post-guide`)
+  - ✅ Analyze campaign position (early/mid/late sequence)
+  - ✅ Define specific goal for upcoming post
+  - ✅ Show connection to previous post
+  - ✅ Suggest optimal angle/approach
+  - ✅ Provide context for AI generation
+
+### 8.6 Customizable Campaign Strategy ✅
+- ✅ **Campaign Creation Wizard Enhancement**
+  - ✅ Step 1: User defines goal, post count, frequency
+  - ✅ Step 2: AI generates initial strategy + post topics
+  - ✅ Step 3: Inline editing interface for all topics
+  - ✅ Real-time preview of strategy changes
+  - ✅ Impact indicators showing which posts will adjust
+  - ✅ [Use This Strategy] or [Customize Topics] options
+- ✅ **Strategy Editor Component**
+  - ✅ Edit overall campaign approach (narrative arc)
+  - ✅ Inline edit for individual post topics
+  - ✅ Live AI updates when topics change
+  - ✅ Preview modal showing before/after comparison
+  - ✅ Locked indicator for generated/posted posts
+  - ✅ User-customized vs AI-suggested badges
+- ✅ **Edit Flow UI/UX**
+  - ✅ Click any post topic to edit
+  - ✅ AI immediately adjusts surrounding posts
+  - ✅ Show "Strategy adjusted" notification
+  - ✅ Display impacted posts with [UPDATED] badge
+  - ✅ Confirm changes before applying
+
+### 8.7 Active Campaign Widget (Dashboard Integration) ✅
+- ✅ **Replace Static Campaign Stat Card**
+  - ✅ Prominent card at top of dashboard
+  - ✅ Show active campaign name + progress
+  - ✅ Display next post due date
+  - ✅ AI-suggested topic for next post
+  - ✅ Quick "Generate Post X" button
+  - ✅ "View Campaign" and "Pause" actions
+- ✅ **Alternative Path Option**
+  - ✅ "Create Single Post Instead" card below
+  - ✅ Clear distinction between campaign vs standalone
+  - ✅ User choice emphasized
+- ✅ **Campaign-Aware Draft Cards**
+  - ✅ Add campaign badge/icon to draft cards
+  - ✅ Show campaign name on hover
+  - ✅ Filter option: "Campaign Posts" vs "Single Posts"
+  - ⚪ Optional grouped view in list mode
+  - ⚪ Visual connection lines in timeline view
+
+### 8.8 Enhanced AI Generation for Campaigns 🔄
+- 🔄 **Campaign-Aware System Prompts**
+  - 🔄 Include campaign narrative arc in prompts
+  - 🔄 Add position-in-sequence context (post X of Y)
+  - 🔄 Reference campaign strategy goals
+  - 🔄 Include previous post themes (not full content)
+  - 🔄 Add tone progression instructions
+  - 🔄 Specify call-back references where relevant
+- ⚪ **Template Blueprints Enhancement**
+  - ⚪ Extend templates with post-by-post guides
+  - ⚪ Product Launch blueprint: Teaser → Problem → Solution → Features → Social Proof → CTA → Follow-up
+  - ⚪ Thought Leadership blueprint: Trend → Analysis → Perspective → Prediction → Discussion
+  - ⚪ AI uses blueprint to guide specific post generation
+- ⚪ **Smart Content Variations**
+  - ⚪ Automatically vary post length across campaign
+  - ⚪ Mix hook styles (question, story, stat, statement)
+  - ⚪ Alternate emoji usage patterns
+  - ⚪ Vary CTA approaches
+
+### 8.9 Campaign Detail Page Redesign 🔄
+- ⚪ **Strategy Overview Section**
+  - ⚪ Editable campaign strategy (narrative arc)
+  - ⚪ Visual flow indicator (text-based, clean)
+  - ⚪ Campaign goal reminder
+  - ⚪ [Edit Strategy] button
+- ⚪ **AI Insights Panel**
+  - ⚪ Next post recommendation
+  - ⚪ Campaign health indicator
+  - ⚪ Tone consistency check
+  - ⚪ Content diversity metrics
+  - ⚪ Suggested improvements
+- ⚪ **Enhanced Timeline View**
+  - ⚪ Each post has [Edit Topic] button
+  - ⚪ Show post goal/purpose on hover
+  - ⚪ Visual indicators for locked vs editable
+  - ⚪ Connection context between posts
+  - ⚪ Scheduled dates with auto-calculation
+- ⚪ **Campaign Actions**
+  - ⚪ Generate next post (with AI context)
+  - ⚪ Optimize entire campaign
+  - ⚪ Export campaign plan
+  - ⚪ Complete/archive with confirmation
+
+### 8.10 Workspace Campaign Integration 🔄
+- 🔄 **Campaign-First Navigation Option**
+  - 🔄 Toggle workspace view: All Posts / Campaign Posts
+  - 🔄 Campaign lens filtering
+  - 🔄 Quick campaign switcher in sidebar
+- 🔄 **Campaign Progress Tracking**
+  - 🔄 Show campaign completion % in workspace
+  - 🔄 Next post due date alerts
+  - 🔄 Campaign momentum indicators
+- ⚪ **Scheduled Date Integration**
+  - ⚪ Calendar view shows campaign posts
+  - ⚪ Auto-schedule based on frequency
+  - ⚪ Drag-to-reschedule (optional)
+  - ⚪ Campaign timeline in calendar
+
+### 8.11 Database Schema Updates ✅
+- ✅ **Campaign Collection Enhancement**
+  - ✅ Add `aiStrategy` object:
+    - ✅ `overallApproach`: string (narrative arc)
+    - ✅ `postBlueprints`: array of post plans
+      - ✅ `position`: number
+      - ✅ `topic`: string
+      - ✅ `goal`: string
+      - ✅ `locked`: boolean
+      - ✅ `userCustomized`: boolean
+    - ✅ `suggestions`: array (AI recommendations)
+  - ⚪ Add `performance` object:
+    - ⚪ `coherenceScore`: number
+    - ⚪ `diversityScore`: number
+    - ⚪ `completionRate`: number
+
+### 8.12 Clean UX/UI Patterns ✅
+- ✅ **Design Principles**
+  - ✅ Clear typography hierarchy (size/weight only)
+  - ✅ Ample whitespace for breathing room
+  - ✅ Simple borders and dividers
+  - ✅ Status via text, minimal colors
+  - ✅ Progress via simple bars, no fancy charts
+- ✅ **Information Architecture**
+  - ✅ AI suggestions in clearly labeled boxes
+  - ✅ "Why this matters" explanations visible
+  - ✅ One clear primary action per screen
+  - ✅ Optional/advanced features collapsed
+- ✅ **User Control Indicators**
+  - ✅ Every AI suggestion has [Use This] or [Customize]
+  - ✅ Can skip AI strategy entirely (DIY mode)
+  - ✅ Can edit any AI-generated content
+  - ✅ Can pause/modify campaign anytime
+  - ✅ Clear locked/unlocked indicators
+
+### 8.13 Enhanced Campaign Detail Page with Post Details ⚪
+- ⚪ **Timeline Post Cards Enhancement**
+  - ⚪ Show AI-suggested topic from aiStrategy.postBlueprints[index].topic
+  - ⚪ Display post goal/purpose from blueprint
+  - ⚪ Increase content preview from 150 to 300 characters
+  - ⚪ Add strategic position label (e.g., "Opening • Awareness phase")
+  - ⚪ Show connection to previous post ("Builds on: [previous topic]")
+  - ⚪ Expandable section for full AI strategy details
+- ⚪ **Campaign Strategy Display Section**
+  - ⚪ Show strategic overview at top of timeline
+  - ⚪ Display narrative arc description
+  - ⚪ Show success markers in dedicated section
+  - ⚪ Add campaign metadata: tone, purpose, audience (if available)
+
+### 8.14 Campaign Wizard Advanced Configuration ⚪
+- ⚪ **Add Configuration Dropdowns to Step 1**
+  - ⚪ Tone dropdown: Professional, Casual, Inspirational, Educational
+  - ⚪ Purpose dropdown: Engagement, Lead Generation, Brand Awareness, Thought Leadership
+  - ⚪ Target Audience dropdown: Executives, Entrepreneurs, Professionals, Industry-Specific
+  - ⚪ Keep all in single card with 2-column grid layout
+  - ⚪ Add after template selection, before name/theme inputs
+- ⚪ **Update Form State & Database**
+  - ⚪ Add tone, purpose, audience to formData
+  - ⚪ Save to Firestore campaigns collection
+  - ⚪ Pass to /api/campaigns/brief for better AI strategy
+- ⚪ **Update Campaign TypeScript Interface**
+  - ⚪ Add tone, purpose, audience fields
+  - ⚪ Ensure aiStrategy structure is properly typed
+
+### 8.15 AI Campaign Input Validator (Bilingual Support) ⚪
+- ⚪ **Create Validation API Endpoint**
+  - ⚪ Route: /api/campaigns/validate-input
+  - ⚪ Accept: text, language (en/no), fieldType (theme/description)
+  - ⚪ Use Claude API to analyze input quality
+  - ⚪ Return: scores (clarity, specificity, actionability), feedback, suggestions
+  - ⚪ Support both English and Norwegian responses
+- ⚪ **Create Validation UI Component**
+  - ⚪ Component: components/CampaignInputValidator.tsx
+  - ⚪ Debounced validation (500ms after typing stops)
+  - ⚪ Quality indicator: 🔴 red / 🟡 yellow / 🟢 green badges
+  - ⚪ Expandable "AI Suggestions" section
+  - ⚪ Non-blocking (users can proceed regardless)
+  - ⚪ Clean, minimal design
+- ⚪ **Integration Points**
+  - ⚪ Add to Campaign Theme input field
+  - ⚪ Add to Campaign Description textarea
+  - ⚪ Real-time feedback as user types
+  - ⚪ Loading state during validation
 
 ---
 
@@ -566,7 +948,7 @@
 - ⚪ Add CSRF protection
 - ⚪ Implement proper error handling (no sensitive data in errors)
 
-### 10.2 Performance Optimization ⚪
+### 11.2 Performance Optimization ⚪
 - ⚪ Use Server Components where possible
 - ⚪ Implement proper data fetching patterns
 - ⚪ Add loading states and skeleton screens
@@ -578,7 +960,7 @@
 - ⚪ Lazy load heavy components
 - ⚪ Minimize client-side JavaScript
 
-### 10.3 Testing & Quality Assurance ⚪
+### 11.3 Testing & Quality Assurance ⚪
 - ⚪ Test authentication flows:
   - ⚪ Google OAuth
   - ⚪ Email/password signup
@@ -601,7 +983,7 @@
 - ⚪ Cross-browser testing
 - ⚪ Mobile responsiveness testing
 
-### 10.4 Deployment ⚪
+### 11.4 Deployment ⚪
 - ⚪ Connect GitHub repository to Vercel
 - ⚪ Set up production environment variables in Vercel
 - ⚪ Configure Firebase project for production
@@ -690,9 +1072,25 @@
   frequency: 'daily' | '3x_week' | 'weekly'
   targetPostCount: number
   style: string
+  tone: 'professional' | 'casual' | 'inspirational' | 'educational'
+  purpose: 'engagement' | 'lead_generation' | 'brand_awareness' | 'thought_leadership'
+  audience: 'executives' | 'entrepreneurs' | 'professionals' | 'industry_specific'
   templateId: string | null
   status: 'active' | 'completed' | 'archived'
   postsGenerated: number
+  aiStrategy: {
+    overallApproach: string
+    strategicOverview: string
+    narrativeArc: string
+    successMarkers: string[]
+    postBlueprints: Array<{
+      position: number
+      topic: string
+      goal: string
+      locked: boolean
+      userCustomized: boolean
+    }>
+  } | null
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -726,7 +1124,8 @@
 7. **Phase 7** - Draft Management *(Organization)*
 8. **Phase 8** - Campaign Planning *(Advanced feature)*
 9. **Phase 9** - Billing & Subscriptions *(Monetization)*
-10. **Phase 10** - Security & Optimization *(Polish & launch)*
+10. **🎨 Phase 10 - Design & UX Enhancement** *(Visual polish & user experience)*
+11. **Phase 11** - Security & Optimization *(Technical polish & launch)*
 
 ---
 
@@ -764,4 +1163,5 @@
 2. **Phase 7:** All Drafts page with search & Calendar view
 3. **Phase 8:** Campaign planning with sequential generation
 4. **Phase 9:** Stripe billing integration for monetization
-5. **Phase 10:** Security hardening & performance optimization
+5. **Phase 10:** 🎨 Design & UX Enhancement - Visual upgrades and tooltips
+6. **Phase 11:** Security hardening & performance optimization

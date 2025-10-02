@@ -17,7 +17,14 @@
       "Bash(git push:*)",
       "Read(//Users/henningtorp/Desktop/**)",
       "Bash(rm:*)",
-      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_wKxQJz/**)"
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_wKxQJz/**)",
+      "mcp__playwright__browser_click",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_6dZuKH/**)",
+      "Bash(pgrep:*)",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_wait_for",
+      "WebSearch",
+      "mcp__context7__get-library-docs"
     ],
     "deny": [],
     "ask": []

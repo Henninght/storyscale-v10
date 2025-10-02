@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { ChevronLeft, ChevronRight, Check, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,6 +24,12 @@ interface WizardData {
   length: 'short' | 'medium' | 'long';
   includeCTA: boolean;
   emojiUsage: 'none' | 'minimal' | 'moderate';
+
+  // Campaign context (optional)
+  campaignId?: string;
+  campaignTheme?: string;
+  postNumber?: number;
+  previousContent?: string;
 }
 
 const initialData: WizardData = {
@@ -38,15 +46,75 @@ const initialData: WizardData = {
 };
 
 export function PostWizard() {
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialData);
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [campaignLoaded, setCampaignLoaded] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load campaign context from URL
+  useEffect(() => {
+    const loadCampaignContext = async () => {
+      const campaignId = searchParams.get('campaignId');
+      const postNumber = searchParams.get('postNumber');
+
+      if (campaignId && !campaignLoaded) {
+        try {
+          const db = getFirestore();
+
+          // Load campaign
+          const campaignRef = doc(db, 'campaigns', campaignId);
+          const campaignSnap = await getDoc(campaignRef);
+
+          if (campaignSnap.exists()) {
+            const campaignData = campaignSnap.data();
+
+            // Load previous post if exists
+            let previousContent = '';
+            if (postNumber && parseInt(postNumber) > 1) {
+              const draftsRef = collection(db, 'drafts');
+              const q = query(
+                draftsRef,
+                where('campaignId', '==', campaignId),
+                orderBy('createdAt', 'desc'),
+                limit(1)
+              );
+              const draftsSnap = await getDocs(q);
+              if (!draftsSnap.empty) {
+                previousContent = draftsSnap.docs[0].data().content || '';
+              }
+            }
+
+            // Update wizard data with campaign context
+            setData(prev => ({
+              ...prev,
+              campaignId,
+              campaignTheme: campaignData.theme,
+              postNumber: postNumber ? parseInt(postNumber) : 1,
+              previousContent,
+              language: campaignData.language || 'en',
+              style: campaignData.style || 'story-based',
+            }));
+
+            setCampaignLoaded(true);
+          }
+        } catch (error) {
+          console.error('Error loading campaign context:', error);
+        }
+      }
+    };
+
+    loadCampaignContext();
+  }, [searchParams, campaignLoaded]);
 
   // Load saved draft on mount
   useEffect(() => {
+    // Skip loading saved draft if we have campaign context
+    if (searchParams.get('campaignId')) return;
+
     const savedDraft = localStorage.getItem('wizardDraft');
     if (savedDraft) {
       try {
@@ -58,7 +126,7 @@ export function PostWizard() {
         console.error('Failed to load saved draft:', error);
       }
     }
-  }, []);
+  }, [searchParams]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -298,6 +366,48 @@ interface Step1Props {
 function Step1({ input, referenceUrls, onUpdate }: Step1Props) {
   const charCount = input.length;
   const isValid = charCount >= 50 && charCount <= 2000;
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const { getAuth } = await import('firebase/auth');
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        const db = getFirestore();
+        const campaignsRef = collection(db, 'campaigns');
+        const q = query(campaignsRef, where('userId', '==', user.uid), where('status', '==', 'active'));
+        const snapshot = await getDocs(q);
+
+        const campaignsData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setCampaigns(campaignsData);
+      } catch (error) {
+        console.error('Error loading campaigns:', error);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+
+    loadCampaigns();
+  }, []);
+
+  const handleCampaignSelect = (campaignId: string) => {
+    setSelectedCampaignId(campaignId);
+    if (campaignId) {
+      onUpdate({ campaignId });
+    } else {
+      onUpdate({ campaignId: undefined });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -307,6 +417,28 @@ function Step1({ input, referenceUrls, onUpdate }: Step1Props) {
           Share your main idea, story, or topic. The more details you provide, the better the result.
         </p>
       </div>
+
+      {/* Campaign Selector */}
+      {!loadingCampaigns && campaigns.length > 0 && (
+        <div>
+          <label className="mb-2 block text-sm font-medium text-secondary">Link to Campaign (Optional)</label>
+          <select
+            value={selectedCampaignId}
+            onChange={(e) => handleCampaignSelect(e.target.value)}
+            className="w-full rounded-lg border border-secondary/20 px-4 py-3 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">Standalone post (no campaign)</option>
+            {campaigns.map((campaign: any) => (
+              <option key={campaign.id} value={campaign.id}>
+                {campaign.name} ({campaign.postsGenerated}/{campaign.targetPostCount} posts)
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-sm text-secondary/60">
+            Select a campaign to generate this post as part of a series
+          </p>
+        </div>
+      )}
 
       <div>
         <label className="mb-2 block text-sm font-medium text-secondary">Your Input *</label>

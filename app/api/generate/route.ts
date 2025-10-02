@@ -105,10 +105,24 @@ export async function POST(req: NextRequest) {
       tags: [],
       scheduledDate: null,
       wizardSettings,
-      campaignId: null,
+      campaignId: wizardSettings.campaignId || null,
       createdAt: now,
       updatedAt: now,
     });
+
+    // If this is part of a campaign, increment campaign post count
+    if (wizardSettings.campaignId) {
+      const campaignRef = adminDb.collection('campaigns').doc(wizardSettings.campaignId);
+      const campaignDoc = await campaignRef.get();
+
+      if (campaignDoc.exists) {
+        const currentCount = campaignDoc.data()?.postsGenerated || 0;
+        await campaignRef.update({
+          postsGenerated: currentCount + 1,
+          updatedAt: now,
+        });
+      }
+    }
 
     // Increment usage counter
     await adminDb
@@ -166,15 +180,52 @@ function buildSystemPrompt(profile: any, wizardSettings: any): string {
     moderate: 'Use 3-5 emojis to enhance readability and engagement.',
   };
 
-  return `You are an expert LinkedIn content writer creating posts for a professional user.
+  const accountType = profile.accountType || 'private';
+  const isCompany = accountType === 'company';
 
-**User Profile:**
+  // Build profile context based on account type
+  const profileContext = isCompany
+    ? `**Company Profile:**
+- Company Name: ${profile.companyName || 'Not specified'}
+- Industry: ${profile.companyIndustry || 'Not specified'}
+- Company Background: ${profile.background || 'Company background not specified'}
+- Areas of Expertise: ${profile.expertise?.join(', ') || 'Not specified'}
+- Target Audience: ${profile.targetAudience || 'Professionals'}
+- Company Goals: ${profile.goals || 'Not specified'}
+- Writing Style: ${profile.writingStyle || 'Professional'}
+- Brand Voice: ${profile.brandVoice || 'Professional and authentic'}`
+    : `**User Profile:**
 - Background: ${profile.background || 'Professional background not specified'}
 - Expertise: ${profile.expertise?.join(', ') || 'Not specified'}
 - Target Audience: ${profile.targetAudience || 'Professionals'}
 - Goals: ${profile.goals || 'Not specified'}
 - Writing Style: ${profile.writingStyle || 'Professional'}
-- Brand Voice: ${profile.brandVoice || 'Authentic and professional'}
+- Brand Voice: ${profile.brandVoice || 'Authentic and professional'}`;
+
+  // Voice and perspective guidelines based on account type
+  const voiceGuidelines = isCompany
+    ? `**Company Voice Guidelines:**
+1. Use first-person plural ("we", "our", "us") to represent the company
+2. Emphasize team achievements and collective expertise
+3. Maintain brand consistency throughout the post
+4. Showcase company values, culture, and capabilities
+5. Focus on how the company helps clients/customers
+6. Share company insights, not individual personal stories
+7. Keep the tone professional yet approachable
+8. Highlight company achievements as team efforts`
+    : `**Personal Voice Guidelines:**
+1. Use first-person ("I", "my", "me") for authentic personal perspective
+2. Share individual experiences and personal insights
+3. Emphasize your unique expertise and perspective
+4. Tell personal stories and lessons learned
+5. Build your personal brand and thought leadership
+6. Connect on a human level with your audience
+7. Show vulnerability and authenticity when appropriate
+8. Highlight your individual achievements and growth`;
+
+  return `You are an expert LinkedIn content writer creating posts for a ${isCompany ? 'company' : 'professional individual'}.
+
+${profileContext}
 
 **Post Requirements:**
 - Tone: ${toneDescriptions[wizardSettings.tone] || wizardSettings.tone}
@@ -186,6 +237,8 @@ function buildSystemPrompt(profile: any, wizardSettings: any): string {
 - Call-to-Action: ${wizardSettings.includeCTA ? 'Include a compelling CTA that encourages engagement' : 'Do not include a CTA'}
 - Emojis: ${emojiGuidelines[wizardSettings.emojiUsage]}
 
+${voiceGuidelines}
+
 **Critical Writing Rules:**
 1. Write like a human, not a corporate robot
 2. Avoid AI clichés and overused phrases like "delve into", "in today's digital age", "game-changer", "unlock", etc.
@@ -194,7 +247,7 @@ function buildSystemPrompt(profile: any, wizardSettings: any): string {
 5. Start strong - hook the reader in the first line
 6. Be authentic and relatable, not salesy or promotional
 7. Format for readability on LinkedIn - use line breaks, not walls of text
-8. If telling a story, make it personal and specific
+8. If telling a story, make it ${isCompany ? 'about the company or team' : 'personal and specific'}
 9. Avoid corporate jargon - write like you're talking to a colleague
 10. End with substance, not empty platitudes
 
