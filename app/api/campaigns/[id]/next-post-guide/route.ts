@@ -15,7 +15,7 @@ interface PostGuide {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify Firebase Auth token
@@ -28,7 +28,7 @@ export async function POST(
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    const campaignId = params.id;
+    const { id: campaignId } = await params;
 
     // Parse request body
     const body = await req.json();
