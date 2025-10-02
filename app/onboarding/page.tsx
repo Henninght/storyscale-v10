@@ -99,7 +99,7 @@ export default function OnboardingPage() {
   const totalSteps = 7; // Updated to 7 steps (added account type + company details)
 
   const [profileData, setProfileData] = useState<ProfileData>({
-    accountType: "private",
+    accountType: "",
     background: "",
     expertise: [],
     targetAudience: "",

@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 
 // Account Type
-export type AccountType = "private" | "company";
+export type AccountType = "private" | "company" | "";
 
 // User Profile Types
 export interface UserProfile {
