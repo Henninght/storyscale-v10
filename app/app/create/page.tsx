@@ -1,5 +1,8 @@
 import { PostWizard } from '@/components/PostWizard';
 
+// Force dynamic rendering since PostWizard uses useSearchParams
+export const dynamic = 'force-dynamic';
+
 export default function CreatePostPage() {
   return (
     <div className="space-y-8">

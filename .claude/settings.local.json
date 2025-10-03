@@ -24,7 +24,8 @@
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_wait_for",
       "WebSearch",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": []
