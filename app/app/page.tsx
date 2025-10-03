@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { FileText, CheckCircle2, Clock, Megaphone, Grid3x3, List, Plus } from "lucide-react";
 import { DraftCard } from "@/components/DraftCard";
 import { ActiveCampaignWidget } from "@/components/ActiveCampaignWidget";
-import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import type { Campaign } from '@/types';
@@ -58,8 +58,7 @@ export default function DashboardPage() {
         const db = getFirestore();
 
         // Fetch user subscription and stats
-        const { doc: firestoreDoc, getDoc } = await import('firebase/firestore');
-        const userRef = firestoreDoc(db, 'users', user.uid);
+        const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
