@@ -262,6 +262,36 @@ export default function CampaignDetailPage() {
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-4">
+        <div className="rounded-xl border border-secondary/10 bg-white p-4">
+          <div className="text-sm text-secondary/60">Total Posts</div>
+          <div className="mt-1 text-2xl font-bold text-secondary">{drafts.length}</div>
+          <div className="mt-1 text-xs text-secondary/40">of {campaign.targetPostCount}</div>
+        </div>
+        <div className="rounded-xl border border-secondary/10 bg-white p-4">
+          <div className="text-sm text-secondary/60">Drafts</div>
+          <div className="mt-1 text-2xl font-bold text-blue-600">
+            {drafts.filter(d => d.status === 'in_progress' || d.status === 'idea').length}
+          </div>
+          <div className="mt-1 text-xs text-secondary/40">in progress</div>
+        </div>
+        <div className="rounded-xl border border-secondary/10 bg-white p-4">
+          <div className="text-sm text-secondary/60">Ready</div>
+          <div className="mt-1 text-2xl font-bold text-green-600">
+            {drafts.filter(d => d.status === 'ready_to_post').length}
+          </div>
+          <div className="mt-1 text-xs text-secondary/40">to post</div>
+        </div>
+        <div className="rounded-xl border border-secondary/10 bg-white p-4">
+          <div className="text-sm text-secondary/60">Posted</div>
+          <div className="mt-1 text-2xl font-bold text-amber-600">
+            {drafts.filter(d => d.status === 'posted').length}
+          </div>
+          <div className="mt-1 text-xs text-secondary/40">live</div>
+        </div>
+      </div>
+
       {/* Progress Card */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-6">
         <div className="mb-4 flex items-center justify-between">
@@ -447,9 +477,10 @@ export default function CampaignDetailPage() {
                   key={index}
                   className={`rounded-lg border p-4 transition-all ${
                     isGenerated
-                      ? 'border-secondary/20 bg-white hover:border-primary hover:shadow-md'
-                      : 'border-dashed border-secondary/20 bg-secondary/5'
+                      ? 'border-secondary/20 bg-white shadow-sm hover:border-primary hover:shadow-md cursor-pointer'
+                      : 'border-dashed border-secondary/20 bg-slate-50/50'
                   }`}
+                  onClick={isGenerated ? () => router.push(`/app/drafts/${draft.id}`) : undefined}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -475,9 +506,12 @@ export default function CampaignDetailPage() {
 
                       {/* AI-Suggested Topic & Goal */}
                       {blueprint && !isGenerated && (
-                        <div className="mb-3 rounded bg-primary/5 p-3">
-                          <div className="mb-1 text-xs font-medium text-primary">AI Suggested Topic</div>
-                          <div className="mb-2 text-sm font-medium text-secondary">{blueprint.topic}</div>
+                        <div className="mb-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                          <div className="mb-2 flex items-center gap-2">
+                            <span className="text-lg">💡</span>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-primary">AI Suggested Topic</div>
+                          </div>
+                          <div className="mb-2 text-sm font-semibold text-secondary">{blueprint.topic}</div>
                           <div className="text-xs text-secondary/70">
                             <span className="font-medium">Goal:</span> {blueprint.goal}
                           </div>
@@ -487,14 +521,16 @@ export default function CampaignDetailPage() {
                       {isGenerated ? (
                         <>
                           {blueprint && (
-                            <div className="mb-2">
-                              <div className="text-xs font-medium text-secondary/60">Strategy: {blueprint.topic}</div>
+                            <div className="mb-2 rounded bg-primary/5 px-2 py-1">
+                              <div className="text-xs font-medium text-primary">📋 {blueprint.topic}</div>
                             </div>
                           )}
-                          <p className="text-sm text-secondary/80 line-clamp-3">
-                            {draft.content.slice(0, 300)}
-                            {draft.content.length > 300 ? '...' : ''}
-                          </p>
+                          <div className="mt-2 rounded-lg bg-slate-50 p-3">
+                            <p className="text-sm text-secondary line-clamp-4 whitespace-pre-wrap">
+                              {draft.content.slice(0, 400)}
+                              {draft.content.length > 400 ? '...' : ''}
+                            </p>
+                          </div>
                         </>
                       ) : (
                         !blueprint && <p className="text-sm text-secondary/40">Not generated yet</p>
