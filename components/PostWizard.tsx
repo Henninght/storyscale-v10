@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { ChevronLeft, ChevronRight, Check, Save } from 'lucide-react';
@@ -45,15 +45,17 @@ const initialData: WizardData = {
   emojiUsage: 'minimal',
 };
 
-export function PostWizard() {
+// Component to handle campaign context loading with useSearchParams
+function CampaignContextLoader({
+  campaignLoaded,
+  setCampaignLoaded,
+  setData,
+}: {
+  campaignLoaded: boolean;
+  setCampaignLoaded: (val: boolean) => void;
+  setData: React.Dispatch<React.SetStateAction<WizardData>>;
+}) {
   const searchParams = useSearchParams();
-  const [currentStep, setCurrentStep] = useState<WizardStep>(1);
-  const [data, setData] = useState<WizardData>(initialData);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [campaignLoaded, setCampaignLoaded] = useState(false);
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load campaign context from URL
   useEffect(() => {
@@ -108,7 +110,7 @@ export function PostWizard() {
     };
 
     loadCampaignContext();
-  }, [searchParams, campaignLoaded]);
+  }, [searchParams, campaignLoaded, setCampaignLoaded, setData]);
 
   // Load saved draft on mount
   useEffect(() => {
@@ -120,13 +122,23 @@ export function PostWizard() {
       try {
         const parsed = JSON.parse(savedDraft);
         setData(parsed.data);
-        setCurrentStep(parsed.step || 1);
-        setLastSaved(new Date(parsed.timestamp));
       } catch (error) {
         console.error('Failed to load saved draft:', error);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, setData]);
+
+  return null;
+}
+
+export function PostWizard() {
+  const [currentStep, setCurrentStep] = useState<WizardStep>(1);
+  const [data, setData] = useState<WizardData>(initialData);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [campaignLoaded, setCampaignLoaded] = useState(false);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -243,6 +255,15 @@ export function PostWizard() {
 
   return (
     <div className="mx-auto max-w-4xl">
+      {/* Campaign context loader with Suspense boundary for useSearchParams */}
+      <Suspense fallback={null}>
+        <CampaignContextLoader
+          campaignLoaded={campaignLoaded}
+          setCampaignLoaded={setCampaignLoaded}
+          setData={setData}
+        />
+      </Suspense>
+
       {/* Auto-save indicator */}
       {lastSaved && (
         <div className="mb-4 flex items-center justify-end gap-2 text-sm text-slate-500">

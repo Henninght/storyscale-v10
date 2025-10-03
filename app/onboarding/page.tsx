@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -87,9 +87,55 @@ const BRAND_VOICES = [
   { value: "energetic", label: "Energetic & Enthusiastic" },
 ];
 
+// Component to handle LinkedIn detection with useSearchParams
+function LinkedInDetector({
+  user,
+  setFromLinkedIn,
+  setLinkedInName,
+  setProfileData
+}: {
+  user: any;
+  setFromLinkedIn: (val: boolean) => void;
+  setLinkedInName: (val: string) => void;
+  setProfileData: React.Dispatch<React.SetStateAction<ProfileData>>;
+}) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const detectLinkedIn = async () => {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userRef);
+        const source = searchParams.get('source');
+        const userData = userDoc.data();
+
+        if (source === 'linkedin' && userData?.linkedinProfile) {
+          setFromLinkedIn(true);
+          setLinkedInName(userData.linkedinProfile.name || user.displayName || '');
+
+          // Pre-populate with helpful starter text
+          if (!userData.profile?.background) {
+            setProfileData(prev => ({
+              ...prev,
+              background: `I'm ${userData.linkedinProfile.name || 'a professional'} looking to share insights and connect with others in my industry.`,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to detect LinkedIn:", error);
+      }
+    };
+
+    detectLinkedIn();
+  }, [user, searchParams, setFromLinkedIn, setLinkedInName, setProfileData]);
+
+  return null;
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -138,7 +184,7 @@ export default function OnboardingPage() {
     return () => clearInterval(autoSaveInterval);
   }, [user, profileData]);
 
-  // Load existing profile data if any and detect LinkedIn sign-in
+  // Load existing profile data if any
   useEffect(() => {
     if (!user) return;
 
@@ -146,23 +192,6 @@ export default function OnboardingPage() {
       try {
         const userRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userRef);
-
-        // Check if user came from LinkedIn
-        const source = searchParams.get('source');
-        const userData = userDoc.data();
-
-        if (source === 'linkedin' && userData?.linkedinProfile) {
-          setFromLinkedIn(true);
-          setLinkedInName(userData.linkedinProfile.name || user.displayName || '');
-
-          // Pre-populate with helpful starter text
-          if (!userData.profile?.background) {
-            setProfileData(prev => ({
-              ...prev,
-              background: `I'm ${userData.linkedinProfile.name || 'a professional'} looking to share insights and connect with others in my industry.`,
-            }));
-          }
-        }
 
         if (userDoc.exists() && userDoc.data().profile) {
           const loadedProfile = userDoc.data().profile;
@@ -180,7 +209,7 @@ export default function OnboardingPage() {
     };
 
     loadProfile();
-  }, [user, searchParams]);
+  }, [user]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -300,6 +329,16 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4">
+      {/* LinkedIn detection with Suspense boundary for useSearchParams */}
+      <Suspense fallback={null}>
+        <LinkedInDetector
+          user={user}
+          setFromLinkedIn={setFromLinkedIn}
+          setLinkedInName={setLinkedInName}
+          setProfileData={setProfileData}
+        />
+      </Suspense>
+
       <div className="max-w-2xl mx-auto">
         {/* Progress Bar */}
         <div className="mb-8">
