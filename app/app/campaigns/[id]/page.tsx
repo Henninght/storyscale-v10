@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, Timestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Plus, CheckCircle2, Clock, FileText, Settings, Archive, Calendar, TrendingUp } from 'lucide-react';
@@ -103,7 +103,7 @@ export default function CampaignDetailPage() {
 
       // Fetch campaign drafts
       const draftsRef = collection(db, 'drafts');
-      const q = query(draftsRef, where('campaignId', '==', campaignId));
+      const q = query(draftsRef, where('campaignId', '==', campaignId), where('userId', '==', user.uid));
       const draftsSnap = await getDocs(q);
 
       const draftsData = draftsSnap.docs.map((doc) => {
@@ -445,7 +445,49 @@ export default function CampaignDetailPage() {
 
       {/* Timeline */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-6">
-        <h3 className="mb-6 text-lg font-semibold text-secondary">Campaign Timeline</h3>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-secondary">Campaign Timeline</h3>
+          {drafts.length === 0 && campaign.postsGenerated > 0 && (
+            <Button
+              onClick={async () => {
+                if (!confirm('Link recent posts to this campaign? This will add the most recent posts to this campaign timeline.')) return;
+                try {
+                  const db = getFirestore();
+                  const draftsRef = collection(db, 'drafts');
+                  const q = query(
+                    draftsRef,
+                    where('userId', '==', getAuth().currentUser?.uid),
+                    orderBy('createdAt', 'desc')
+                  );
+                  const snapshot = await getDocs(q);
+
+                  let linked = 0;
+                  for (const docSnap of snapshot.docs) {
+                    const data = docSnap.data();
+                    if (!data.campaignId && linked < campaign.postsGenerated) {
+                      await updateDoc(doc(db, 'drafts', docSnap.id), {
+                        campaignId: campaignId,
+                      });
+                      linked++;
+                    }
+                  }
+
+                  alert(`Linked ${linked} post(s) to this campaign`);
+                  fetchCampaignData(); // Refresh
+                } catch (error) {
+                  console.error('Error linking posts:', error);
+                  alert('Failed to link posts');
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Link Existing Posts
+            </Button>
+          )}
+        </div>
 
         {drafts.length === 0 ? (
           <div className="py-8 text-center">

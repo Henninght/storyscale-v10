@@ -25,7 +25,14 @@
       "mcp__playwright__browser_wait_for",
       "WebSearch",
       "mcp__context7__get-library-docs",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_cLzGWj/**)",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_JwaIaV/**)",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_kZxFsN/**)",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_c13g8I/**)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { fetchMultipleUrls } from '@/lib/urlFetcher';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -66,11 +67,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch reference URL content if provided
+    let referenceContent: Array<{ url: string; content: string; error?: string }> = [];
+    if (wizardSettings.referenceUrls?.some((url: string) => url.trim())) {
+      const validUrls = wizardSettings.referenceUrls.filter((url: string) => url.trim());
+      referenceContent = await fetchMultipleUrls(validUrls);
+    }
+
     // Build system prompt with user profile
     const systemPrompt = buildSystemPrompt(profile, wizardSettings);
 
-    // Build user message
-    const userMessage = buildUserMessage(wizardSettings);
+    // Build user message with fetched reference content
+    const userMessage = buildUserMessage(wizardSettings, referenceContent);
 
     // Call Claude API
     const message = await anthropic.messages.create({
@@ -251,22 +259,73 @@ ${voiceGuidelines}
 9. Avoid corporate jargon - write like you're talking to a colleague
 10. End with substance, not empty platitudes
 
+**ANTI-HALLUCINATION RULES (CRITICAL):**
+⚠️ NEVER invent, estimate, or make up statistics, numbers, percentages, dates, or facts
+⚠️ If reference content is provided, use ONLY the specific data contained within it
+⚠️ If you don't have verified data for a claim, rephrase to avoid requiring specific numbers
+⚠️ Better to be general and accurate than specific and wrong
+⚠️ When in doubt, focus on qualitative insights rather than quantitative claims
+
 Generate ONLY the post content. Do not include any meta-commentary, explanations, or labels.`;
 }
 
-function buildUserMessage(wizardSettings: any): string {
+function buildUserMessage(
+  wizardSettings: any,
+  referenceContent: Array<{ url: string; content: string; error?: string }> = []
+): string {
   let message = `Create a LinkedIn post based on this input:\n\n${wizardSettings.input}`;
 
-  if (wizardSettings.referenceUrls?.some((url: string) => url.trim())) {
-    const validUrls = wizardSettings.referenceUrls.filter((url: string) => url.trim());
-    message += `\n\nReference URLs for additional context:\n${validUrls.join('\n')}`;
+  // Add fetched reference content
+  if (referenceContent.length > 0) {
+    message += `\n\n**REFERENCE CONTENT (Use ONLY factual information from these sources):**\n`;
+
+    referenceContent.forEach((ref, index) => {
+      if (ref.error) {
+        message += `\n[Reference ${index + 1}] ${ref.url}\nError: ${ref.error} - Content unavailable\n`;
+      } else {
+        message += `\n[Reference ${index + 1}] ${ref.url}\nContent:\n${ref.content}\n`;
+      }
+    });
+
+    message += `\n**CRITICAL:** Only use statistics, numbers, and facts that appear in the reference content above. NEVER make up or estimate numbers. If specific data is not in the references, do not include it in the post.`;
   }
 
-  if (wizardSettings.campaignId) {
-    message += `\n\nThis is post ${wizardSettings.postNumber || 1} in a campaign series about: ${wizardSettings.campaignTheme}`;
+  // Add custom instructions if provided
+  if (wizardSettings.customInstructions?.trim()) {
+    message += `\n\n**CUSTOM INSTRUCTIONS FROM USER:**\n${wizardSettings.customInstructions.trim()}\n`;
+    message += `\nFollow these custom instructions while maintaining all anti-hallucination rules and staying true to the reference content.`;
+  }
 
+  // Add comprehensive campaign context
+  if (wizardSettings.campaignId) {
+    const totalPosts = wizardSettings.aiStrategy?.postBlueprints?.length || '?';
+    message += `\n\n**CAMPAIGN CONTEXT:**`;
+    message += `\n- Campaign: "${wizardSettings.campaignTheme}"`;
+    if (wizardSettings.campaignDescription) {
+      message += `\n- Description: ${wizardSettings.campaignDescription}`;
+    }
+    message += `\n- This is post ${wizardSettings.postNumber || 1} of ${totalPosts} in the series`;
+
+    // Add strategic post blueprint if available
+    if (wizardSettings.postBlueprint) {
+      message += `\n\n**POST STRATEGY (follow this plan):**`;
+      message += `\n- Suggested Topic: ${wizardSettings.postBlueprint.topic}`;
+      message += `\n- Post Goal: ${wizardSettings.postBlueprint.goal}`;
+      message += `\n\nIMPORTANT: Use the user's input as the primary direction, but ensure the post aligns with the strategic topic and goal above.`;
+    }
+
+    // Add narrative arc context for strategic progression
+    if (wizardSettings.aiStrategy?.narrativeArc) {
+      message += `\n\n**NARRATIVE PROGRESSION:**`;
+      message += `\n${wizardSettings.aiStrategy.narrativeArc}`;
+      message += `\n\nEnsure this post fits naturally into this progression.`;
+    }
+
+    // Add previous post for thematic continuity
     if (wizardSettings.previousContent) {
-      message += `\n\nPrevious post for context (maintain continuity but don't repeat):\n${wizardSettings.previousContent}`;
+      message += `\n\n**PREVIOUS POST (for thematic continuity):**`;
+      message += `\n${wizardSettings.previousContent.slice(0, 600)}...`;
+      message += `\n\nIMPORTANT: Build on the themes and insights from the previous post. Maintain continuity in voice and perspective, but DON'T directly reference it unless necessary for the narrative. Create a natural progression, not forced callbacks.`;
     }
   }
 

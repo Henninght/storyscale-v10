@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { ChevronLeft, ChevronRight, Check, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Save, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -12,6 +12,7 @@ interface WizardData {
   // Step 1
   input: string;
   referenceUrls: string[];
+  customInstructions?: string;
 
   // Step 2
   tone: string;
@@ -28,8 +29,29 @@ interface WizardData {
   // Campaign context (optional)
   campaignId?: string;
   campaignTheme?: string;
+  campaignDescription?: string;
   postNumber?: number;
   previousContent?: string;
+  aiStrategy?: {
+    overallApproach: string;
+    strategicOverview: string;
+    narrativeArc: string;
+    successMarkers: string[];
+    postBlueprints: Array<{
+      position: number;
+      topic: string;
+      goal: string;
+      locked: boolean;
+      userCustomized: boolean;
+    }>;
+  };
+  postBlueprint?: {
+    position: number;
+    topic: string;
+    goal: string;
+    locked: boolean;
+    userCustomized: boolean;
+  };
 }
 
 const initialData: WizardData = {
@@ -60,7 +82,7 @@ function CampaignContextLoader({
   // Load campaign context from URL
   useEffect(() => {
     const loadCampaignContext = async () => {
-      const campaignId = searchParams.get('campaignId');
+      const campaignId = searchParams.get('campaign') || searchParams.get('campaignId');
       const postNumber = searchParams.get('postNumber');
 
       if (campaignId && !campaignLoaded) {
@@ -90,15 +112,25 @@ function CampaignContextLoader({
               }
             }
 
+            // Get the specific post blueprint for this post number
+            const postIndex = postNumber ? parseInt(postNumber) - 1 : 0;
+            const postBlueprint = campaignData.aiStrategy?.postBlueprints?.[postIndex];
+
             // Update wizard data with campaign context
             setData(prev => ({
               ...prev,
               campaignId,
               campaignTheme: campaignData.theme,
+              campaignDescription: campaignData.description,
               postNumber: postNumber ? parseInt(postNumber) : 1,
               previousContent,
               language: campaignData.language || 'en',
               style: campaignData.style || 'story-based',
+              tone: campaignData.tone || prev.tone,
+              purpose: campaignData.purpose || prev.purpose,
+              audience: campaignData.audience || prev.audience,
+              aiStrategy: campaignData.aiStrategy,
+              postBlueprint,
             }));
 
             setCampaignLoaded(true);
@@ -115,7 +147,7 @@ function CampaignContextLoader({
   // Load saved draft on mount
   useEffect(() => {
     // Skip loading saved draft if we have campaign context
-    if (searchParams.get('campaignId')) return;
+    if (searchParams.get('campaign') || searchParams.get('campaignId')) return;
 
     const savedDraft = localStorage.getItem('wizardDraft');
     if (savedDraft) {
@@ -132,6 +164,7 @@ function CampaignContextLoader({
 }
 
 export function PostWizard() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialData);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -219,7 +252,8 @@ export function PostWizard() {
         throw new Error('User not authenticated');
       }
 
-      const token = await user.getIdToken();
+      // Force token refresh with forceRefresh=true to ensure it's valid
+      const token = await user.getIdToken(true);
 
       // Call generate API
       const response = await fetch('/api/generate', {
@@ -243,8 +277,8 @@ export function PostWizard() {
       // Clear saved draft on successful generation
       localStorage.removeItem('wizardDraft');
 
-      // Navigate to editor
-      window.location.href = `/app/drafts/${result.draftId}`;
+      // Navigate to editor using Next.js router (client-side navigation)
+      router.push(`/app/drafts/${result.draftId}`);
     } catch (error) {
       console.error('Generation failed:', error);
       alert(error instanceof Error ? error.message : 'Failed to generate post');
@@ -325,6 +359,7 @@ export function PostWizard() {
           <Step1
             input={data.input}
             referenceUrls={data.referenceUrls}
+            customInstructions={data.customInstructions}
             onUpdate={updateData}
           />
         )}
@@ -381,15 +416,17 @@ export function PostWizard() {
 interface Step1Props {
   input: string;
   referenceUrls: string[];
+  customInstructions?: string;
   onUpdate: (data: Partial<WizardData>) => void;
 }
 
-function Step1({ input, referenceUrls, onUpdate }: Step1Props) {
+function Step1({ input, referenceUrls, customInstructions, onUpdate }: Step1Props) {
   const charCount = input.length;
   const isValid = charCount >= 50 && charCount <= 2000;
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     const loadCampaigns = async () => {
@@ -493,6 +530,53 @@ function Step1({ input, referenceUrls, onUpdate }: Step1Props) {
             />
           ))}
         </div>
+      </div>
+
+      {/* Advanced Settings - Collapsible */}
+      <div className="rounded-lg border border-secondary/10 bg-slate-50/50">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-slate-100/50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-secondary">Advanced: Custom Instructions</span>
+            <span className="rounded bg-slate-200 px-2 py-0.5 text-xs text-secondary/70">Optional</span>
+          </div>
+          {showAdvanced ? (
+            <ChevronUp className="h-4 w-4 text-secondary/60" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-secondary/60" />
+          )}
+        </button>
+
+        {showAdvanced && (
+          <div className="border-t border-secondary/10 px-4 pb-4 pt-3">
+            <div className="mb-3 flex items-start gap-2 rounded-lg bg-blue-50 p-3">
+              <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+              <div className="text-xs text-blue-900">
+                <p className="mb-1 font-medium">Guide the AI with specific instructions:</p>
+                <ul className="ml-4 list-disc space-y-0.5 text-blue-800">
+                  <li>Be specific about which data or elements to include</li>
+                  <li>When comparing, explicitly mention all items to compare</li>
+                  <li>Specify desired structure, format, or narrative angle</li>
+                  <li>More detailed instructions lead to better results</li>
+                </ul>
+              </div>
+            </div>
+
+            <textarea
+              value={customInstructions || ''}
+              onChange={(e) => onUpdate({ customInstructions: e.target.value })}
+              placeholder="Example: Include pricing for both products. Focus on the sustainability metrics from reference 2. Use a question-based opening."
+              maxLength={500}
+              className="min-h-[100px] w-full rounded-lg border border-secondary/20 p-3 text-sm text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <div className="mt-1 text-right text-xs text-secondary/60">
+              {(customInstructions || '').length} / 500 characters
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -684,6 +768,15 @@ interface Step4Props {
 }
 
 function Step4({ data, isGenerating }: Step4Props) {
+  const router = useRouter();
+
+  const handleDeleteDraft = () => {
+    if (confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
+      localStorage.removeItem('wizardDraft');
+      router.push('/app');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -726,6 +819,17 @@ function Step4({ data, isGenerating }: Step4Props) {
         <p className="text-sm text-blue-900">
           ℹ️ This will use <strong>1 post credit</strong> from your monthly limit.
         </p>
+      </div>
+
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          onClick={handleDeleteDraft}
+          disabled={isGenerating}
+          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+        >
+          Delete Draft
+        </Button>
       </div>
 
       {isGenerating && (
