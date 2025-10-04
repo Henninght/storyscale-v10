@@ -98,3 +98,24 @@
     transform: scale(1.1);
   }
 }
+
+@keyframes confetti {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg);
+  }
+}
+
+.animate-confetti {
+  animation: confetti 3s ease-out forwards;
+}

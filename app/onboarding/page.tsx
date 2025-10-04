@@ -19,6 +19,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Building2, Linkedin, CheckCircle } from "lucide-react";
 import { AccountType } from "@/types";
+import { SuccessCelebration } from "@/components/SuccessCelebration";
 
 interface ProfileData {
   accountType: AccountType;
@@ -142,6 +143,7 @@ export default function OnboardingPage() {
   const [autoSaving, setAutoSaving] = useState(false);
   const [fromLinkedIn, setFromLinkedIn] = useState(false);
   const [linkedInName, setLinkedInName] = useState("");
+  const [showCelebration, setShowCelebration] = useState(false);
   const totalSteps = 7; // Updated to 7 steps (added account type + company details)
 
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -276,7 +278,13 @@ export default function OnboardingPage() {
         { merge: true }
       );
 
-      router.push("/app");
+      // Show celebration animation
+      setShowCelebration(true);
+
+      // Navigate after celebration
+      setTimeout(() => {
+        router.push("/app");
+      }, 2000);
     } catch (error) {
       console.error("Failed to save profile:", error);
       alert("Failed to save profile. Please try again.");
@@ -328,7 +336,17 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50 py-12 px-4 relative overflow-hidden">
+      {/* Success Celebration */}
+      <SuccessCelebration show={showCelebration} />
+
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-200/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-orange-100/10 to-transparent rounded-full blur-3xl" />
+      </div>
+
       {/* LinkedIn detection with Suspense boundary for useSearchParams */}
       <Suspense fallback={null}>
         <LinkedInDetector
@@ -339,14 +357,37 @@ export default function OnboardingPage() {
         />
       </Suspense>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto relative z-10">
+        {/* Welcome Hero (Step 1 only) */}
+        {step === 1 && (
+          <div className="mb-8 text-center animate-in fade-in slide-in-from-top-6 duration-700">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 mb-6 shadow-xl shadow-orange-200 animate-in zoom-in duration-500">
+              <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-outfit font-bold mb-3 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent">
+              Welcome to Storyscale
+            </h1>
+            <p className="text-lg text-slate-600 max-w-lg mx-auto mb-2">
+              Let's personalize your LinkedIn content creation experience
+            </p>
+            <p className="text-sm text-slate-500">
+              This will only take 2-3 minutes
+            </p>
+          </div>
+        )}
+
         {/* Progress Bar */}
         <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-3xl font-outfit font-bold text-slate-900 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text">
-              Welcome to Storyscale
-            </h1>
-            <span className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+            {step > 1 && (
+              <h1 className="text-2xl font-outfit font-bold text-slate-900 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text">
+                Welcome to Storyscale
+              </h1>
+            )}
+            {step === 1 && <div />}
+            <span className="text-sm font-medium text-slate-600 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
               Step {step} of {totalSteps}
             </span>
           </div>
