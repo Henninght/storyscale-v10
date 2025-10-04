@@ -37,9 +37,11 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
   const { id, content, status, language, createdAt, tags, campaignId } = draft;
   const preview = content.length > 100 ? `${content.slice(0, 100)}...` : content;
   const { label, color } = statusConfig[status as DraftStatus];
-  const timeAgo = createdAt?.toDate
+  const timeAgo = createdAt instanceof Date
+    ? formatDistanceToNow(createdAt, { addSuffix: true })
+    : createdAt?.toDate
     ? formatDistanceToNow(createdAt.toDate(), { addSuffix: true })
-    : 'Unknown';
+    : formatDistanceToNow(new Date(), { addSuffix: true });
 
   const handleEdit = () => {
     router.push(`/app/drafts/${id}`);

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { ChevronLeft, ChevronRight, Check, Save, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -325,65 +326,69 @@ export function PostWizard() {
           {[1, 2, 3, 4].map((step) => (
             <div key={step} className="flex flex-1 items-center">
               <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold transition-all ${
+                className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold transition-all duration-300 ${
                   step === currentStep
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 ring-4 ring-primary/20'
                     : step < currentStep
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-green-500 text-white shadow-md'
                     : 'bg-slate-200 text-slate-500'
                 }`}
               >
-                {step < currentStep ? <Check className="h-5 w-5" /> : step}
+                {step < currentStep ? <Check className="h-5 w-5 animate-in zoom-in duration-300" /> : step}
               </div>
               {step < 4 && (
-                <div
-                  className={`h-1 flex-1 transition-all ${
-                    step < currentStep ? 'bg-green-500' : 'bg-slate-200'
-                  }`}
-                />
+                <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200 mx-2">
+                  <div
+                    className={`h-full transition-all duration-500 ${
+                      step < currentStep ? 'bg-green-500 w-full' : 'w-0'
+                    }`}
+                  />
+                </div>
               )}
             </div>
           ))}
         </div>
         <div className="mt-4 flex justify-between text-sm font-medium">
-          <span className={currentStep === 1 ? 'text-primary' : 'text-secondary/60'}>Input</span>
-          <span className={currentStep === 2 ? 'text-primary' : 'text-secondary/60'}>Configuration</span>
-          <span className={currentStep === 3 ? 'text-primary' : 'text-secondary/60'}>Preferences</span>
-          <span className={currentStep === 4 ? 'text-primary' : 'text-secondary/60'}>Review</span>
+          <span className={`transition-colors duration-200 ${currentStep === 1 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Input</span>
+          <span className={`transition-colors duration-200 ${currentStep === 2 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Configuration</span>
+          <span className={`transition-colors duration-200 ${currentStep === 3 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Preferences</span>
+          <span className={`transition-colors duration-200 ${currentStep === 4 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Review</span>
         </div>
       </div>
 
       {/* Step Content */}
-      <div className="rounded-2xl border border-secondary/10 bg-white p-8">
-        {currentStep === 1 && (
-          <Step1
-            input={data.input}
-            referenceUrls={data.referenceUrls}
-            customInstructions={data.customInstructions}
-            onUpdate={updateData}
-          />
-        )}
-        {currentStep === 2 && (
-          <Step2
-            tone={data.tone}
-            purpose={data.purpose}
-            audience={data.audience}
-            style={data.style}
-            onUpdate={updateData}
-          />
-        )}
-        {currentStep === 3 && (
-          <Step3
-            language={data.language}
-            length={data.length}
-            includeCTA={data.includeCTA}
-            emojiUsage={data.emojiUsage}
-            onUpdate={updateData}
-          />
-        )}
-        {currentStep === 4 && (
-          <Step4 data={data} onGenerate={handleGenerate} isGenerating={isGenerating} />
-        )}
+      <div className="rounded-2xl border border-secondary/10 bg-white p-8 shadow-sm">
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+          {currentStep === 1 && (
+            <Step1
+              input={data.input}
+              referenceUrls={data.referenceUrls}
+              customInstructions={data.customInstructions}
+              onUpdate={updateData}
+            />
+          )}
+          {currentStep === 2 && (
+            <Step2
+              tone={data.tone}
+              purpose={data.purpose}
+              audience={data.audience}
+              style={data.style}
+              onUpdate={updateData}
+            />
+          )}
+          {currentStep === 3 && (
+            <Step3
+              language={data.language}
+              length={data.length}
+              includeCTA={data.includeCTA}
+              emojiUsage={data.emojiUsage}
+              onUpdate={updateData}
+            />
+          )}
+          {currentStep === 4 && (
+            <Step4 data={data} onGenerate={handleGenerate} isGenerating={isGenerating} />
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
@@ -392,19 +397,34 @@ export function PostWizard() {
           variant="outline"
           onClick={prevStep}
           disabled={currentStep === 1}
-          className="gap-2"
+          className="gap-2 transition-all hover:gap-3 hover:shadow-md"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Back
         </Button>
         {currentStep < 4 ? (
-          <Button onClick={nextStep} disabled={!canProceed()} className="gap-2">
+          <Button
+            onClick={nextStep}
+            disabled={!canProceed()}
+            className="gap-2 transition-all hover:gap-3 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95"
+          >
             Next
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>
         ) : (
-          <Button onClick={handleGenerate} disabled={isGenerating || !canProceed()}>
-            {isGenerating ? 'Generating...' : 'Generate Post'}
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || !canProceed()}
+            className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95"
+          >
+            {isGenerating ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Generating...
+              </span>
+            ) : (
+              'Generate Post'
+            )}
           </Button>
         )}
       </div>
@@ -500,14 +520,39 @@ function Step1({ input, referenceUrls, customInstructions, onUpdate }: Step1Prop
 
       <div>
         <label className="mb-2 block text-sm font-medium text-secondary">Your Input *</label>
-        <textarea
-          value={input}
-          onChange={(e) => onUpdate({ input: e.target.value })}
-          placeholder="Example: I recently helped a client increase their revenue by 40% through a simple automation. Here's what we did..."
-          className="min-h-[200px] w-full rounded-lg border border-secondary/20 p-4 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-        <div className={`mt-1 text-sm ${isValid ? 'text-green-600' : 'text-secondary/60'}`}>
-          {charCount} / 2000 characters (minimum 50)
+        <div className="relative">
+          <textarea
+            value={input}
+            onChange={(e) => onUpdate({ input: e.target.value })}
+            placeholder="Example: I recently helped a client increase their revenue by 40% through a simple automation. Here's what we did..."
+            className="min-h-[200px] w-full rounded-lg border border-secondary/20 p-4 text-secondary transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:shadow-lg"
+          />
+          <div className="mt-2 flex items-center gap-3">
+            <div className="flex-1">
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    charCount < 50
+                      ? 'bg-slate-400'
+                      : charCount < 1000
+                      ? 'bg-green-500'
+                      : charCount < 1800
+                      ? 'bg-amber-500'
+                      : charCount <= 2000
+                      ? 'bg-red-500'
+                      : 'bg-red-600'
+                  }`}
+                  style={{ width: `${Math.min((charCount / 2000) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+            <div className={`text-sm font-medium transition-colors ${isValid ? 'text-green-600' : charCount > 2000 ? 'text-red-600' : 'text-secondary/60'}`}>
+              {charCount} / 2000
+            </div>
+          </div>
+          {charCount < 50 && (
+            <p className="mt-1 text-xs text-amber-600">Add at least {50 - charCount} more characters</p>
+          )}
         </div>
       </div>
 
@@ -601,7 +646,10 @@ function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary">Tone *</label>
+          <div className="mb-2 flex items-center gap-2">
+            <label className="text-sm font-medium text-secondary">Tone *</label>
+            <InfoTooltip content="Choose how formal or casual your post should sound. Professional establishes credibility for corporate audiences, while Casual builds authentic connections through conversational language." />
+          </div>
           <select
             value={tone}
             onChange={(e) => onUpdate({ tone: e.target.value })}
@@ -615,7 +663,10 @@ function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary">Purpose *</label>
+          <div className="mb-2 flex items-center gap-2">
+            <label className="text-sm font-medium text-secondary">Purpose *</label>
+            <InfoTooltip content="Define your post's goal. Engagement sparks conversations, Lead Generation drives action toward your services, Brand Awareness increases visibility, and Thought Leadership establishes you as an industry authority." />
+          </div>
           <select
             value={purpose}
             onChange={(e) => onUpdate({ purpose: e.target.value })}
@@ -629,7 +680,10 @@ function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary">Target Audience *</label>
+          <div className="mb-2 flex items-center gap-2">
+            <label className="text-sm font-medium text-secondary">Target Audience *</label>
+            <InfoTooltip content="Select who you're writing for. Executives prefer strategic, high-level insights. Entrepreneurs want growth strategies and practical advice. Professionals seek tactical tips and career development. Industry-Specific uses niche terminology." />
+          </div>
           <select
             value={audience}
             onChange={(e) => onUpdate({ audience: e.target.value })}
@@ -643,7 +697,10 @@ function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary">Post Style *</label>
+          <div className="mb-2 flex items-center gap-2">
+            <label className="text-sm font-medium text-secondary">Post Style *</label>
+            <InfoTooltip content="Choose your post structure. Story-Based uses narrative for engagement, List Format offers scannable tips, Question-Based drives curiosity, and How-To provides actionable instructions." />
+          </div>
           <select
             value={style}
             onChange={(e) => onUpdate({ style: e.target.value })}
@@ -705,7 +762,10 @@ function Step3({ language, length, includeCTA, emojiUsage, onUpdate }: Step3Prop
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary">Post Length *</label>
+          <div className="mb-2 flex items-center gap-2">
+            <label className="text-sm font-medium text-secondary">Post Length *</label>
+            <InfoTooltip content="Short posts (50-150 words) are punchy and quick to consume. Medium (150-300 words) is optimal for LinkedIn's algorithm. Long (300-500 words) demonstrates expertise in depth." />
+          </div>
           <div className="space-y-2">
             {[
               { value: 'short', label: 'Short', desc: '50-150 words' },
@@ -729,22 +789,28 @@ function Step3({ language, length, includeCTA, emojiUsage, onUpdate }: Step3Prop
         </div>
 
         <div>
-          <label className="mb-2 flex items-center gap-2 text-sm font-medium text-secondary">
-            <input
-              type="checkbox"
-              checked={includeCTA}
-              onChange={(e) => onUpdate({ includeCTA: e.target.checked })}
-              className="h-4 w-4 rounded border-secondary/20 text-primary focus:ring-primary"
-            />
-            Include Call-to-Action
-          </label>
+          <div className="mb-2 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-secondary">
+              <input
+                type="checkbox"
+                checked={includeCTA}
+                onChange={(e) => onUpdate({ includeCTA: e.target.checked })}
+                className="h-4 w-4 rounded border-secondary/20 text-primary focus:ring-primary"
+              />
+              Include Call-to-Action
+            </label>
+            <InfoTooltip content="Adding a CTA encourages readers to engage with your post through comments, shares, or specific actions. This can increase interaction by 30-50%." />
+          </div>
           <p className="ml-6 text-sm text-secondary/60">
             Add a prompt for engagement (e.g., "What do you think?")
           </p>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary">Emoji Usage</label>
+          <div className="mb-2 flex items-center gap-2">
+            <label className="text-sm font-medium text-secondary">Emoji Usage</label>
+            <InfoTooltip content="None keeps posts purely professional. Minimal (1-2) adds strategic visual breaks. Moderate (3-5) improves scannability and adds personality to your content." />
+          </div>
           <select
             value={emojiUsage}
             onChange={(e) => onUpdate({ emojiUsage: e.target.value as 'none' | 'minimal' | 'moderate' })}

@@ -341,23 +341,26 @@ export default function OnboardingPage() {
 
       <div className="max-w-2xl mx-auto">
         {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-outfit font-bold text-slate-900">
+        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-3xl font-outfit font-bold text-slate-900 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text">
               Welcome to Storyscale
             </h1>
-            <span className="text-sm text-slate-600">
+            <span className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
               Step {step} of {totalSteps}
             </span>
           </div>
-          <div className="w-full bg-slate-200 rounded-full h-2">
+          <div className="relative w-full bg-slate-200 rounded-full h-3 shadow-inner overflow-hidden">
             <div
-              className="bg-orange-600 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-orange-600 to-orange-500 h-3 rounded-full transition-all duration-500 ease-out shadow-sm"
               style={{ width: `${(step / totalSteps) * 100}%` }}
             />
           </div>
           {autoSaving && (
-            <p className="text-xs text-slate-500 mt-2">Auto-saving...</p>
+            <p className="text-xs text-slate-500 mt-2 flex items-center gap-1 animate-pulse">
+              <span className="h-2 w-2 rounded-full bg-orange-600"></span>
+              Auto-saving...
+            </p>
           )}
         </div>
 
@@ -385,76 +388,78 @@ export default function OnboardingPage() {
         )}
 
         {/* Step Content */}
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-outfit font-semibold text-slate-900 mb-2">
-                  Choose your account type
-                </h2>
-                <p className="text-slate-600 text-sm mb-4">
-                  This determines how your content will be created and presented.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={() => setProfileData({ ...profileData, accountType: "private" })}
-                  className={`relative p-6 rounded-lg border-2 transition-all ${
-                    profileData.accountType === "private"
-                      ? "border-orange-600 bg-orange-50"
-                      : "border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <User className={`h-12 w-12 ${
-                      profileData.accountType === "private" ? "text-orange-600" : "text-slate-400"
-                    }`} />
-                    <div>
-                      <h3 className="font-semibold text-slate-900">Private Account</h3>
-                      <p className="text-sm text-slate-600 mt-1">
-                        Post as yourself and build your personal brand
-                      </p>
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 transition-shadow hover:shadow-xl">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-400">
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-outfit font-bold text-slate-900 mb-2">
+                    Choose your account type
+                  </h2>
+                  <p className="text-slate-600 mb-4">
+                    This determines how your content will be created and presented.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setProfileData({ ...profileData, accountType: "private" })}
+                    className={`group relative p-6 rounded-xl border-2 transition-all duration-300 ${
+                      profileData.accountType === "private"
+                        ? "border-orange-600 bg-gradient-to-br from-orange-50 to-orange-100/50 shadow-lg shadow-orange-100"
+                        : "border-slate-200 hover:border-orange-300 hover:shadow-md hover:scale-[1.02]"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center text-center space-y-3">
+                      <User className={`h-14 w-14 transition-all duration-300 ${
+                        profileData.accountType === "private" ? "text-orange-600 scale-110" : "text-slate-400 group-hover:text-orange-500"
+                      }`} />
+                      <div>
+                        <h3 className="font-semibold text-slate-900 text-lg">Private Account</h3>
+                        <p className="text-sm text-slate-600 mt-1">
+                          Post as yourself and build your personal brand
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  {profileData.accountType === "private" && (
-                    <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-orange-600 flex items-center justify-center">
-                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-                </button>
+                    {profileData.accountType === "private" && (
+                      <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-orange-600 flex items-center justify-center shadow-md animate-in zoom-in duration-200">
+                        <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
 
-                <button
-                  onClick={() => setProfileData({ ...profileData, accountType: "company" })}
-                  className={`relative p-6 rounded-lg border-2 transition-all ${
-                    profileData.accountType === "company"
-                      ? "border-orange-600 bg-orange-50"
-                      : "border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <Building2 className={`h-12 w-12 ${
-                      profileData.accountType === "company" ? "text-orange-600" : "text-slate-400"
-                    }`} />
-                    <div>
-                      <h3 className="font-semibold text-slate-900">Company Account</h3>
-                      <p className="text-sm text-slate-600 mt-1">
-                        Post as your company and build brand awareness
-                      </p>
+                  <button
+                    onClick={() => setProfileData({ ...profileData, accountType: "company" })}
+                    className={`group relative p-6 rounded-xl border-2 transition-all duration-300 ${
+                      profileData.accountType === "company"
+                        ? "border-orange-600 bg-gradient-to-br from-orange-50 to-orange-100/50 shadow-lg shadow-orange-100"
+                        : "border-slate-200 hover:border-orange-300 hover:shadow-md hover:scale-[1.02]"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center text-center space-y-3">
+                      <Building2 className={`h-14 w-14 transition-all duration-300 ${
+                        profileData.accountType === "company" ? "text-orange-600 scale-110" : "text-slate-400 group-hover:text-orange-500"
+                      }`} />
+                      <div>
+                        <h3 className="font-semibold text-slate-900 text-lg">Company Account</h3>
+                        <p className="text-sm text-slate-600 mt-1">
+                          Post as your company and build brand awareness
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  {profileData.accountType === "company" && (
-                    <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-orange-600 flex items-center justify-center">
-                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-                </button>
+                    {profileData.accountType === "company" && (
+                      <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-orange-600 flex items-center justify-center shadow-md animate-in zoom-in duration-200">
+                        <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {step === 2 && profileData.accountType === "company" && (
             <div className="space-y-4">

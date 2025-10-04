@@ -493,7 +493,49 @@ export default function CampaignDetailPage() {
           <div className="py-8 text-center">
             <FileText className="mx-auto mb-3 h-12 w-12 text-secondary/20" />
             <p className="text-secondary/60">No posts generated yet</p>
-            {canGenerateNext && (
+            {campaign.postsGenerated > 0 ? (
+              <div className="mt-4">
+                <p className="mb-3 text-sm text-amber-600">
+                  This campaign shows {campaign.postsGenerated} post(s) generated, but they're not linked to the timeline.
+                </p>
+                <Button
+                  onClick={async () => {
+                    if (!confirm('Link recent posts to this campaign? This will add the most recent posts to this campaign timeline.')) return;
+                    try {
+                      const db = getFirestore();
+                      const draftsRef = collection(db, 'drafts');
+                      const q = query(
+                        draftsRef,
+                        where('userId', '==', getAuth().currentUser?.uid),
+                        orderBy('createdAt', 'desc')
+                      );
+                      const snapshot = await getDocs(q);
+
+                      let linked = 0;
+                      for (const docSnap of snapshot.docs) {
+                        const data = docSnap.data();
+                        if (!data.campaignId && linked < campaign.postsGenerated) {
+                          await updateDoc(doc(db, 'drafts', docSnap.id), {
+                            campaignId: campaignId,
+                          });
+                          linked++;
+                        }
+                      }
+
+                      alert(`Linked ${linked} post(s) to this campaign`);
+                      fetchCampaignData();
+                    } catch (error) {
+                      console.error('Error linking posts:', error);
+                      alert('Failed to link posts');
+                    }
+                  }}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Link Existing Posts
+                </Button>
+              </div>
+            ) : canGenerateNext && (
               <Button
                 onClick={handleGenerateNextPost}
                 className="mt-4 gap-2"
