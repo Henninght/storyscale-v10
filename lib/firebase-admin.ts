@@ -4,18 +4,18 @@ import { getFirestore, Firestore } from "firebase-admin/firestore";
 
 function formatPrivateKey(key: string): string {
   // Handle different formats of private keys from environment variables
-  // 1. If key already has real newlines, use as-is
-  // 2. If key has literal \n strings, replace them
-  // 3. Validate PEM format
+  // Vercel may store the key with literal \n or with actual newlines
 
   let formattedKey = key;
 
-  // If the key contains literal \n (not actual newlines), replace them
-  if (key.includes('\\n')) {
+  // Check if key has literal \n strings (not actual newlines)
+  // This checks for the two-character sequence: backslash followed by 'n'
+  if (!key.includes('\n') && key.includes('\\n')) {
+    // Replace literal \n with actual newlines
     formattedKey = key.replace(/\\n/g, '\n');
   }
 
-  // Validate that it looks like a PEM key
+  // Validate that it looks like a PEM key after formatting
   if (!formattedKey.includes('BEGIN PRIVATE KEY') || !formattedKey.includes('END PRIVATE KEY')) {
     throw new Error(
       'FIREBASE_ADMIN_PRIVATE_KEY is not in valid PEM format. ' +
