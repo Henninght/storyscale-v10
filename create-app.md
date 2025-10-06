@@ -931,6 +931,210 @@ LinkedIn authentication now adds genuine value by:
 
 ---
 
+## Phase 12: AI Idea Generator 💡
+
+### 12.1 Database Schema & Data Models ⚪
+- ⚪ Create `user_focus_areas` collection
+  - ⚪ Links to user profile
+  - ⚪ Status: active/archived
+  - ⚪ Generated from AI suggestions based on profile
+  - ⚪ Stores strategic focus title, rationale, example topics
+- ⚪ Create `generated_ideas` collection
+  - ⚪ Tracks all generated ideas with content and context
+  - ⚪ User rating field (1-8 scale)
+  - ⚪ Status: pending/used/rejected
+  - ⚪ Links to posts/campaigns if converted to content
+  - ⚪ Generation source tracking (standalone/campaign/wizard)
+- ⚪ Create `idea_generation_context` collection
+  - ⚪ Snapshots of context used per generation
+  - ⚪ Stores profile data state, campaign data (if applicable)
+  - ⚪ Enables learning from what context produces highly-rated ideas
+- ⚪ Create `user_idea_preferences` collection
+  - ⚪ Aggregated learning data from user ratings
+  - ⚪ Topic clusters user rates highly
+  - ⚪ Tone/style preferences
+  - ⚪ Auto-updated from rating submissions
+
+### 12.2 Profile Enhancement - Focus Area Generator 🎯
+- ⚪ Add "Your Strategic Focus" section to profile/settings
+- ⚪ AI generates 2-3 focus suggestions based on profile input
+  - ⚪ Analyzes: industry, role, expertise, goals
+  - ⚪ Each suggestion includes: title, 2-3 sentence rationale, example topics
+- ⚪ User selection interface
+  - ⚪ Select one as active focus
+  - ⚪ Regenerate suggestions button
+  - ⚪ Customize selected focus inline editor
+- ⚪ Store as default context for all idea generation
+- ⚪ Create `/api/profile/generate-focus` route
+  - ⚪ Uses Claude API to analyze profile
+  - ⚪ Returns 2-3 strategic focus suggestions
+  - ⚪ Token budget: ~200 tokens per generation
+
+### 12.3 Standalone Idea Generator Tool 💡
+- ⚪ Create new route: `/app/ideas` or `/app/idea-generator`
+- ⚪ Add "Idea Generator" to left sidebar navigation
+- ⚪ Build generator interface
+  - ⚪ Generates **3 ideas** per request
+  - ⚪ Uses: profile data + active focus + learned preferences
+  - ⚪ Optional quick inputs: "I want to talk about..." or "I'm stuck on..."
+  - ⚪ Loading states during generation
+- ⚪ Create IdeaCard component
+  - ⚪ Display topic/angle with brief outline (3-4 bullets)
+  - ⚪ Rating widget (1-8 scale slider)
+  - ⚪ Action buttons:
+    - ⚪ "Create Post" → opens draft wizard pre-populated
+    - ⚪ "Create Campaign" → opens campaign wizard pre-populated
+    - ⚪ "Regenerate this idea" → creates variation
+    - ⚪ "Save for later" → stores for future reference
+- ⚪ Create `/api/ideas/generate` route
+  - ⚪ Authenticate user
+  - ⚪ Fetch profile + focus area + preferences
+  - ⚪ Build AI prompt with context
+  - ⚪ Generate 3 ideas via Claude API
+  - ⚪ Token budget: ~450 tokens (3 × 150)
+  - ⚪ Return structured JSON array
+- ⚪ Create `/api/ideas/rate` route
+  - ⚪ Accept idea ID and rating (1-8)
+  - ⚪ Store rating in generated_ideas collection
+  - ⚪ Trigger async learning algorithm update
+
+### 12.4 Campaign Tool Integration 🎯
+- ⚪ Add "Need topic ideas?" section to campaign creation/edit
+- ⚪ Embed IdeaIntegrationWidget component
+- ⚪ Generate **2 ideas** based on:
+  - ⚪ Campaign goal, target audience, duration
+  - ⚪ User profile + active focus area
+  - ⚪ NOT other unrelated campaigns
+- ⚪ Display ideas with same rating + action interface
+- ⚪ "Use this idea" button → adds to campaign planning notes or creates draft
+- ⚪ Update `/api/ideas/generate` to accept campaign context parameter
+  - ⚪ Conditional logic for campaign-specific prompts
+  - ⚪ Token budget: ~300 tokens (2 × 150)
+
+### 12.5 Draft Wizard Integration ✨
+- ⚪ Add optional step: "Need inspiration? Generate ideas"
+  - ⚪ Available before or alongside existing wizard flow
+  - ⚪ Skippable for users who already have content
+- ⚪ Generate **2 ideas** based on:
+  - ⚪ Any partial input user provided
+  - ⚪ Profile + active focus area
+  - ⚪ Current wizard settings (if selected)
+- ⚪ User selects idea → **populates wizard fields**
+  - ⚪ Pre-fills topic, key points
+  - ⚪ User still customizes tone, length, CTA, etc.
+- ⚪ Capture rating after user views generated post
+- ⚪ Update wizard state management to handle idea selection
+- ⚪ Token budget: ~300 tokens (2 × 150)
+
+### 12.6 Adaptive Learning System 🧠
+- ⚪ **Rating Collection & Storage**
+  - ⚪ After user rates idea (1-8), store:
+    - ⚪ Rating value and timestamp
+    - ⚪ Idea content + context snapshot
+    - ⚪ Generation source (standalone/campaign/wizard)
+    - ⚪ User ID for aggregation
+- ⚪ **Learning Algorithm (Initial Version)**
+  - ⚪ Aggregate ratings by topic keywords
+    - ⚪ Extract keywords from highly-rated ideas (7-8 ratings)
+    - ⚪ Track tone patterns in top ideas
+    - ⚪ Identify structure types that perform well
+  - ⚪ Weight recent ratings higher (temporal decay)
+    - ⚪ Last 30 days: 100% weight
+    - ⚪ 30-60 days: 70% weight
+    - ⚪ 60+ days: 40% weight
+  - ⚪ Use aggregated preferences to:
+    - ⚪ Boost similar future suggestions
+    - ⚪ Filter out low-rated patterns (1-3 ratings)
+- ⚪ **Create `/api/ideas/update-preferences` background job**
+  - ⚪ Runs after each rating submission
+  - ⚪ Updates user_idea_preferences collection
+  - ⚪ Async processing to avoid blocking user
+- ⚪ **Optional Advanced (Future Phase)**
+  - ⚪ Track posts created from ideas → monitor engagement
+  - ⚪ Feed engagement metrics back as implicit signal
+  - ⚪ Engagement score: likes + comments × 2 + shares × 3
+  - ⚪ Update idea preferences with engagement data
+
+### 12.7 Idea History & Management 📚
+- ⚪ Create "My Ideas" tab/section in idea generator
+- ⚪ Display all generated ideas with filters:
+  - ⚪ Filter by rating (1-8)
+  - ⚪ Filter by status (pending/used/rejected)
+  - ⚪ Filter by source (standalone/campaign/wizard)
+  - ⚪ Sort by date, rating, status
+- ⚪ Idea card enhancements:
+  - ⚪ Show rating badge
+  - ⚪ Show "Used in [Post Title]" if converted
+  - ⚪ Re-use button → opens appropriate tool
+  - ⚪ Delete/archive option
+- ⚪ Create `/api/ideas/history` route
+  - ⚪ Fetch user's generated ideas with pagination
+  - ⚪ Support filtering and sorting parameters
+  - ⚪ Return ideas with linked post/campaign data
+
+### 12.8 AI Prompt Engineering & Context 🤖
+- ⚪ **Build Comprehensive System Prompt**
+  - ⚪ Include user profile summary (background, expertise, audience, goals)
+  - ⚪ Add active focus area description
+  - ⚪ Include learned preferences summary (topic clusters, tone patterns)
+  - ⚪ Add generation rules (actionable, specific, grounded in reality)
+  - ⚪ Specify output format: JSON array with topic, outline, rationale
+- ⚪ **Context-Specific Prompts**
+  - ⚪ Standalone: "Generate general LinkedIn post ideas"
+  - ⚪ Campaign: "Generate ideas aligned with [campaign goal]"
+  - ⚪ Wizard: "Build on this partial idea: [user input]"
+- ⚪ **Token Optimization Strategies**
+  - ⚪ Cache user profile + preferences (changes infrequently)
+  - ⚪ Only send relevant campaign/wizard context
+  - ⚪ Use structured JSON output for easy parsing
+  - ⚪ Compress context where possible without losing meaning
+- ⚪ **Quality Enforcement**
+  - ⚪ Prompt must emphasize: specific over generic
+  - ⚪ Must be rooted in user's reality (not abstract thought leadership)
+  - ⚪ Must include 3-4 specific talking points
+  - ⚪ Must avoid buzzwords and corporate jargon
+
+### 12.9 UI/UX Components & Navigation 🎨
+- ⚪ **Create New Components**
+  - ⚪ `FocusAreaSelector.tsx` (Profile page)
+    - ⚪ Display 2-3 AI suggestions as cards
+    - ⚪ Selection radio buttons
+    - ⚪ Regenerate button
+    - ⚪ Inline edit mode for customization
+  - ⚪ `IdeaGenerator.tsx` (Standalone tool main component)
+    - ⚪ Optional context input field
+    - ⚪ Generate button with loading state
+    - ⚪ Idea cards grid/list
+  - ⚪ `IdeaCard.tsx` (Reusable idea display)
+    - ⚪ Topic headline
+    - ⚪ 3-4 bullet outline
+    - ⚪ Rating slider (1-8)
+    - ⚪ Action buttons (create post/campaign, regenerate, save)
+  - ⚪ `IdeaIntegrationWidget.tsx` (Campaign/Wizard embeds)
+    - ⚪ Compact version of generator
+    - ⚪ "Get Ideas" expandable section
+    - ⚪ Context-aware generation
+  - ⚪ `RatingSlider.tsx` (1-8 scale input)
+    - ⚪ Visual slider with labels
+    - ⚪ Submit button
+    - ⚪ Confirmation feedback
+  - ⚪ `IdeaHistory.tsx` (View past ideas)
+    - ⚪ Filter controls
+    - ⚪ Idea cards with status badges
+    - ⚪ Pagination
+- ⚪ **Navigation Updates**
+  - ⚪ Add "💡 Idea Generator" to sidebar
+  - ⚪ Add "💡 Get Ideas" buttons in Campaign + Wizard
+  - ⚪ Position between "Create New Post" and "All Drafts"
+- ⚪ **Design Consistency**
+  - ⚪ Use existing color palette (orange accent, slate grey)
+  - ⚪ Match typography (Outfit headings, Inter body)
+  - ⚪ Follow 8px grid system
+  - ⚪ Consistent card shadows and spacing
+  - ⚪ Smooth animations for idea loading/rating
+
+---
+
 ## Phase 11: Security & Optimization
 
 ### 11.1 Security Hardening ⚪
@@ -1110,6 +1314,92 @@ LinkedIn authentication now adds genuine value by:
 }
 ```
 
+### `/user_focus_areas/{focusId}`
+```typescript
+{
+  userId: string
+  title: string
+  rationale: string
+  exampleTopics: string[]
+  status: 'active' | 'archived'
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+```
+
+### `/generated_ideas/{ideaId}`
+```typescript
+{
+  userId: string
+  topic: string
+  outline: string[]
+  rationale: string
+  generationSource: 'standalone' | 'campaign' | 'wizard'
+  campaignId: string | null
+  contextSnapshot: {
+    profileData: object
+    campaignData: object | null
+    wizardInput: string | null
+  }
+  rating: number | null // 1-8 scale
+  status: 'pending' | 'used' | 'rejected'
+  linkedPostId: string | null
+  linkedCampaignId: string | null
+  createdAt: Timestamp
+  ratedAt: Timestamp | null
+}
+```
+
+### `/idea_generation_context/{contextId}`
+```typescript
+{
+  userId: string
+  ideaId: string
+  profileState: {
+    background: string
+    expertise: string[]
+    targetAudience: string
+    goals: string
+    writingStyle: string
+    brandVoice: string
+  }
+  activeFocusArea: {
+    title: string
+    rationale: string
+  } | null
+  campaignContext: {
+    name: string
+    theme: string
+    targetPostCount: number
+  } | null
+  createdAt: Timestamp
+}
+```
+
+### `/user_idea_preferences/{userId}`
+```typescript
+{
+  userId: string
+  topicClusters: Array<{
+    keywords: string[]
+    averageRating: number
+    count: number
+  }>
+  tonePatterns: Array<{
+    tone: string
+    averageRating: number
+    count: number
+  }>
+  structureTypes: Array<{
+    type: string
+    averageRating: number
+    count: number
+  }>
+  lastUpdated: Timestamp
+  totalIdeasRated: number
+}
+```
+
 ---
 
 ## 🎯 Priority Implementation Order
@@ -1122,9 +1412,10 @@ LinkedIn authentication now adds genuine value by:
 6. **Phase 6** - Content Editor *(Refinement & versioning)*
 7. **Phase 7** - Draft Management *(Organization)*
 8. **Phase 8** - Campaign Planning *(Advanced feature)*
-9. **Phase 9** - Billing & Subscriptions *(Monetization)*
-10. **🎨 Phase 10 - Design & UX Enhancement** *(Visual polish & user experience)*
-11. **Phase 11** - Security & Optimization *(Technical polish & launch)*
+9. **💡 Phase 12 - AI Idea Generator** *(Enhances campaigns, wizard, standalone ideation)*
+10. **Phase 9** - Billing & Subscriptions *(Monetization)*
+11. **🎨 Phase 10 - Design & UX Enhancement** *(Visual polish & user experience)*
+12. **Phase 11** - Security & Optimization *(Technical polish & launch)*
 
 ---
 
@@ -1137,6 +1428,7 @@ LinkedIn authentication now adds genuine value by:
 - **Error Handling**: Graceful degradation with user-friendly messages
 - **Rate Limiting**: Protect generate API from abuse
 - **Version Control**: Track all content iterations for user reference
+- **💡 Idea Generator**: Adaptive learning system improves suggestions over time based on user ratings (1-8 scale). Works with minimal context but improves as user adds profile data, focus areas, and rating feedback. Three entry points: standalone tool, campaign integration, draft wizard integration.
 
 ---
 
@@ -1161,6 +1453,7 @@ LinkedIn authentication now adds genuine value by:
 1. **Phase 6.2:** Create `/api/enhance` route for AI content improvements
 2. **Phase 7:** All Drafts page with search & Calendar view
 3. **Phase 8:** Campaign planning with sequential generation
-4. **Phase 9:** Stripe billing integration for monetization
-5. **Phase 10:** 🎨 Design & UX Enhancement - Visual upgrades and tooltips
-6. **Phase 11:** Security hardening & performance optimization
+4. **💡 Phase 12:** AI Idea Generator - Adaptive content ideation system with three integration points
+5. **Phase 9:** Stripe billing integration for monetization
+6. **Phase 10:** 🎨 Design & UX Enhancement - Visual upgrades and tooltips
+7. **Phase 11:** Security hardening & performance optimization

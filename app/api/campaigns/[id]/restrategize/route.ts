@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
+  apiKey: process.env.ANTHROPIC_API_KEY?.trim() || '',
 });
 
 interface PostPlan {

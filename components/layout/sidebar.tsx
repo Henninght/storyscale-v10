@@ -14,10 +14,12 @@ import {
   Menu,
   X,
   LogOut,
+  BarChart3,
 } from "lucide-react";
 
 const navigation = [
   { name: "Workspace", href: "/app", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/app/dashboard", icon: BarChart3 },
   { name: "Create New Post", href: "/app/create", icon: PenSquare },
   { name: "Campaigns", href: "/app/campaigns", icon: Megaphone },
   { name: "Calendar View", href: "/app/calendar", icon: Calendar },

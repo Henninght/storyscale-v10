@@ -4,7 +4,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { fetchMultipleUrls } from '@/lib/urlFetcher';
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
+  apiKey: process.env.ANTHROPIC_API_KEY?.trim() || '',
 });
 
 export async function POST(req: NextRequest) {
