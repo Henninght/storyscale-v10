@@ -1,5 +1,3 @@
-import * as cheerio from 'cheerio';
-
 interface FetchResult {
   url: string;
   content: string;
@@ -48,36 +46,22 @@ export async function fetchUrlContent(
 
     const html = await response.text();
 
-    // Parse HTML and extract text
-    const $ = cheerio.load(html);
-
-    // Remove script, style, nav, footer, and other non-content elements
-    $('script, style, nav, footer, header, iframe, noscript').remove();
-
-    // Try to find main content areas (common patterns)
-    let content = '';
-    const mainSelectors = [
-      'article',
-      'main',
-      '[role="main"]',
-      '.post-content',
-      '.article-content',
-      '.content',
-      'body',
-    ];
-
-    for (const selector of mainSelectors) {
-      const element = $(selector).first();
-      if (element.length) {
-        content = element.text();
-        break;
-      }
-    }
-
-    // Clean up whitespace
-    content = content
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/\n\s*\n/g, '\n') // Remove excessive line breaks
+    // Simple HTML-to-text extraction using regex (no external dependencies)
+    let content = html
+      // Remove script and style tags
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      // Remove HTML tags
+      .replace(/<[^>]+>/g, ' ')
+      // Decode common HTML entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Clean up whitespace
+      .replace(/\s+/g, ' ')
       .trim();
 
     // Limit length
