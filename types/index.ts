@@ -17,7 +17,7 @@ export interface UserProfile {
 }
 
 // Subscription Types
-export type SubscriptionTier = "free" | "pro" | "enterprise";
+export type SubscriptionTier = "free" | "trial" | "pro" | "enterprise";
 export type SubscriptionStatus = "active" | "canceled" | "past_due" | "incomplete";
 
 export interface Subscription {
@@ -26,6 +26,7 @@ export interface Subscription {
   stripeCustomerId?: string;
   stripePriceId?: string;
   currentPeriodEnd?: Timestamp;
+  trialEndDate?: Timestamp;
 }
 
 // User Document
