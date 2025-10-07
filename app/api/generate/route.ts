@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { fetchMultipleUrls } from '@/lib/urlFetcher';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY?.trim() || '',
-});
+import { anthropic } from '@/lib/anthropic';
 
 export async function POST(req: NextRequest) {
   try {
