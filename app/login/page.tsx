@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { Chrome, Mail, Lock, ArrowRight, Linkedin } from "lucide-react";
+import { Chrome, Mail, Lock, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signInWithGoogle, signInWithLinkedIn, signInWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,56 +45,6 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       setError(err.message || "Failed to sign in with Google");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLinkedInSignIn = async () => {
-    try {
-      setError("");
-      setLoading(true);
-      await signInWithLinkedIn();
-      // Check if user needs onboarding
-      const user = await import("firebase/auth").then(m => m.getAuth().currentUser);
-      if (user) {
-        const { doc, getDoc, setDoc } = await import("firebase/firestore");
-        const { db } = await import("@/lib/firebase");
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-          // Create new user document with LinkedIn metadata
-          await setDoc(userDocRef, {
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            createdAt: new Date().toISOString(),
-            linkedinProfile: {
-              connectedAt: new Date().toISOString(),
-              name: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL,
-            }
-          });
-          router.push("/onboarding?source=linkedin");
-        } else if (!userDoc.data()?.profile) {
-          // Update existing user with LinkedIn metadata
-          await setDoc(userDocRef, {
-            linkedinProfile: {
-              connectedAt: new Date().toISOString(),
-              name: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL,
-            }
-          }, { merge: true });
-          router.push("/onboarding?source=linkedin");
-        } else {
-          router.push("/app");
-        }
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in with LinkedIn");
     } finally {
       setLoading(false);
     }
@@ -169,15 +119,6 @@ export default function LoginPage() {
             >
               <Chrome className="h-5 w-5" />
               Continue with Google
-            </button>
-
-            <button
-              onClick={handleLinkedInSignIn}
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-secondary/20 bg-white px-6 py-3 font-semibold text-secondary transition-all hover:border-[#0A66C2] hover:text-[#0A66C2] disabled:opacity-50"
-            >
-              <Linkedin className="h-5 w-5" />
-              Continue with LinkedIn
             </button>
           </div>
 

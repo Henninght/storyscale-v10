@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import {
   User,
   GoogleAuthProvider,
-  OAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -19,7 +18,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithLinkedIn: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<User>;
   signOut: () => Promise<void>;
@@ -30,7 +28,6 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signInWithGoogle: async () => {},
-  signInWithLinkedIn: async () => {},
   signInWithEmail: async () => {},
   signUpWithEmail: async () => ({} as User),
   signOut: async () => {},
@@ -52,14 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-  };
-
-  const signInWithLinkedIn = async () => {
-    const provider = new OAuthProvider('oidc.linkedin');
-    provider.addScope('openid');
-    provider.addScope('profile');
-    provider.addScope('email');
     await signInWithPopup(auth, provider);
   };
 
@@ -87,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         signInWithGoogle,
-        signInWithLinkedIn,
         signInWithEmail,
         signUpWithEmail,
         signOut,

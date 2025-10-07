@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings, Save, User, Building2, Check, Lock, Camera, Upload, Trash2, AlertTriangle, Download, Chrome, Linkedin, Link2, Unlink } from "lucide-react";
+import { Settings, Save, User, Building2, Check, Lock, Camera, Upload, Trash2, AlertTriangle, Download, Chrome, Link2, Unlink } from "lucide-react";
 import { AccountType } from "@/types";
 
 interface ProfileData {
@@ -116,7 +116,6 @@ export default function SettingsPage() {
   // Provider management state
   const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
-  const [linkedInProfile, setLinkedInProfile] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -135,11 +134,6 @@ export default function SettingsPage() {
             accountType: loadedProfile.accountType || "private",
             ...loadedProfile,
           });
-        }
-
-        // Load LinkedIn profile data if available
-        if (userData?.linkedinProfile) {
-          setLinkedInProfile(userData.linkedinProfile);
         }
       } catch (error) {
         console.error("Failed to load profile:", error);
@@ -409,22 +403,13 @@ export default function SettingsPage() {
     }
   };
 
-  const handleLinkProvider = async (providerId: 'google.com' | 'oidc.linkedin') => {
+  const handleLinkProvider = async (providerId: 'google.com') => {
     if (!user) return;
 
     setLinkingProvider(providerId);
 
     try {
-      let provider;
-      if (providerId === 'google.com') {
-        provider = new GoogleAuthProvider();
-      } else {
-        provider = new OAuthProvider('oidc.linkedin');
-        provider.addScope('openid');
-        provider.addScope('profile');
-        provider.addScope('email');
-      }
-
+      const provider = new GoogleAuthProvider();
       await linkWithPopup(user, provider);
 
       // Update linked providers list
@@ -655,67 +640,6 @@ export default function SettingsPage() {
                 <Link2 className="mr-2 h-4 w-4" />
                 {linkingProvider === 'google.com' ? 'Linking...' : 'Link Account'}
               </Button>
-            )}
-          </div>
-
-          {/* LinkedIn Account */}
-          <div className="p-4 border border-secondary/10 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#0A66C2]/10 rounded-lg">
-                  <Linkedin className="h-6 w-6 text-[#0A66C2]" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-secondary">LinkedIn</h3>
-                  <p className="text-sm text-secondary/60">
-                    {linkedProviders.includes('oidc.linkedin')
-                      ? 'Connected'
-                      : 'Not connected'}
-                  </p>
-                </div>
-              </div>
-              {linkedProviders.includes('oidc.linkedin') ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleUnlinkProvider('oidc.linkedin')}
-                  disabled={linkingProvider === 'oidc.linkedin' || linkedProviders.length <= 1}
-                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                >
-                  <Unlink className="mr-2 h-4 w-4" />
-                  {linkingProvider === 'oidc.linkedin' ? 'Unlinking...' : 'Unlink'}
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleLinkProvider('oidc.linkedin')}
-                  disabled={linkingProvider === 'oidc.linkedin'}
-                >
-                  <Link2 className="mr-2 h-4 w-4" />
-                  {linkingProvider === 'oidc.linkedin' ? 'Linking...' : 'Link Account'}
-                </Button>
-              )}
-            </div>
-            {linkedInProfile && linkedProviders.includes('oidc.linkedin') && (
-              <div className="mt-3 pt-3 border-t border-secondary/10">
-                <div className="flex items-start gap-3 text-sm">
-                  {linkedInProfile.photoURL && (
-                    <img
-                      src={linkedInProfile.photoURL}
-                      alt="LinkedIn profile"
-                      className="h-10 w-10 rounded-full flex-shrink-0"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium text-secondary">{linkedInProfile.name}</p>
-                    <p className="text-secondary/60 text-xs">{linkedInProfile.email}</p>
-                    <p className="text-secondary/40 text-xs mt-1">
-                      Connected {new Date(linkedInProfile.connectedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
             )}
           </div>
 
