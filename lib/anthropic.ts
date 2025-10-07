@@ -6,11 +6,11 @@ if (!apiKey) {
   throw new Error("ANTHROPIC_API_KEY is not set");
 }
 
+// For Vercel Edge/Serverless compatibility
 export const anthropic = new Anthropic({
   apiKey,
-  // Force use of native fetch to avoid gRPC issues on Vercel
-  dangerouslyAllowBrowser: false,
-  fetch: globalThis.fetch ? globalThis.fetch.bind(globalThis) : undefined,
+  maxRetries: 2,
+  timeout: 60000, // 60 seconds
 });
 
 export const CLAUDE_MODEL = "claude-sonnet-4-20250514";
