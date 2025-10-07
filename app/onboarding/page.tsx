@@ -22,6 +22,7 @@ import { AccountType } from "@/types";
 import { SuccessCelebration } from "@/components/SuccessCelebration";
 
 interface ProfileData {
+  language: string;
   accountType: AccountType;
   background: string;
   expertise: string[];
@@ -88,6 +89,11 @@ const BRAND_VOICES = [
   { value: "energetic", label: "Energetic & Enthusiastic" },
 ];
 
+const LANGUAGES = [
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "no", label: "Norsk", flag: "🇳🇴" },
+];
+
 // Component to handle LinkedIn detection with useSearchParams
 function LinkedInDetector({
   user,
@@ -144,9 +150,10 @@ export default function OnboardingPage() {
   const [fromLinkedIn, setFromLinkedIn] = useState(false);
   const [linkedInName, setLinkedInName] = useState("");
   const [showCelebration, setShowCelebration] = useState(false);
-  const totalSteps = 7; // Updated to 7 steps (added account type + company details)
+  const totalSteps = 8; // Updated to 8 steps (added language + account type + company details)
 
   const [profileData, setProfileData] = useState<ProfileData>({
+    language: "",
     accountType: "",
     background: "",
     expertise: [],
@@ -197,8 +204,9 @@ export default function OnboardingPage() {
 
         if (userDoc.exists() && userDoc.data().profile) {
           const loadedProfile = userDoc.data().profile;
-          // Provide default accountType for existing users
+          // Provide default values for existing users
           setProfileData({
+            language: loadedProfile.language || "en",
             accountType: loadedProfile.accountType || "private",
             companyName: loadedProfile.companyName || "",
             companyIndustry: loadedProfile.companyIndustry || "",
@@ -222,9 +230,9 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     if (step < totalSteps) {
-      // Skip step 2 (company details) if private account
-      if (step === 1 && profileData.accountType === "private") {
-        setStep(3);
+      // Skip step 3 (company details) if private account
+      if (step === 2 && profileData.accountType === "private") {
+        setStep(4);
       } else {
         setStep(step + 1);
       }
@@ -233,9 +241,9 @@ export default function OnboardingPage() {
 
   const handleBack = () => {
     if (step > 1) {
-      // Skip step 2 (company details) when going back from step 3 if private account
-      if (step === 3 && profileData.accountType === "private") {
-        setStep(1);
+      // Skip step 3 (company details) when going back from step 4 if private account
+      if (step === 4 && profileData.accountType === "private") {
+        setStep(2);
       } else {
         setStep(step - 1);
       }
@@ -305,22 +313,24 @@ export default function OnboardingPage() {
   const isStepValid = () => {
     switch (step) {
       case 1:
-        return profileData.accountType !== "";
+        return profileData.language !== "";
       case 2:
+        return profileData.accountType !== "";
+      case 3:
         // Company details step - only required if company account
         if (profileData.accountType === "company") {
           return profileData.companyName?.trim().length! >= 2;
         }
         return true; // Skip validation for private accounts
-      case 3:
-        return profileData.background.trim().length >= 20;
       case 4:
-        return profileData.expertise.length > 0;
+        return profileData.background.trim().length >= 20;
       case 5:
-        return profileData.targetAudience !== "";
+        return profileData.expertise.length > 0;
       case 6:
-        return profileData.goals.length > 0;
+        return profileData.targetAudience !== "";
       case 7:
+        return profileData.goals.length > 0;
+      case 8:
         return profileData.writingStyle !== "" && profileData.brandVoice !== "";
       default:
         return false;
@@ -406,7 +416,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* LinkedIn Import Notification */}
-        {fromLinkedIn && step === 3 && (
+        {fromLinkedIn && step === 4 && (
           <div className="mb-6 rounded-lg bg-[#0A66C2]/10 border border-[#0A66C2]/20 p-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
@@ -432,6 +442,48 @@ export default function OnboardingPage() {
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 transition-shadow hover:shadow-xl">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-400">
             {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-outfit font-bold text-slate-900 mb-2">
+                    Choose your language
+                  </h2>
+                  <p className="text-slate-600 mb-4">
+                    Select the language for your LinkedIn content creation. This will be used for all generated posts and content.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {LANGUAGES.map((language) => (
+                    <button
+                      key={language.value}
+                      onClick={() => setProfileData({ ...profileData, language: language.value })}
+                      className={`group relative p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                        profileData.language === language.value
+                          ? "border-orange-600 bg-orange-50 shadow-md"
+                          : "border-slate-200 hover:border-orange-300 hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{language.flag}</span>
+                        <span className={`font-medium ${
+                          profileData.language === language.value ? "text-orange-900" : "text-slate-700"
+                        }`}>
+                          {language.label}
+                        </span>
+                      </div>
+                      {profileData.language === language.value && (
+                        <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-orange-600 flex items-center justify-center animate-in zoom-in duration-200">
+                          <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-outfit font-bold text-slate-900 mb-2">
@@ -502,7 +554,7 @@ export default function OnboardingPage() {
             )}
           </div>
 
-          {step === 2 && profileData.accountType === "company" && (
+          {step === 3 && profileData.accountType === "company" && (
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-outfit font-semibold text-slate-900 mb-2">
@@ -540,7 +592,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-outfit font-semibold text-slate-900 mb-2">
@@ -575,7 +627,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-outfit font-semibold text-slate-900 mb-2">
@@ -609,7 +661,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-outfit font-semibold text-slate-900 mb-2">
@@ -642,7 +694,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-outfit font-semibold text-slate-900 mb-2">
@@ -675,7 +727,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 7 && (
+          {step === 8 && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-outfit font-semibold text-slate-900 mb-2">

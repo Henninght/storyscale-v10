@@ -73,12 +73,43 @@ function CampaignContextLoader({
   campaignLoaded,
   setCampaignLoaded,
   setData,
+  userId,
 }: {
   campaignLoaded: boolean;
   setCampaignLoaded: (val: boolean) => void;
   setData: React.Dispatch<React.SetStateAction<WizardData>>;
+  userId: string | null;
 }) {
   const searchParams = useSearchParams();
+
+  // Load user profile language preference on mount
+  useEffect(() => {
+    const loadUserLanguage = async () => {
+      if (!userId) return;
+
+      try {
+        const db = getFirestore();
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const userLanguage = userData?.profile?.language;
+
+          if (userLanguage) {
+            setData(prev => ({
+              ...prev,
+              language: userLanguage as 'en' | 'no',
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user language preference:', error);
+      }
+    };
+
+    loadUserLanguage();
+  }, [userId, setData]);
 
   // Load campaign context from URL
   useEffect(() => {
@@ -172,7 +203,21 @@ export function PostWizard() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [campaignLoaded, setCampaignLoaded] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Get current user ID on mount
+  useEffect(() => {
+    const loadUser = async () => {
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        setUserId(user.uid);
+      }
+    };
+    loadUser();
+  }, []);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -299,6 +344,7 @@ export function PostWizard() {
           campaignLoaded={campaignLoaded}
           setCampaignLoaded={setCampaignLoaded}
           setData={setData}
+          userId={userId}
         />
       </Suspense>
 

@@ -23,6 +23,7 @@ import { Settings, Save, User, Building2, Check, Lock, Camera, Upload, Trash2, A
 import { AccountType } from "@/types";
 
 interface ProfileData {
+  language: string;
   accountType: AccountType;
   background: string;
   expertise: string[];
@@ -67,6 +68,11 @@ const BRAND_VOICES = [
   { value: "energetic", label: "Energetic & Enthusiastic" },
 ];
 
+const LANGUAGES = [
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "no", label: "Norsk", flag: "🇳🇴" },
+];
+
 export default function SettingsPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -75,6 +81,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   const [profileData, setProfileData] = useState<ProfileData>({
+    language: "en",
     accountType: "private",
     background: "",
     expertise: [],
@@ -122,8 +129,9 @@ export default function SettingsPage() {
 
         if (userDoc.exists() && userData?.profile) {
           const loadedProfile = userData.profile;
-          // Provide default accountType for existing users
+          // Provide default values for existing users
           setProfileData({
+            language: loadedProfile.language || "en",
             accountType: loadedProfile.accountType || "private",
             ...loadedProfile,
           });
@@ -848,6 +856,34 @@ export default function SettingsPage() {
           Content Profile
         </h2>
         <div className="space-y-6">
+          {/* Language Selection */}
+          <div>
+            <Label htmlFor="language">Content Language</Label>
+            <p className="text-xs text-slate-500 mb-2">
+              The language used for all generated LinkedIn content
+            </p>
+            <Select
+              value={profileData.language}
+              onValueChange={(value) =>
+                setProfileData({ ...profileData, language: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((language) => (
+                  <SelectItem key={language.value} value={language.value}>
+                    <span className="flex items-center gap-2">
+                      <span>{language.flag}</span>
+                      <span>{language.label}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Professional Background */}
           <div>
             <Label htmlFor="background">
