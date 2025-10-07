@@ -77,17 +77,25 @@ export async function POST(req: NextRequest) {
     const userMessage = buildUserMessage(wizardSettings, referenceContent);
 
     // Call Claude API
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userMessage,
-        },
-      ],
-    });
+    console.log('About to call Anthropic API...');
+    let message;
+    try {
+      message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userMessage,
+          },
+        ],
+      });
+      console.log('Anthropic API call successful');
+    } catch (anthropicError) {
+      console.error('Anthropic API error:', anthropicError);
+      throw new Error(`Anthropic API failed: ${anthropicError instanceof Error ? anthropicError.message : String(anthropicError)}`);
+    }
 
     // Extract generated content
     const generatedContent =
