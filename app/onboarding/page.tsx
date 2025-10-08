@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { User, Building2, Linkedin, CheckCircle } from "lucide-react";
 import { AccountType } from "@/types";
 import { SuccessCelebration } from "@/components/SuccessCelebration";
+import { PageTransition } from "@/components/PageTransition";
 
 interface ProfileData {
   language: string;
@@ -346,7 +347,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50 py-12 px-4 relative overflow-hidden">
+    <PageTransition>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50 py-12 px-4 relative overflow-hidden">
       {/* Success Celebration */}
       <SuccessCelebration show={showCelebration} />
 
@@ -815,5 +817,6 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

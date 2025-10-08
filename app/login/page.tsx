@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Chrome, Mail, Lock, ArrowRight } from "lucide-react";
+import { PageTransition } from "@/components/PageTransition";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -93,7 +94,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <PageTransition>
+      <div className="flex min-h-screen">
       {/* Left side - Form */}
       <div className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2">
         <div className="w-full max-w-md space-y-8">
@@ -211,5 +213,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

@@ -460,21 +460,21 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-4">
         <div>
-          <h1 className="text-3xl font-bold text-secondary">Settings</h1>
-          <p className="mt-2 text-secondary/80">Loading your profile...</p>
+          <h1 className="text-3xl font-bold text-slate-700">Settings</h1>
+          <p className="mt-2 text-slate-700/80">Loading your profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary">Settings</h1>
-          <p className="mt-2 text-secondary/80">
+          <h1 className="text-3xl font-bold text-slate-700">Settings</h1>
+          <p className="mt-2 text-slate-700/80">
             Manage your profile and content preferences
           </p>
         </div>
@@ -495,7 +495,7 @@ export default function SettingsPage() {
       {/* Account Information */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-secondary">
+          <h2 className="text-xl font-semibold text-slate-700">
             Account Information
           </h2>
           <Button
@@ -597,10 +597,10 @@ export default function SettingsPage() {
 
       {/* Connected Accounts */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-8">
-        <h2 className="text-xl font-semibold text-secondary mb-4">
+        <h2 className="text-xl font-semibold text-slate-700 mb-4">
           Connected Accounts
         </h2>
-        <p className="text-secondary/80 mb-6">
+        <p className="text-slate-700/80 mb-6">
           Manage which accounts are connected to your Storyscale account. You can link multiple sign-in methods for easier access.
         </p>
         <div className="space-y-4">
@@ -611,8 +611,8 @@ export default function SettingsPage() {
                 <Chrome className="h-6 w-6 text-slate-700" />
               </div>
               <div>
-                <h3 className="font-medium text-secondary">Google</h3>
-                <p className="text-sm text-secondary/60">
+                <h3 className="font-medium text-slate-700">Google</h3>
+                <p className="text-sm text-slate-700/60">
                   {linkedProviders.includes('google.com')
                     ? 'Connected'
                     : 'Not connected'}
@@ -651,8 +651,8 @@ export default function SettingsPage() {
                   <Lock className="h-6 w-6 text-slate-700" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-secondary">Email & Password</h3>
-                  <p className="text-sm text-secondary/60">
+                  <h3 className="font-medium text-slate-700">Email & Password</h3>
+                  <p className="text-sm text-slate-700/60">
                     {user?.email}
                   </p>
                 </div>
@@ -661,7 +661,7 @@ export default function SettingsPage() {
                 variant="outline"
                 size="sm"
                 disabled
-                className="text-secondary/40"
+                className="text-slate-700/40"
               >
                 Primary Method
               </Button>
@@ -673,14 +673,14 @@ export default function SettingsPage() {
       {/* Password & Security - Only show for email/password users */}
       {user?.providerData?.[0]?.providerId === "password" && (
         <div className="rounded-2xl border border-secondary/10 bg-white p-8">
-          <h2 className="text-xl font-semibold text-secondary mb-6">
+          <h2 className="text-xl font-semibold text-slate-700 mb-6">
             Password & Security
           </h2>
           <div className="space-y-4">
             <div>
               <Label htmlFor="currentPassword">Current Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-secondary/40" />
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-700/40" />
                 <Input
                   id="currentPassword"
                   type="password"
@@ -694,7 +694,7 @@ export default function SettingsPage() {
             <div>
               <Label htmlFor="newPassword">New Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-secondary/40" />
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-700/40" />
                 <Input
                   id="newPassword"
                   type="password"
@@ -708,7 +708,7 @@ export default function SettingsPage() {
             <div>
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-secondary/40" />
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-700/40" />
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -745,7 +745,7 @@ export default function SettingsPage() {
       {/* Company Details (only for company accounts) */}
       {profileData.accountType === "company" && (
         <div className="rounded-2xl border border-secondary/10 bg-white p-8">
-          <h2 className="text-xl font-semibold text-secondary mb-6">
+          <h2 className="text-xl font-semibold text-slate-700 mb-6">
             Company Information
           </h2>
           <div className="space-y-4">
@@ -776,10 +776,10 @@ export default function SettingsPage() {
 
       {/* Profile Settings */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-8">
-        <h2 className="text-xl font-semibold text-secondary mb-6">
+        <h2 className="text-xl font-semibold text-slate-700 mb-6">
           Content Profile
         </h2>
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Language Selection */}
           <div>
             <Label htmlFor="language">Content Language</Label>
@@ -937,10 +937,10 @@ export default function SettingsPage() {
 
       {/* Data Privacy & Security */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-8">
-        <h2 className="text-xl font-semibold text-secondary mb-4">
+        <h2 className="text-xl font-semibold text-slate-700 mb-4">
           Data Privacy & Export
         </h2>
-        <p className="text-secondary/80 mb-4">
+        <p className="text-slate-700/80 mb-4">
           Download a complete copy of all your data including profile, drafts, campaigns, and settings. This file will be in JSON format and complies with GDPR data portability requirements.
         </p>
         <Button
@@ -1024,10 +1024,10 @@ export default function SettingsPage() {
 
       {/* Billing Link */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-8">
-        <h2 className="text-xl font-semibold text-secondary mb-4">
+        <h2 className="text-xl font-semibold text-slate-700 mb-4">
           Subscription & Billing
         </h2>
-        <p className="text-secondary/80 mb-4">
+        <p className="text-slate-700/80 mb-4">
           Manage your subscription plan and billing information.
         </p>
         <Button variant="outline" onClick={() => router.push("/app/billing")}>

@@ -115,7 +115,7 @@ export default function CalendarPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-secondary/60">Loading calendar...</div>
+        <div className="text-slate-700/60">Loading calendar...</div>
       </div>
     );
   }
@@ -124,8 +124,8 @@ export default function CalendarPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-secondary">Calendar View</h1>
-        <p className="mt-2 text-secondary/80">
+        <h1 className="text-3xl font-bold text-slate-700">Calendar View</h1>
+        <p className="mt-2 text-slate-700/80">
           Visualize your scheduled posts on a calendar timeline.
         </p>
       </div>
@@ -136,7 +136,7 @@ export default function CalendarPage() {
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
-        <h2 className="text-xl font-semibold text-secondary">
+        <h2 className="text-xl font-semibold text-slate-700">
           {monthName} {year}
         </h2>
         <Button onClick={nextMonth} variant="outline" size="sm" className="gap-2">
@@ -150,7 +150,7 @@ export default function CalendarPage() {
         {/* Day Headers */}
         <div className="mb-4 grid grid-cols-7 gap-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div key={day} className="text-center text-sm font-semibold text-secondary/60">
+            <div key={day} className="text-center text-sm font-semibold text-slate-700/60">
               {day}
             </div>
           ))}
@@ -188,7 +188,7 @@ export default function CalendarPage() {
                 <div className="flex h-full flex-col">
                   <span
                     className={`text-sm font-medium ${
-                      isToday ? 'text-primary' : 'text-secondary'
+                      isToday ? 'text-primary' : 'text-slate-700'
                     }`}
                   >
                     {day}
@@ -203,7 +203,7 @@ export default function CalendarPage() {
                         />
                       ))}
                       {dayDrafts.length > 3 && (
-                        <span className="text-xs text-secondary/60">
+                        <span className="text-xs text-slate-700/60">
                           +{dayDrafts.length - 3}
                         </span>
                       )}
@@ -219,7 +219,7 @@ export default function CalendarPage() {
       {/* Selected Date Details */}
       {selectedDate && (
         <div className="rounded-2xl border border-secondary/10 bg-white p-6">
-          <h3 className="mb-4 text-lg font-semibold text-secondary">
+          <h3 className="mb-4 text-lg font-semibold text-slate-700">
             {selectedDate.toLocaleDateString('default', {
               weekday: 'long',
               year: 'numeric',
@@ -229,7 +229,7 @@ export default function CalendarPage() {
           </h3>
 
           {getDraftsForDate(selectedDate).length === 0 ? (
-            <p className="text-secondary/60">No posts scheduled for this date.</p>
+            <p className="text-slate-700/60">No posts scheduled for this date.</p>
           ) : (
             <div className="space-y-3">
               {getDraftsForDate(selectedDate).map((draft) => {
@@ -246,11 +246,11 @@ export default function CalendarPage() {
                   >
                     <div className="mb-2 flex items-center gap-2">
                       <div className={`h-3 w-3 rounded-full ${statusColors[draft.status]}`} />
-                      <span className="text-sm font-medium capitalize text-secondary/60">
+                      <span className="text-sm font-medium capitalize text-slate-700/60">
                         {draft.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <p className="text-sm text-secondary">{preview}</p>
+                    <p className="text-sm text-slate-700">{preview}</p>
                   </button>
                 );
               })}
@@ -261,12 +261,12 @@ export default function CalendarPage() {
 
       {/* Legend */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-6">
-        <h3 className="mb-3 text-sm font-semibold text-secondary">Status Legend</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-700">Status Legend</h3>
         <div className="flex flex-wrap gap-4">
           {Object.entries(statusColors).map(([status, color]) => (
             <div key={status} className="flex items-center gap-2">
               <div className={`h-3 w-3 rounded-full ${color}`} />
-              <span className="text-sm capitalize text-secondary/60">
+              <span className="text-sm capitalize text-slate-700/60">
                 {status.replace('_', ' ')}
               </span>
             </div>

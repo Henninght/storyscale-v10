@@ -41,27 +41,32 @@ export default function BillingPage() {
 
     setActivatingTrial(true);
     try {
+      const now = new Date();
       const trialEndDate = new Date();
       trialEndDate.setDate(trialEndDate.getDate() + 14);
 
       const userRef = doc(db, 'users', user.uid);
+
+      // Update Firestore with proper date objects
       await setDoc(
         userRef,
         {
           subscription: {
             tier: 'trial',
-            trialStartDate: new Date(),
+            trialStartDate: now,
             trialEndDate: trialEndDate,
           },
         },
         { merge: true }
       );
 
-      setSubscription({
-        tier: 'trial',
-        trialStartDate: new Date(),
-        trialEndDate: trialEndDate,
-      });
+      // Immediately reload subscription data from Firestore to ensure consistency
+      const updatedDoc = await getDoc(userRef);
+      if (updatedDoc.exists()) {
+        const data = updatedDoc.data();
+        setSubscription(data.subscription || { tier: 'free' });
+        setPostsUsedThisMonth(data.postsUsedThisMonth || 0);
+      }
     } catch (error) {
       console.error('Failed to start trial:', error);
       alert('Failed to start trial. Please try again.');

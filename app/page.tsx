@@ -2,10 +2,12 @@ import Link from "next/link";
 import { Container } from "@/components/layout";
 import { PricingCard } from "@/components/pricing/pricing-card";
 import { ArrowRight, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { PageTransition } from "@/components/PageTransition";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <PageTransition>
+      <main className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white to-background py-20 sm:py-32">
         <Container>
@@ -188,5 +190,6 @@ export default function Home() {
         </Container>
       </section>
     </main>
+    </PageTransition>
   );
 }

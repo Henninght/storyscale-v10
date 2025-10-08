@@ -271,18 +271,18 @@ export default function CampaignsPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-secondary/60">Loading campaigns...</div>
+        <div className="text-slate-600">Loading campaigns...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary">Campaigns</h1>
-          <p className="mt-2 text-secondary/80">
+          <h1 className="text-3xl font-bold text-slate-800">Campaigns</h1>
+          <p className="mt-1.5 text-slate-600">
             Plan and manage your content campaigns with sequential posts.
           </p>
         </div>
@@ -298,10 +298,10 @@ export default function CampaignsPage() {
           <div className="mx-auto mb-4 inline-flex rounded-full bg-primary/10 p-4">
             <Megaphone className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="mb-2 text-xl font-semibold text-secondary">
+          <h3 className="mb-2 text-xl font-semibold text-slate-700">
             No active campaigns
           </h3>
-          <p className="mb-6 text-secondary/80">
+          <p className="mb-6 text-slate-700/80">
             Create your first campaign to generate a series of related posts.
           </p>
           <Button onClick={() => setShowCreateModal(true)} className="gap-2">
@@ -322,8 +322,8 @@ export default function CampaignsPage() {
               >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-secondary">{campaign.name}</h3>
-                    <p className="mt-1 text-sm text-secondary/60 line-clamp-2">{campaign.theme}</p>
+                    <h3 className="text-lg font-semibold text-slate-700">{campaign.name}</h3>
+                    <p className="mt-1 text-sm text-slate-700/60 line-clamp-2">{campaign.theme}</p>
                   </div>
                   <div className={`rounded-full px-3 py-1 text-xs font-medium ${
                     campaign.status === 'active' ? 'bg-green-100 text-green-700' :
@@ -337,8 +337,8 @@ export default function CampaignsPage() {
                 {/* Progress */}
                 <div className="mb-4">
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="text-secondary/60">Progress</span>
-                    <span className="font-medium text-secondary">
+                    <span className="text-slate-700/60">Progress</span>
+                    <span className="font-medium text-slate-700">
                       {campaign.postsGenerated} / {campaign.targetPostCount}
                     </span>
                   </div>
@@ -351,7 +351,7 @@ export default function CampaignsPage() {
                 </div>
 
                 {/* Meta info */}
-                <div className="flex items-center gap-4 text-xs text-secondary/60">
+                <div className="flex items-center gap-4 text-xs text-slate-700/60">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     <span>{campaign.frequency.replace('_', '/').replace('x', '×')}</span>
@@ -376,8 +376,8 @@ export default function CampaignsPage() {
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-8">
             {/* Wizard Progress */}
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-secondary">Create New Campaign</h2>
-              <div className="text-sm text-secondary/60">Step {wizardStep} of 3</div>
+              <h2 className="text-2xl font-bold text-slate-700">Create New Campaign</h2>
+              <div className="text-sm text-slate-700/60">Step {wizardStep} of 3</div>
             </div>
 
             <form onSubmit={handleCreateCampaign} className="space-y-6">
@@ -386,7 +386,7 @@ export default function CampaignsPage() {
                 <>
               {/* Template Selection */}
               <div>
-                <label className="mb-3 block text-sm font-medium text-secondary">
+                <label className="mb-3 block text-sm font-medium text-slate-700">
                   Choose a Template (Optional)
                 </label>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -410,14 +410,14 @@ export default function CampaignsPage() {
                       className={`rounded-lg border p-4 text-left transition-all ${
                         selectedTemplate?.id === template.id
                           ? 'border-primary bg-primary/5'
-                          : 'border-secondary/20 hover:border-primary/50'
+                          : 'border-slate-300 hover:border-primary/50'
                       }`}
                     >
                       <div className="mb-2 flex items-center gap-2">
                         <span className="text-2xl">{template.icon}</span>
-                        <span className="font-medium text-secondary">{template.name}</span>
+                        <span className="font-medium text-slate-700">{template.name}</span>
                       </div>
-                      <p className="text-xs text-secondary/60">{template.description}</p>
+                      <p className="text-xs text-slate-700/60">{template.description}</p>
                     </button>
                   ))}
                 </div>
@@ -434,7 +434,7 @@ export default function CampaignsPage() {
                         templateId: null,
                       });
                     }}
-                    className="mt-3 flex items-center gap-2 text-sm text-secondary/60 hover:text-primary"
+                    className="mt-3 flex items-center gap-2 text-sm text-slate-700/60 hover:text-primary"
                   >
                     <Sparkles className="h-4 w-4" />
                     Start from scratch instead
@@ -444,18 +444,18 @@ export default function CampaignsPage() {
 
               {/* Configuration Dropdowns */}
               <div>
-                <label className="mb-3 block text-sm font-medium text-secondary">
+                <label className="mb-3 block text-sm font-medium text-slate-700">
                   Campaign Configuration
                 </label>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-secondary/70">
+                    <label className="mb-2 block text-xs font-medium text-slate-700/70">
                       Tone *
                     </label>
                     <select
                       value={formData.tone}
                       onChange={(e) => setFormData({ ...formData, tone: e.target.value as any })}
-                      className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-sm outline-none focus:border-primary"
+                      className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                     >
                       <option value="professional">Professional</option>
                       <option value="casual">Casual</option>
@@ -465,13 +465,13 @@ export default function CampaignsPage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-secondary/70">
+                    <label className="mb-2 block text-xs font-medium text-slate-700/70">
                       Purpose *
                     </label>
                     <select
                       value={formData.purpose}
                       onChange={(e) => setFormData({ ...formData, purpose: e.target.value as any })}
-                      className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-sm outline-none focus:border-primary"
+                      className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                     >
                       <option value="engagement">Engagement</option>
                       <option value="lead_generation">Lead Generation</option>
@@ -481,13 +481,13 @@ export default function CampaignsPage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-secondary/70">
+                    <label className="mb-2 block text-xs font-medium text-slate-700/70">
                       Target Audience *
                     </label>
                     <select
                       value={formData.audience}
                       onChange={(e) => setFormData({ ...formData, audience: e.target.value as any })}
-                      className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-sm outline-none focus:border-primary"
+                      className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                     >
                       <option value="executives">Executives</option>
                       <option value="entrepreneurs">Entrepreneurs</option>
@@ -496,21 +496,21 @@ export default function CampaignsPage() {
                     </select>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-secondary/60">
+                <p className="mt-2 text-xs text-slate-700/60">
                   These settings help AI generate a more targeted campaign strategy
                 </p>
               </div>
 
               {/* Name */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-secondary">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Campaign Name *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   placeholder="e.g., Product Launch 2024"
                   required
                 />
@@ -518,14 +518,14 @@ export default function CampaignsPage() {
 
               {/* Theme */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-secondary">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Campaign Theme *
                 </label>
                 <input
                   type="text"
                   value={formData.theme}
                   onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
-                  className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   placeholder="e.g., Launching our new AI-powered analytics tool"
                   required
                 />
@@ -538,13 +538,13 @@ export default function CampaignsPage() {
 
               {/* Description */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-secondary">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Description
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   rows={3}
                   placeholder="Brief description of your campaign goals..."
                 />
@@ -560,13 +560,13 @@ export default function CampaignsPage() {
               {/* Language & Style */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-secondary">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
                     Language
                   </label>
                   <select
                     value={formData.language}
                     onChange={(e) => setFormData({ ...formData, language: e.target.value as 'en' | 'no' })}
-                    className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   >
                     <option value="en">English</option>
                     <option value="no">Norwegian</option>
@@ -574,13 +574,13 @@ export default function CampaignsPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-secondary">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
                     Content Style
                   </label>
                   <select
                     value={formData.style}
                     onChange={(e) => setFormData({ ...formData, style: e.target.value })}
-                    className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   >
                     <option value="story-based">Story-Based</option>
                     <option value="list-format">List Format</option>
@@ -593,39 +593,39 @@ export default function CampaignsPage() {
               {/* Dates & Frequency */}
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-secondary">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
                     Start Date
                   </label>
                   <input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-secondary">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
                     End Date
                   </label>
                   <input
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-secondary">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
                     Frequency
                   </label>
                   <select
                     value={formData.frequency}
                     onChange={(e) => setFormData({ ...formData, frequency: e.target.value as 'daily' | '3x_week' | 'weekly' })}
-                    className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   >
                     <option value="daily">Daily</option>
                     <option value="3x_week">3× per week</option>
@@ -636,14 +636,14 @@ export default function CampaignsPage() {
 
               {/* Target Post Count */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-secondary">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Target Number of Posts
                 </label>
                 <input
                   type="number"
                   value={formData.targetPostCount}
                   onChange={(e) => setFormData({ ...formData, targetPostCount: parseInt(e.target.value) })}
-                  className="w-full rounded-lg border border-secondary/20 px-4 py-3 outline-none focus:border-primary"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                   min="1"
                   max="50"
                   required
@@ -679,21 +679,21 @@ export default function CampaignsPage() {
               {/* Step 2: AI Strategy Review */}
               {wizardStep === 2 && aiBrief && (
                 <>
-                  <div className="rounded-lg border border-secondary/20 bg-secondary/5 p-6">
-                    <h3 className="mb-3 text-lg font-semibold text-secondary">
+                  <div className="rounded-lg border border-slate-300 bg-secondary/5 p-6">
+                    <h3 className="mb-3 text-lg font-semibold text-slate-700">
                       Your Campaign Strategy
                     </h3>
-                    <p className="mb-4 text-secondary/80">{aiBrief.strategicOverview}</p>
+                    <p className="mb-4 text-slate-700/80">{aiBrief.strategicOverview}</p>
 
                     <div className="mb-4">
-                      <div className="text-sm font-medium text-secondary/60">Narrative Arc</div>
-                      <div className="text-secondary">{aiBrief.narrativeArc}</div>
+                      <div className="text-sm font-medium text-slate-700/60">Narrative Arc</div>
+                      <div className="text-slate-700">{aiBrief.narrativeArc}</div>
                     </div>
 
                     <div>
                       <div className="mb-3 flex items-center justify-between">
-                        <div className="text-sm font-medium text-secondary/60">Post Sequence</div>
-                        <div className="text-xs text-secondary/50">Click any post to edit</div>
+                        <div className="text-sm font-medium text-slate-700/60">Post Sequence</div>
+                        <div className="text-xs text-slate-700/50">Click any post to edit</div>
                       </div>
                       <div className="space-y-2">
                         {aiBrief.postBlueprints.map((bp: any, index: number) => (
@@ -720,7 +720,7 @@ export default function CampaignsPage() {
                                   <button
                                     type="button"
                                     onClick={handleCancelEdit}
-                                    className="rounded border border-secondary/20 px-3 py-1 text-xs font-medium text-secondary hover:bg-secondary/5"
+                                    className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-secondary/5"
                                   >
                                     Cancel
                                   </button>
@@ -730,15 +730,15 @@ export default function CampaignsPage() {
                               // View mode
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1">
-                                  <div className="font-medium text-secondary">
+                                  <div className="font-medium text-slate-700">
                                     Post {bp.position}: {bp.topic}
                                   </div>
-                                  <div className="text-sm text-secondary/60">{bp.goal}</div>
+                                  <div className="text-sm text-slate-700/60">{bp.goal}</div>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => handleEditPostTopic(index, bp.topic)}
-                                  className="rounded border border-secondary/20 px-2 py-1 text-xs text-secondary opacity-0 transition-opacity hover:bg-secondary/5 group-hover:opacity-100"
+                                  className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 opacity-0 transition-opacity hover:bg-secondary/5 group-hover:opacity-100"
                                 >
                                   Edit
                                 </button>
@@ -784,35 +784,35 @@ export default function CampaignsPage() {
               {wizardStep === 3 && (
                 <>
                   <div className="space-y-4">
-                    <div className="rounded-lg border border-secondary/20 p-4">
-                      <h3 className="mb-3 font-semibold text-secondary">Campaign Summary</h3>
+                    <div className="rounded-lg border border-slate-300 p-4">
+                      <h3 className="mb-3 font-semibold text-slate-700">Campaign Summary</h3>
                       <dl className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <dt className="text-secondary/60">Name:</dt>
-                          <dd className="font-medium text-secondary">{formData.name}</dd>
+                          <dt className="text-slate-700/60">Name:</dt>
+                          <dd className="font-medium text-slate-700">{formData.name}</dd>
                         </div>
                         <div className="flex justify-between">
-                          <dt className="text-secondary/60">Goal:</dt>
-                          <dd className="font-medium text-secondary">{formData.theme}</dd>
+                          <dt className="text-slate-700/60">Goal:</dt>
+                          <dd className="font-medium text-slate-700">{formData.theme}</dd>
                         </div>
                         <div className="flex justify-between">
-                          <dt className="text-secondary/60">Posts:</dt>
-                          <dd className="font-medium text-secondary">{formData.targetPostCount}</dd>
+                          <dt className="text-slate-700/60">Posts:</dt>
+                          <dd className="font-medium text-slate-700">{formData.targetPostCount}</dd>
                         </div>
                         <div className="flex justify-between">
-                          <dt className="text-secondary/60">Frequency:</dt>
-                          <dd className="font-medium text-secondary">{formData.frequency.replace('_', '/').replace('x', '×')}</dd>
+                          <dt className="text-slate-700/60">Frequency:</dt>
+                          <dd className="font-medium text-slate-700">{formData.frequency.replace('_', '/').replace('x', '×')}</dd>
                         </div>
                         <div className="flex justify-between">
-                          <dt className="text-secondary/60">Language:</dt>
-                          <dd className="font-medium text-secondary uppercase">{formData.language}</dd>
+                          <dt className="text-slate-700/60">Language:</dt>
+                          <dd className="font-medium text-slate-700 uppercase">{formData.language}</dd>
                         </div>
                       </dl>
                     </div>
 
                     {aiBrief && (
                       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                        <div className="text-sm text-secondary/80">
+                        <div className="text-sm text-slate-700/80">
                           <strong>Strategy:</strong> {aiBrief.narrativeArc}
                         </div>
                       </div>

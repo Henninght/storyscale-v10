@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { ChevronLeft, ChevronRight, Check, Save, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Save, ChevronDown, ChevronUp, Info, Briefcase, Users, Target, Lightbulb, FileText, List, HelpCircle, BookOpen, Sparkles, MessageCircle, TrendingUp, Award, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
+import { WizardStepTransition } from '@/components/WizardStepTransition';
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -407,7 +408,7 @@ export function PostWizard() {
 
       {/* Step Content */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-8 shadow-sm">
-        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+        <WizardStepTransition step={currentStep}>
           {currentStep === 1 && (
             <Step1
               input={data.input}
@@ -437,7 +438,7 @@ export function PostWizard() {
           {currentStep === 4 && (
             <Step4 data={data} onGenerate={handleGenerate} isGenerating={isGenerating} />
           )}
-        </div>
+        </WizardStepTransition>
       </div>
 
       {/* Navigation */}
@@ -685,7 +686,72 @@ interface Step2Props {
   onUpdate: (data: Partial<WizardData>) => void;
 }
 
+interface OptionCardProps {
+  icon: React.ElementType;
+  label: string;
+  description: string;
+  value: string;
+  selected: boolean;
+  onClick: () => void;
+}
+
+function OptionCard({ icon: Icon, label, description, value, selected, onClick }: OptionCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group relative w-full rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+        selected
+          ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+          : 'border-secondary/10 hover:border-primary/30 hover:bg-secondary/5 hover:scale-[1.02] hover:shadow-lg'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`rounded-lg p-2 transition-colors ${
+          selected ? 'bg-primary/10' : 'bg-secondary/5 group-hover:bg-primary/10'
+        }`}>
+          <Icon className={`h-5 w-5 ${selected ? 'text-primary' : 'text-secondary group-hover:text-primary'}`} />
+        </div>
+        <div className="flex-1">
+          <div className="mb-1 font-semibold text-secondary">{label}</div>
+          <div className="text-sm text-secondary/60">{description}</div>
+        </div>
+        {selected && (
+          <Check className="h-5 w-5 text-primary animate-in zoom-in duration-200" />
+        )}
+      </div>
+    </button>
+  );
+}
+
 function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
+  const toneOptions = [
+    { value: 'professional', label: 'Professional', icon: Briefcase, description: 'Establishes credibility for corporate audiences' },
+    { value: 'casual', label: 'Casual', icon: MessageCircle, description: 'Conversational language for authentic connections' },
+    { value: 'inspirational', label: 'Inspirational', icon: Sparkles, description: 'Motivating content focused on growth' },
+    { value: 'educational', label: 'Educational', icon: BookOpen, description: 'Clear teaching-focused content' },
+  ];
+
+  const purposeOptions = [
+    { value: 'engagement', label: 'Engagement', icon: MessageCircle, description: 'Sparks conversations and comments' },
+    { value: 'lead_generation', label: 'Lead Generation', icon: Target, description: 'Drives action toward services' },
+    { value: 'brand_awareness', label: 'Brand Awareness', icon: TrendingUp, description: 'Increases visibility and recognition' },
+    { value: 'thought_leadership', label: 'Thought Leadership', icon: Award, description: 'Establishes industry authority' },
+  ];
+
+  const audienceOptions = [
+    { value: 'executives', label: 'Executives', icon: Briefcase, description: 'Strategic, high-level insights' },
+    { value: 'entrepreneurs', label: 'Entrepreneurs', icon: Lightbulb, description: 'Growth strategies and practical advice' },
+    { value: 'professionals', label: 'Professionals', icon: Users, description: 'Tactical tips and career development' },
+    { value: 'industry_specific', label: 'Industry-Specific', icon: Target, description: 'Niche terminology and specialized challenges' },
+  ];
+
+  const styleOptions = [
+    { value: 'story-based', label: 'Story-Based', icon: BookOpen, description: 'Narrative structure for engagement' },
+    { value: 'list_format', label: 'List Format', icon: List, description: 'Scannable bullet points and tips' },
+    { value: 'question-based', label: 'Question-Based', icon: HelpCircle, description: 'Drives curiosity and discussion' },
+    { value: 'how-to', label: 'How-To', icon: FileText, description: 'Actionable instructions and processes' },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -693,73 +759,71 @@ function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
         <p className="text-secondary/70">Choose the tone, purpose, and style for your content.</p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <div className="mb-2 flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">Tone *</label>
-            <InfoTooltip content="Choose how formal or casual your post should sound. Professional establishes credibility for corporate audiences, while Casual builds authentic connections through conversational language." />
-          </div>
-          <select
-            value={tone}
-            onChange={(e) => onUpdate({ tone: e.target.value })}
-            className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="professional">Professional</option>
-            <option value="casual">Casual</option>
-            <option value="inspirational">Inspirational</option>
-            <option value="educational">Educational</option>
-          </select>
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <label className="text-sm font-medium text-secondary">Tone *</label>
+          <InfoTooltip content="Choose how formal or casual your post should sound." />
         </div>
-
-        <div>
-          <div className="mb-2 flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">Purpose *</label>
-            <InfoTooltip content="Define your post's goal. Engagement sparks conversations, Lead Generation drives action toward your services, Brand Awareness increases visibility, and Thought Leadership establishes you as an industry authority." />
-          </div>
-          <select
-            value={purpose}
-            onChange={(e) => onUpdate({ purpose: e.target.value })}
-            className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="engagement">Engagement</option>
-            <option value="lead_generation">Lead Generation</option>
-            <option value="brand_awareness">Brand Awareness</option>
-            <option value="thought_leadership">Thought Leadership</option>
-          </select>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {toneOptions.map((option) => (
+            <OptionCard
+              key={option.value}
+              {...option}
+              selected={tone === option.value}
+              onClick={() => onUpdate({ tone: option.value })}
+            />
+          ))}
         </div>
+      </div>
 
-        <div>
-          <div className="mb-2 flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">Target Audience *</label>
-            <InfoTooltip content="Select who you're writing for. Executives prefer strategic, high-level insights. Entrepreneurs want growth strategies and practical advice. Professionals seek tactical tips and career development. Industry-Specific uses niche terminology." />
-          </div>
-          <select
-            value={audience}
-            onChange={(e) => onUpdate({ audience: e.target.value })}
-            className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="executives">Executives</option>
-            <option value="entrepreneurs">Entrepreneurs</option>
-            <option value="professionals">Professionals</option>
-            <option value="industry_specific">Industry-Specific</option>
-          </select>
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <label className="text-sm font-medium text-secondary">Purpose *</label>
+          <InfoTooltip content="Define your post's goal and what you want to achieve." />
         </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {purposeOptions.map((option) => (
+            <OptionCard
+              key={option.value}
+              {...option}
+              selected={purpose === option.value}
+              onClick={() => onUpdate({ purpose: option.value })}
+            />
+          ))}
+        </div>
+      </div>
 
-        <div>
-          <div className="mb-2 flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">Post Style *</label>
-            <InfoTooltip content="Choose your post structure. Story-Based uses narrative for engagement, List Format offers scannable tips, Question-Based drives curiosity, and How-To provides actionable instructions." />
-          </div>
-          <select
-            value={style}
-            onChange={(e) => onUpdate({ style: e.target.value })}
-            className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="story-based">Story-Based</option>
-            <option value="list_format">List Format</option>
-            <option value="question-based">Question-Based</option>
-            <option value="how-to">How-To</option>
-          </select>
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <label className="text-sm font-medium text-secondary">Target Audience *</label>
+          <InfoTooltip content="Select who you're writing for to tailor the message." />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {audienceOptions.map((option) => (
+            <OptionCard
+              key={option.value}
+              {...option}
+              selected={audience === option.value}
+              onClick={() => onUpdate({ audience: option.value })}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <label className="text-sm font-medium text-secondary">Post Style *</label>
+          <InfoTooltip content="Choose your post structure and format." />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {styleOptions.map((option) => (
+            <OptionCard
+              key={option.value}
+              {...option}
+              selected={style === option.value}
+              onClick={() => onUpdate({ style: option.value })}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -776,6 +840,12 @@ interface Step3Props {
 }
 
 function Step3({ language, length, includeCTA, emojiUsage, onUpdate }: Step3Props) {
+  const lengthOptions = [
+    { value: 'short', label: 'Short', desc: '50-150 words', words: 100, width: '33%' },
+    { value: 'medium', label: 'Medium', desc: '150-300 words', words: 225, width: '66%' },
+    { value: 'long', label: 'Long', desc: '300-500 words', words: 400, width: '100%' },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -784,91 +854,139 @@ function Step3({ language, length, includeCTA, emojiUsage, onUpdate }: Step3Prop
       </div>
 
       <div className="space-y-6">
+        {/* Language Selector with Flags */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary">Language *</label>
-          <div className="flex gap-4">
+          <label className="mb-3 block text-sm font-medium text-secondary">Language *</label>
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => onUpdate({ language: 'en' })}
-              className={`flex-1 rounded-lg border px-6 py-3 font-medium transition-all ${
+              className={`group flex items-center gap-3 rounded-xl border-2 p-4 transition-all duration-200 ${
                 language === 'en'
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-secondary/20 text-secondary hover:bg-secondary/5'
+                  ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                  : 'border-secondary/10 hover:border-primary/30 hover:bg-secondary/5 hover:scale-[1.02] hover:shadow-lg'
               }`}
             >
-              English
+              <span className="text-3xl">🇬🇧</span>
+              <div className="flex-1 text-left">
+                <div className="font-semibold text-secondary">English</div>
+                <div className="text-xs text-secondary/60">International audience</div>
+              </div>
+              {language === 'en' && (
+                <Check className="h-5 w-5 text-primary animate-in zoom-in duration-200" />
+              )}
             </button>
             <button
               onClick={() => onUpdate({ language: 'no' })}
-              className={`flex-1 rounded-lg border px-6 py-3 font-medium transition-all ${
+              className={`group flex items-center gap-3 rounded-xl border-2 p-4 transition-all duration-200 ${
                 language === 'no'
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-secondary/20 text-secondary hover:bg-secondary/5'
+                  ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                  : 'border-secondary/10 hover:border-primary/30 hover:bg-secondary/5 hover:scale-[1.02] hover:shadow-lg'
               }`}
             >
-              Norwegian
+              <span className="text-3xl">🇳🇴</span>
+              <div className="flex-1 text-left">
+                <div className="font-semibold text-secondary">Norwegian</div>
+                <div className="text-xs text-secondary/60">Norsk publikum</div>
+              </div>
+              {language === 'no' && (
+                <Check className="h-5 w-5 text-primary animate-in zoom-in duration-200" />
+              )}
             </button>
           </div>
         </div>
 
+        {/* Post Length with Visual Indicators */}
         <div>
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-3 flex items-center gap-2">
             <label className="text-sm font-medium text-secondary">Post Length *</label>
-            <InfoTooltip content="Short posts (50-150 words) are punchy and quick to consume. Medium (150-300 words) is optimal for LinkedIn's algorithm. Long (300-500 words) demonstrates expertise in depth." />
+            <InfoTooltip content="Choose the ideal length based on your content depth and audience preference." />
           </div>
-          <div className="space-y-2">
-            {[
-              { value: 'short', label: 'Short', desc: '50-150 words' },
-              { value: 'medium', label: 'Medium', desc: '150-300 words' },
-              { value: 'long', label: 'Long', desc: '300-500 words' },
-            ].map((option) => (
+          <div className="space-y-3">
+            {lengthOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => onUpdate({ length: option.value as 'short' | 'medium' | 'long' })}
-                className={`w-full rounded-lg border px-6 py-3 text-left transition-all ${
+                className={`w-full rounded-xl border-2 p-4 text-left transition-all duration-200 ${
                   length === option.value
-                    ? 'border-primary bg-primary/5'
-                    : 'border-secondary/20 hover:bg-secondary/5'
+                    ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                    : 'border-secondary/10 hover:border-primary/30 hover:bg-secondary/5 hover:scale-[1.01] hover:shadow-lg'
                 }`}
               >
-                <div className="font-medium text-secondary">{option.label}</div>
-                <div className="text-sm text-secondary/60">{option.desc}</div>
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="font-semibold text-secondary">{option.label}</div>
+                  {length === option.value && (
+                    <Check className="h-5 w-5 text-primary animate-in zoom-in duration-200" />
+                  )}
+                </div>
+                <div className="mb-2 text-sm text-secondary/60">{option.desc}</div>
+                {/* Visual word count indicator */}
+                <div className="flex items-center gap-2">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary/10">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        length === option.value ? 'bg-primary' : 'bg-secondary/30'
+                      }`}
+                      style={{ width: option.width }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-secondary/60">~{option.words}w</span>
+                </div>
               </button>
             ))}
           </div>
         </div>
 
-        <div>
-          <div className="mb-2 flex items-center gap-2">
+        {/* CTA Toggle with Preview */}
+        <div className="rounded-xl border-2 border-secondary/10 p-4">
+          <div className="mb-3 flex items-center gap-2">
             <label className="flex items-center gap-2 text-sm font-medium text-secondary">
               <input
                 type="checkbox"
                 checked={includeCTA}
                 onChange={(e) => onUpdate({ includeCTA: e.target.checked })}
-                className="h-4 w-4 rounded border-secondary/20 text-primary focus:ring-primary"
+                className="h-5 w-5 rounded border-secondary/20 text-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
               Include Call-to-Action
             </label>
-            <InfoTooltip content="Adding a CTA encourages readers to engage with your post through comments, shares, or specific actions. This can increase interaction by 30-50%." />
+            <InfoTooltip content="CTAs encourage engagement and can boost interaction by 30-50%." />
           </div>
-          <p className="ml-6 text-sm text-secondary/60">
-            Add a prompt for engagement (e.g., "What do you think?")
-          </p>
+          {includeCTA && (
+            <div className="mt-3 rounded-lg bg-primary/5 border border-primary/20 p-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mb-1 text-xs font-medium text-primary">Preview Example:</div>
+              <div className="text-sm italic text-secondary/70">
+                "What's your experience with this? Share in the comments below! 👇"
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Emoji Usage */}
         <div>
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-3 flex items-center gap-2">
             <label className="text-sm font-medium text-secondary">Emoji Usage</label>
-            <InfoTooltip content="None keeps posts purely professional. Minimal (1-2) adds strategic visual breaks. Moderate (3-5) improves scannability and adds personality to your content." />
+            <InfoTooltip content="Control how many emojis appear in your post for personality vs professionalism balance." />
           </div>
-          <select
-            value={emojiUsage}
-            onChange={(e) => onUpdate({ emojiUsage: e.target.value as 'none' | 'minimal' | 'moderate' })}
-            className="w-full rounded-lg border border-secondary/20 px-4 py-2 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="none">None</option>
-            <option value="minimal">Minimal (1-2 emojis)</option>
-            <option value="moderate">Moderate (3-5 emojis)</option>
-          </select>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { value: 'none', label: 'None', emoji: '📝', desc: 'Pure text' },
+              { value: 'minimal', label: 'Minimal', emoji: '✨', desc: '1-2 emojis' },
+              { value: 'moderate', label: 'Moderate', emoji: '🎨', desc: '3-5 emojis' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => onUpdate({ emojiUsage: option.value as 'none' | 'minimal' | 'moderate' })}
+                className={`rounded-xl border-2 p-3 text-center transition-all duration-200 ${
+                  emojiUsage === option.value
+                    ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                    : 'border-secondary/10 hover:border-primary/30 hover:bg-secondary/5 hover:scale-[1.05] hover:shadow-lg'
+                }`}
+              >
+                <div className="mb-1 text-2xl">{option.emoji}</div>
+                <div className="text-sm font-semibold text-secondary">{option.label}</div>
+                <div className="text-xs text-secondary/60">{option.desc}</div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -884,6 +1002,7 @@ interface Step4Props {
 
 function Step4({ data, isGenerating }: Step4Props) {
   const router = useRouter();
+  const [expandedSection, setExpandedSection] = useState<string | null>('input');
 
   const handleDeleteDraft = () => {
     if (confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
@@ -891,6 +1010,15 @@ function Step4({ data, isGenerating }: Step4Props) {
       router.push('/app');
     }
   };
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  // Calculate credit usage (simplified - would fetch from user data in production)
+  const creditsUsed = 0; // This would come from actual user data
+  const creditsLimit = 50; // This would come from subscription tier
+  const creditPercentage = ((creditsUsed + 1) / creditsLimit) * 100;
 
   return (
     <div className="space-y-6">
@@ -901,38 +1029,164 @@ function Step4({ data, isGenerating }: Step4Props) {
         </p>
       </div>
 
-      <div className="space-y-4 rounded-lg bg-slate-50 p-6">
-        <div>
-          <h3 className="mb-1 text-sm font-medium text-secondary/60">Your Input</h3>
-          <p className="text-secondary">{data.input.slice(0, 200)}...</p>
+      {/* Collapsible Summary Sections */}
+      <div className="space-y-3">
+        {/* Input Section */}
+        <div className="overflow-hidden rounded-xl border-2 border-secondary/10 transition-all">
+          <button
+            onClick={() => toggleSection('input')}
+            className="flex w-full items-center justify-between p-4 text-left hover:bg-secondary/5 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-semibold text-secondary">Your Input</h3>
+                <p className="text-sm text-secondary/60">{data.input.length} characters</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-primary hover:underline">Edit Step 1</span>
+              {expandedSection === 'input' ? (
+                <ChevronUp className="h-5 w-5 text-secondary/60" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-secondary/60" />
+              )}
+            </div>
+          </button>
+          {expandedSection === 'input' && (
+            <div className="border-t border-secondary/10 bg-secondary/5 p-4 animate-in slide-in-from-top-2 duration-300">
+              <p className="text-sm leading-relaxed text-secondary">
+                {data.input.slice(0, 300)}{data.input.length > 300 ? '...' : ''}
+              </p>
+              {data.referenceUrls.some(url => url) && (
+                <div className="mt-3">
+                  <p className="mb-1 text-xs font-medium text-secondary/60">Reference URLs:</p>
+                  <ul className="space-y-1">
+                    {data.referenceUrls.filter(url => url).map((url, i) => (
+                      <li key={i} className="text-xs text-primary truncate">{url}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <h3 className="mb-1 text-sm font-medium text-secondary/60">Configuration</h3>
-            <ul className="space-y-1 text-sm text-secondary">
-              <li>Tone: {data.tone}</li>
-              <li>Purpose: {data.purpose.replace('_', ' ')}</li>
-              <li>Audience: {data.audience.replace('_', ' ')}</li>
-              <li>Style: {data.style.replace('-', ' ')}</li>
-            </ul>
-          </div>
+        {/* Configuration Section */}
+        <div className="overflow-hidden rounded-xl border-2 border-secondary/10 transition-all">
+          <button
+            onClick={() => toggleSection('config')}
+            className="flex w-full items-center justify-between p-4 text-left hover:bg-secondary/5 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Target className="h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-semibold text-secondary">Configuration</h3>
+                <p className="text-sm text-secondary/60">Tone, purpose, audience & style</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-primary hover:underline">Edit Step 2</span>
+              {expandedSection === 'config' ? (
+                <ChevronUp className="h-5 w-5 text-secondary/60" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-secondary/60" />
+              )}
+            </div>
+          </button>
+          {expandedSection === 'config' && (
+            <div className="border-t border-secondary/10 bg-secondary/5 p-4 animate-in slide-in-from-top-2 duration-300">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Tone</div>
+                  <div className="text-sm font-semibold text-secondary capitalize">{data.tone}</div>
+                </div>
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Purpose</div>
+                  <div className="text-sm font-semibold text-secondary capitalize">{data.purpose.replace('_', ' ')}</div>
+                </div>
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Audience</div>
+                  <div className="text-sm font-semibold text-secondary capitalize">{data.audience.replace('_', ' ')}</div>
+                </div>
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Style</div>
+                  <div className="text-sm font-semibold text-secondary capitalize">{data.style.replace('-', ' ')}</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
-          <div>
-            <h3 className="mb-1 text-sm font-medium text-secondary/60">Preferences</h3>
-            <ul className="space-y-1 text-sm text-secondary">
-              <li>Language: {data.language === 'en' ? 'English' : 'Norwegian'}</li>
-              <li>Length: {data.length}</li>
-              <li>Call-to-Action: {data.includeCTA ? 'Yes' : 'No'}</li>
-              <li>Emojis: {data.emojiUsage}</li>
-            </ul>
-          </div>
+        {/* Preferences Section */}
+        <div className="overflow-hidden rounded-xl border-2 border-secondary/10 transition-all">
+          <button
+            onClick={() => toggleSection('prefs')}
+            className="flex w-full items-center justify-between p-4 text-left hover:bg-secondary/5 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-semibold text-secondary">Preferences</h3>
+                <p className="text-sm text-secondary/60">Language, length & formatting</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-primary hover:underline">Edit Step 3</span>
+              {expandedSection === 'prefs' ? (
+                <ChevronUp className="h-5 w-5 text-secondary/60" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-secondary/60" />
+              )}
+            </div>
+          </button>
+          {expandedSection === 'prefs' && (
+            <div className="border-t border-secondary/10 bg-secondary/5 p-4 animate-in slide-in-from-top-2 duration-300">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Language</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{data.language === 'en' ? '🇬🇧' : '🇳🇴'}</span>
+                    <span className="text-sm font-semibold text-secondary">{data.language === 'en' ? 'English' : 'Norwegian'}</span>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Length</div>
+                  <div className="text-sm font-semibold text-secondary capitalize">{data.length}</div>
+                </div>
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Call-to-Action</div>
+                  <div className="text-sm font-semibold text-secondary">{data.includeCTA ? '✓ Included' : '✗ Not included'}</div>
+                </div>
+                <div className="rounded-lg bg-white p-3 border border-secondary/10">
+                  <div className="text-xs font-medium text-secondary/60 mb-1">Emoji Usage</div>
+                  <div className="text-sm font-semibold text-secondary capitalize">{data.emojiUsage}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <p className="text-sm text-blue-900">
-          ℹ️ This will use <strong>1 post credit</strong> from your monthly limit.
+      {/* Credit Usage Visualization */}
+      <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Award className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-secondary">Credit Usage</h3>
+          </div>
+          <div className="text-sm font-medium text-secondary">
+            <span className="text-blue-600">{creditsUsed + 1}</span> / {creditsLimit}
+          </div>
+        </div>
+        <div className="mb-2 h-3 overflow-hidden rounded-full bg-blue-100">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 shadow-sm"
+            style={{ width: `${Math.min(creditPercentage, 100)}%` }}
+          />
+        </div>
+        <p className="text-xs text-secondary/70">
+          This generation will use <strong>1 post credit</strong>. {creditsLimit - creditsUsed - 1} credits remaining after generation.
         </p>
       </div>
 
@@ -948,12 +1202,13 @@ function Step4({ data, isGenerating }: Step4Props) {
       </div>
 
       {isGenerating && (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <span className="text-sm font-medium text-secondary">
-              Generating your post... This may take a few moments.
-            </span>
+        <div className="rounded-xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-white p-5 animate-in fade-in duration-500">
+          <div className="flex items-center gap-4">
+            <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
+            <div>
+              <div className="font-semibold text-secondary">Generating your post...</div>
+              <div className="text-sm text-secondary/60">This may take a few moments</div>
+            </div>
           </div>
         </div>
       )}

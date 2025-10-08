@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SuccessCelebrationProps {
   show: boolean;
@@ -27,10 +28,16 @@ export function SuccessCelebration({ show }: SuccessCelebrationProps) {
     }
   }, [show]);
 
-  if (!show) return null;
-
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
+        >
       {confetti.map((piece) => (
         <div
           key={piece.id}
@@ -45,7 +52,12 @@ export function SuccessCelebration({ show }: SuccessCelebrationProps) {
       ))}
 
       {/* Success checkmark */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-in zoom-in duration-500">
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+      >
         <div className="relative">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-2xl shadow-green-200 animate-pulse">
             <svg className="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,7 +66,9 @@ export function SuccessCelebration({ show }: SuccessCelebrationProps) {
           </div>
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-green-400 to-green-500 animate-ping opacity-75" />
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -60,19 +60,19 @@ export default function DraftPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-secondary/60">Loading draft...</div>
+        <div className="text-slate-600">Loading draft...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-12 text-center">
+      <div className="space-y-5">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
           <h3 className="mb-2 text-xl font-semibold text-red-900">{error}</h3>
           <button
             onClick={() => router.push('/app')}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-white transition-all hover:bg-primary-hover"
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-orange-700 px-6 py-3 font-semibold text-white transition-all hover:bg-orange-800 hover:scale-[1.02]"
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Workspace
@@ -87,10 +87,10 @@ export default function DraftPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h1 className="text-3xl font-bold text-secondary">Edit Draft</h1>
-        <p className="mt-2 text-secondary/80">
+        <h1 className="text-3xl font-bold text-slate-800">Edit Draft</h1>
+        <p className="mt-1.5 text-slate-600">
           Refine and enhance your LinkedIn post.
         </p>
       </div>

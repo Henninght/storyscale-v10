@@ -17,12 +17,12 @@ interface DraftCardProps {
   campaignName?: string;
 }
 
-const statusConfig: Record<DraftStatus, { label: string; color: string }> = {
-  idea: { label: 'Idea', color: 'bg-slate-200 text-slate-700' },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700' },
-  ready_to_post: { label: 'Ready to Post', color: 'bg-green-100 text-green-700' },
-  posted: { label: 'Posted', color: 'bg-amber-100 text-amber-700' },
-  archived: { label: 'Archived', color: 'bg-gray-100 text-gray-500' },
+const statusConfig: Record<DraftStatus, { label: string; color: string; borderColor: string }> = {
+  idea: { label: 'Idea', color: 'bg-purple-100 text-purple-700', borderColor: 'border-l-purple-400' },
+  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700', borderColor: 'border-l-blue-500' },
+  ready_to_post: { label: 'Ready to Post', color: 'bg-green-100 text-green-700', borderColor: 'border-l-green-500' },
+  posted: { label: 'Posted', color: 'bg-amber-100 text-amber-700', borderColor: 'border-l-amber-500' },
+  archived: { label: 'Archived', color: 'bg-gray-100 text-gray-600', borderColor: 'border-l-gray-400' },
 };
 
 const languageFlags: Record<'en' | 'no', string> = {
@@ -36,7 +36,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
 
   const { id, content, status, language, createdAt, tags, campaignId } = draft;
   const preview = content.length > 100 ? `${content.slice(0, 100)}...` : content;
-  const { label, color } = statusConfig[status as DraftStatus];
+  const { label, color, borderColor } = statusConfig[status as DraftStatus];
   const timeAgo = createdAt instanceof Date
     ? formatDistanceToNow(createdAt, { addSuffix: true })
     : createdAt?.toDate
@@ -68,7 +68,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
 
   if (viewMode === 'list') {
     return (
-      <div className="rounded-lg border border-secondary/10 bg-white p-4 transition-shadow hover:shadow-md">
+      <div className={`rounded-lg border-l-4 border-y border-r border-slate-200 bg-white p-2.5 hover-lift-sm ${borderColor}`}>
         <div className="flex items-start gap-4">
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-2">
@@ -80,7 +80,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
               </span>
               {campaignId && campaignName && (
                 <span
-                  className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+                  className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
                   title={`Campaign: ${campaignName}`}
                 >
                   <Megaphone className="h-3 w-3" />
@@ -92,7 +92,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
                   {tags.map((tag: string) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
+                      className="rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700"
                     >
                       {tag}
                     </span>
@@ -100,15 +100,15 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
                 </div>
               )}
             </div>
-            <p className="mb-2 text-sm leading-relaxed text-secondary">{preview}</p>
-            <span className="text-xs text-secondary/50">{timeAgo}</span>
+            <p className="mb-2 text-sm leading-relaxed text-slate-700">{preview}</p>
+            <span className="text-xs text-slate-500">{timeAgo}</span>
           </div>
           <div className="flex gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleEdit}
-              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -116,7 +116,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
               variant="ghost"
               size="sm"
               onClick={handleCopy}
-              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+              className="h-8 w-8 p-0 hover:bg-slate-100 hover:text-slate-700"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -135,7 +135,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
   }
 
   return (
-    <div className="rounded-lg border border-secondary/10 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+    <div className={`rounded-lg border-l-4 border-y border-r border-slate-200 bg-white p-4 shadow-sm hover-lift-sm ${borderColor}`}>
       <div className="mb-3 flex items-start justify-between">
         <div className="flex flex-col gap-2">
           <span className={`rounded-full px-3 py-1 text-xs font-medium ${color}`}>
@@ -143,7 +143,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
           </span>
           {campaignId && campaignName && (
             <span
-              className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+              className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
               title={`Campaign: ${campaignName}`}
             >
               <Megaphone className="h-3 w-3" />
@@ -156,14 +156,14 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
         </span>
       </div>
 
-      <p className="mb-4 min-h-[60px] text-sm leading-relaxed text-secondary">{preview}</p>
+      <p className="mb-4 min-h-[60px] text-sm leading-relaxed text-slate-700">{preview}</p>
 
       {tags && tags.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-1">
           {tags.map((tag: string) => (
             <span
               key={tag}
-              className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
+              className="rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700"
             >
               {tag}
             </span>
@@ -172,13 +172,13 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
       )}
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-secondary/50">{timeAgo}</span>
+        <span className="text-xs text-slate-500">{timeAgo}</span>
         <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleEdit}
-            className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -186,7 +186,7 @@ export function DraftCard({ draft, onDelete, viewMode = 'grid', campaignName }: 
             variant="ghost"
             size="sm"
             onClick={handleCopy}
-            className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+            className="h-8 w-8 p-0 hover:bg-slate-100 hover:text-slate-700"
           >
             <Copy className="h-4 w-4" />
           </Button>

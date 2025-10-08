@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Chrome, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { PageTransition } from "@/components/PageTransition";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -66,7 +67,8 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-6 py-12">
+      <PageTransition>
+        <div className="flex min-h-screen items-center justify-center px-6 py-12">
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="mx-auto mb-4 inline-flex rounded-full bg-primary/10 p-4">
             <Mail className="h-8 w-8 text-primary" />
@@ -85,11 +87,13 @@ export default function SignupPage() {
           </Link>
         </div>
       </div>
+      </PageTransition>
     );
   }
 
   return (
-    <div className="flex min-h-screen">
+    <PageTransition>
+      <div className="flex min-h-screen">
       {/* Left side - Form */}
       <div className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2">
         <div className="w-full max-w-md space-y-8">
@@ -252,5 +256,6 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

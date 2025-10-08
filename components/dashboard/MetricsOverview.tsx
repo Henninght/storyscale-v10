@@ -5,6 +5,7 @@ import { FileText, CheckCircle2, Clock, Megaphone, TrendingUp, Archive } from "l
 import { MetricsCard } from './MetricsCard';
 import { getFirestore, collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { usePathname } from 'next/navigation';
 import type { SubscriptionTier } from '@/types';
 
 interface MetricsData {
@@ -20,6 +21,7 @@ interface MetricsData {
 
 export function MetricsOverview() {
   const { user, loading: authLoading } = useAuth();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<MetricsData>({
     postsUsedThisMonth: 0,
@@ -114,10 +116,50 @@ export function MetricsOverview() {
     fetchMetrics();
   }, [user, authLoading]);
 
+  // Refresh metrics when navigating back to dashboard
+  useEffect(() => {
+    if (pathname === '/app/dashboard' && user && !loading) {
+      const refreshMetrics = async () => {
+        try {
+          const db = getFirestore();
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const tier: SubscriptionTier = userData.subscription?.tier || 'free';
+            const postsUsed = userData.postsUsedThisMonth || 0;
+
+            let postsLimit: number | string = 5;
+            if (tier === 'trial' || tier === 'pro') {
+              postsLimit = 50;
+            } else if (tier === 'enterprise') {
+              postsLimit = '∞';
+            }
+
+            const postsRemaining = typeof postsLimit === 'number' ? postsLimit - postsUsed : Infinity;
+
+            setSubscriptionTier(tier);
+            setMetrics(prev => ({
+              ...prev,
+              postsUsedThisMonth: postsUsed,
+              postsRemaining: typeof postsRemaining === 'number' ? postsRemaining : 0,
+              postsLimit,
+            }));
+          }
+        } catch (error) {
+          console.error('Error refreshing metrics:', error);
+        }
+      };
+
+      refreshMetrics();
+    }
+  }, [pathname, user, loading]);
+
   if (loading) {
     return (
-      <div className="rounded-2xl border border-secondary/10 bg-white p-12 text-center">
-        <p className="text-secondary/60">Loading metrics...</p>
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+        <p className="text-slate-600">Loading metrics...</p>
       </div>
     );
   }
@@ -136,7 +178,7 @@ export function MetricsOverview() {
   };
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <MetricsCard
         title="Posts Remaining"
         value={metrics.postsLimit === '∞' ? '∞' : metrics.postsRemaining.toString()}
