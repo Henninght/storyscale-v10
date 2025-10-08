@@ -6,8 +6,9 @@ import { DraftCard } from "@/components/DraftCard";
 import { ActiveCampaignWidget } from "@/components/ActiveCampaignWidget";
 import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { Campaign } from '@/types';
+import { PageTransition } from '@/components/PageTransition';
 
 type DraftStatus = 'idea' | 'in_progress' | 'ready_to_post' | 'posted' | 'archived';
 type Language = 'en' | 'no';
@@ -24,6 +25,7 @@ interface Draft {
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [statusFilter, setStatusFilter] = useState<DraftStatus | 'all'>('all');
   const [languageFilter, setLanguageFilter] = useState<Language | 'all'>('all');
@@ -40,8 +42,9 @@ export default function DashboardPage() {
   });
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [campaignMap, setCampaignMap] = useState<Map<string, string>>(new Map());
+  const [isCampaignCollapsed, setIsCampaignCollapsed] = useState(true);
 
-  // Fetch drafts
+  // Fetch drafts and subscription
   useEffect(() => {
     const fetchDrafts = async () => {
       // Wait for auth to initialize
@@ -57,17 +60,23 @@ export default function DashboardPage() {
 
         const db = getFirestore();
 
-        // Fetch user subscription and stats
+        // Fetch user subscription and stats (always get fresh data)
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setSubscription(userData.subscription || { tier: 'free' });
+
+          // Always update subscription state with fresh data from Firestore
+          const currentSubscription = userData.subscription || { tier: 'free' };
+          setSubscription(currentSubscription);
 
           // Update stats with actual postsUsedThisMonth from user doc
           const postsUsed = userData.postsUsedThisMonth || 0;
           setStats(prev => ({ ...prev, postsThisMonth: postsUsed }));
+        } else {
+          // If no user doc exists yet, ensure we have default subscription
+          setSubscription({ tier: 'free' });
         }
 
         // Fetch drafts
@@ -142,6 +151,33 @@ export default function DashboardPage() {
     fetchDrafts();
   }, [user, authLoading]);
 
+  // Refresh data when navigating to this page
+  useEffect(() => {
+    if (pathname === '/app' && user && !loading) {
+      // Refetch subscription data when landing on dashboard
+      const refreshSubscription = async () => {
+        try {
+          const db = getFirestore();
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const currentSubscription = userData.subscription || { tier: 'free' };
+            setSubscription(currentSubscription);
+
+            const postsUsed = userData.postsUsedThisMonth || 0;
+            setStats(prev => ({ ...prev, postsThisMonth: postsUsed }));
+          }
+        } catch (error) {
+          console.error('Error refreshing subscription:', error);
+        }
+      };
+
+      refreshSubscription();
+    }
+  }, [pathname, user, loading]);
+
   const handleDelete = async (id: string) => {
     // Refresh drafts after delete
     const db = getFirestore();
@@ -203,48 +239,43 @@ export default function DashboardPage() {
     });
 
   return (
-    <div className="space-y-8">
+    <PageTransition>
+      <div className="space-y-4">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-secondary">Workspace</h1>
-        <p className="mt-2 text-secondary/80">
+        <h1 className="text-3xl font-bold text-slate-800">Workspace</h1>
+        <p className="mt-1 text-slate-600">
           Welcome back! Here&apos;s an overview of your content.
         </p>
       </div>
 
       {/* Active Campaign Widget or Stats Cards */}
       {campaigns.length > 0 ? (
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Active Campaign Widget - Takes 2 columns */}
-          <div className="lg:col-span-2">
+        <div className="flex gap-3">
+          {/* Active Campaign Widget */}
+          <div className="flex-1">
             <ActiveCampaignWidget
               campaign={campaigns[0]}
               onPause={() => handlePauseCampaign(campaigns[0].id)}
+              isCollapsed={isCampaignCollapsed}
+              onToggleCollapse={() => setIsCampaignCollapsed(!isCampaignCollapsed)}
             />
           </div>
 
-          {/* Alternative Path Card */}
-          <div className="rounded-2xl border border-secondary/10 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="rounded-lg bg-secondary/10 p-2">
-                <Plus className="h-5 w-5 text-secondary" />
-              </div>
-              <h3 className="text-lg font-semibold text-secondary">Create Single Post</h3>
+          {/* Create Single Post Button */}
+          <button
+            onClick={() => router.push('/app/create')}
+            className="rounded-2xl border-2 border-orange-200 bg-white px-6 py-4 shadow-sm transition-all hover:border-orange-300 hover:bg-orange-50/30 flex items-center gap-3 whitespace-nowrap"
+          >
+            <div className="rounded-lg bg-orange-100 p-2">
+              <Plus className="h-5 w-5 text-orange-600" />
             </div>
-            <p className="mb-4 text-sm text-secondary/70">
-              Not part of a campaign? Create a standalone post instead.
-            </p>
-            <button
-              onClick={() => router.push('/app/create')}
-              className="w-full rounded-lg border-2 border-primary bg-white px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary hover:text-white"
-            >
-              Create Standalone Post
-            </button>
-          </div>
+            <span className="text-sm font-semibold text-slate-700">Create Single Post</span>
+          </button>
         </div>
       ) : (
         /* Stats Cards - Show when no active campaign */
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Posts This Month"
             value={`${stats.postsThisMonth} / ${subscription.tier === 'trial' || subscription.tier === 'pro' ? '50' : subscription.tier === 'enterprise' ? '∞' : '5'}`}
@@ -274,16 +305,16 @@ export default function DashboardPage() {
 
       {/* Recent Drafts Section */}
       <div>
-        <div className="mb-6 space-y-4">
+        <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-secondary">Recent Drafts</h2>
+            <h2 className="text-2xl font-semibold text-slate-800">Recent Drafts</h2>
             <div className="flex gap-2">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                   viewMode === 'grid'
-                    ? 'border-primary bg-primary text-white'
-                    : 'border-secondary/20 text-secondary hover:bg-secondary/5'
+                    ? 'border-orange-700 bg-orange-700 text-white'
+                    : 'border-slate-300 text-slate-700 hover:bg-slate-100'
                 }`}
               >
                 <Grid3x3 className="h-4 w-4" />
@@ -292,8 +323,8 @@ export default function DashboardPage() {
                 onClick={() => setViewMode('list')}
                 className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                   viewMode === 'list'
-                    ? 'border-primary bg-primary text-white'
-                    : 'border-secondary/20 text-secondary hover:bg-secondary/5'
+                    ? 'border-orange-700 bg-orange-700 text-white'
+                    : 'border-slate-300 text-slate-700 hover:bg-slate-100'
                 }`}
               >
                 <List className="h-4 w-4" />
@@ -302,13 +333,13 @@ export default function DashboardPage() {
           </div>
 
           {/* Filters and Sort */}
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-secondary">Type:</label>
+              <label className="text-sm font-medium text-slate-700">Type:</label>
               <select
                 value={campaignFilter}
                 onChange={(e) => setCampaignFilter(e.target.value as 'all' | 'campaign' | 'single')}
-                className="rounded-lg border border-secondary/20 px-3 py-1.5 text-sm text-secondary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
               >
                 <option value="all">All Posts</option>
                 <option value="campaign">Campaign Posts</option>
@@ -317,11 +348,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-secondary">Status:</label>
+              <label className="text-sm font-medium text-slate-700">Status:</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as DraftStatus | 'all')}
-                className="rounded-lg border border-secondary/20 px-3 py-1.5 text-sm text-secondary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
               >
                 <option value="all">All</option>
                 <option value="idea">Idea</option>
@@ -333,11 +364,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-secondary">Language:</label>
+              <label className="text-sm font-medium text-slate-700">Language:</label>
               <select
                 value={languageFilter}
                 onChange={(e) => setLanguageFilter(e.target.value as Language | 'all')}
-                className="rounded-lg border border-secondary/20 px-3 py-1.5 text-sm text-secondary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
               >
                 <option value="all">All</option>
                 <option value="en">English</option>
@@ -346,11 +377,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-secondary">Sort by:</label>
+              <label className="text-sm font-medium text-slate-700">Sort by:</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'date' | 'status')}
-                className="rounded-lg border border-secondary/20 px-3 py-1.5 text-sm text-secondary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
               >
                 <option value="date">Date Created</option>
                 <option value="status">Status</option>
@@ -361,24 +392,24 @@ export default function DashboardPage() {
 
         {/* Drafts Grid/List */}
         {loading ? (
-          <div className="rounded-2xl border border-secondary/10 bg-white p-12 text-center">
-            <p className="text-secondary/60">Loading drafts...</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+            <p className="text-slate-600">Loading drafts...</p>
           </div>
         ) : filteredDrafts.length === 0 ? (
           /* Empty State */
-          <div className="rounded-2xl border border-secondary/10 bg-white p-12 text-center">
-            <div className="mx-auto mb-4 inline-flex rounded-full bg-primary/10 p-4">
-              <FileText className="h-8 w-8 text-primary" />
+          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+            <div className="mx-auto mb-4 inline-flex rounded-full bg-orange-100 p-4">
+              <FileText className="h-8 w-8 text-orange-600" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-secondary">
+            <h3 className="mb-2 text-xl font-semibold text-slate-800">
               No drafts yet
             </h3>
-            <p className="mb-6 text-secondary/80">
+            <p className="mb-6 text-slate-600">
               Start creating your first LinkedIn post with AI
             </p>
             <a
               href="/app/create"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-white transition-all hover:bg-primary-hover"
+              className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-6 py-3 font-semibold text-white transition-all hover:bg-orange-800 hover:scale-[1.02]"
             >
               <FileText className="h-5 w-5" />
               Create New Post
@@ -388,8 +419,8 @@ export default function DashboardPage() {
           <div
             className={
               viewMode === 'grid'
-                ? 'grid gap-6 sm:grid-cols-2 lg:grid-cols-3'
-                : 'flex flex-col gap-4'
+                ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                : 'flex flex-col gap-3'
             }
           >
             {filteredDrafts.map((draft) => (
@@ -405,6 +436,7 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+    </PageTransition>
   );
 }
 
@@ -416,16 +448,27 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, icon: Icon, description }: StatCardProps) {
+  // Color-coded icon backgrounds based on title
+  const getIconColor = () => {
+    if (title.includes('Posts')) return { bg: 'bg-orange-100', text: 'text-orange-600' };
+    if (title.includes('Drafts')) return { bg: 'bg-blue-100', text: 'text-blue-600' };
+    if (title.includes('Ready')) return { bg: 'bg-green-100', text: 'text-green-600' };
+    if (title.includes('Campaigns')) return { bg: 'bg-purple-100', text: 'text-purple-600' };
+    return { bg: 'bg-slate-100', text: 'text-slate-600' };
+  };
+
+  const iconColor = getIconColor();
+
   return (
-    <div className="rounded-2xl border border-secondary/10 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-secondary/80">{title}</h3>
-        <div className="rounded-lg bg-primary/10 p-2">
-          <Icon className="h-5 w-5 text-primary" />
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover-lift">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-medium text-slate-600">{title}</h3>
+        <div className={`rounded-lg ${iconColor.bg} p-2`}>
+          <Icon className={`h-5 w-5 ${iconColor.text}`} />
         </div>
       </div>
-      <div className="mb-1 text-3xl font-bold text-secondary">{value}</div>
-      <p className="text-sm text-secondary/60">{description}</p>
+      <div className="mb-1 text-3xl font-bold text-slate-800">{value}</div>
+      <p className="text-sm text-slate-600">{description}</p>
     </div>
   );
 }

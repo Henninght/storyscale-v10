@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Megaphone, Calendar, Lightbulb, Play, Eye, Pause } from 'lucide-react';
+import { Megaphone, Calendar, Lightbulb, Play, Eye, Pause, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format, addDays } from 'date-fns';
 
@@ -23,9 +23,11 @@ interface ActiveCampaignWidgetProps {
     };
   };
   onPause?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function ActiveCampaignWidget({ campaign, onPause }: ActiveCampaignWidgetProps) {
+export function ActiveCampaignWidget({ campaign, onPause, isCollapsed = false, onToggleCollapse }: ActiveCampaignWidgetProps) {
   const router = useRouter();
 
   const progress = (campaign.postsGenerated / campaign.targetPostCount) * 100;
@@ -56,43 +58,81 @@ export function ActiveCampaignWidget({ campaign, onPause }: ActiveCampaignWidget
     router.push(`/app/campaigns/${campaign.id}`);
   };
 
-  return (
-    <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6 shadow-sm">
-      {/* Header */}
-      <div className="mb-4 flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/20 p-2">
-            <Megaphone className="h-5 w-5 text-primary" />
+  // Collapsed view
+  if (isCollapsed) {
+    return (
+      <div
+        className="rounded-2xl border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm hover:border-blue-200 transition-all cursor-pointer"
+        onClick={onToggleCollapse}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-blue-100 p-2">
+              <Megaphone className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-700">Active Campaign</h3>
+              <p className="text-sm text-slate-600">{campaign.name}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-secondary">Active Campaign</h3>
-            <p className="text-sm text-secondary/60">{campaign.name}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">
+              {campaign.postsGenerated} / {campaign.targetPostCount}
+            </span>
+            <ChevronDown className="h-5 w-5 text-slate-600" />
           </div>
         </div>
-        {!isComplete && (
+      </div>
+    );
+  }
+
+  // Expanded view
+  return (
+    <div className="rounded-2xl border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm hover-lift-sm">
+      {/* Header */}
+      <div className="mb-2.5 flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-blue-100 p-2">
+            <Megaphone className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-700">Active Campaign</h3>
+            <p className="text-sm text-slate-600">{campaign.name}</p>
+          </div>
+        </div>
+        <div className="flex gap-1">
+          {!isComplete && (
+            <Button
+              onClick={onPause}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <Pause className="h-4 w-4" />
+              Pause
+            </Button>
+          )}
           <Button
-            onClick={onPause}
+            onClick={onToggleCollapse}
             variant="ghost"
             size="sm"
-            className="gap-2 hover:bg-primary/10"
           >
-            <Pause className="h-4 w-4" />
-            Pause
+            <ChevronUp className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-4">
+      <div className="mb-2.5">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-secondary">Progress</span>
-          <span className="text-secondary/60">
+          <span className="font-medium text-slate-700">Progress</span>
+          <span className="text-slate-600">
             {campaign.postsGenerated} / {campaign.targetPostCount} posts
           </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-secondary/10">
+        <div className="h-2 w-full rounded-full bg-slate-200">
           <div
-            className="h-2 rounded-full bg-primary transition-all"
+            className="h-2 rounded-full bg-orange-700 transition-all"
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
@@ -118,24 +158,28 @@ export function ActiveCampaignWidget({ campaign, onPause }: ActiveCampaignWidget
       ) : (
         <>
           {/* Next Post Info */}
-          <div className="mb-4 space-y-3">
+          <div className="mb-2.5 space-y-2">
             {/* Next Post Due Date */}
-            <div className="flex items-start gap-3 rounded-lg bg-white/50 p-3">
-              <Calendar className="h-5 w-5 text-primary" />
+            <div className="flex items-start gap-3 rounded-lg bg-blue-50/50 p-3">
+              <div className="rounded bg-blue-100 p-1">
+                <Calendar className="h-4 w-4 text-blue-600" />
+              </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-secondary">Next Post Due</p>
-                <p className="text-xs text-secondary/60">
+                <p className="text-sm font-medium text-slate-700">Next Post Due</p>
+                <p className="text-xs text-slate-600">
                   {format(nextDueDate, 'EEEE, MMMM d, yyyy')}
                 </p>
               </div>
             </div>
 
             {/* AI-Suggested Topic */}
-            <div className="flex items-start gap-3 rounded-lg bg-white/50 p-3">
-              <Lightbulb className="h-5 w-5 text-amber-500" />
+            <div className="flex items-start gap-3 rounded-lg bg-blue-50/50 p-3">
+              <div className="rounded bg-amber-100 p-1">
+                <Lightbulb className="h-4 w-4 text-amber-600" />
+              </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-secondary">Suggested Topic</p>
-                <p className="text-xs text-secondary/80">{nextPostTopic}</p>
+                <p className="text-sm font-medium text-slate-700">Suggested Topic</p>
+                <p className="text-xs text-slate-700">{nextPostTopic}</p>
               </div>
             </div>
           </div>
@@ -144,15 +188,15 @@ export function ActiveCampaignWidget({ campaign, onPause }: ActiveCampaignWidget
           <div className="flex gap-2">
             <Button
               onClick={handleGeneratePost}
-              className="flex-1 gap-2 bg-primary hover:bg-primary-hover"
+              className="flex-1 gap-2"
             >
               <Play className="h-4 w-4" />
               Generate Post {nextPostNumber}
             </Button>
             <Button
               onClick={handleViewCampaign}
-              variant="outline"
-              className="gap-2 hover:bg-primary/10"
+              variant="secondary"
+              className="gap-2"
             >
               <Eye className="h-4 w-4" />
               View
