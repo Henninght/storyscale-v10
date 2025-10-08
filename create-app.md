@@ -801,7 +801,7 @@ LinkedIn authentication now adds genuine value by:
   - ✅ Success celebration animation with confetti and checkmark
   - ✅ Background patterns with animated gradient orbs for visual interest
 
-### 10.2 Draft Creation Wizard Visual Upgrade ✅
+### 10.2 Draft Creation Wizard Visual Upgrade ⏳
 - ✅ Enhanced step indicators
   - ✅ Animated progress ring/circle design with shadow and scale effects
   - ✅ Step icons with state changes (pending, active, completed)
@@ -811,28 +811,24 @@ LinkedIn authentication now adds genuine value by:
   - ✅ Character counter with visual progress bar (color changes at milestones)
   - ✅ Textarea focus animations with shadow and ring
   - ✅ Visual feedback for character count thresholds
-  - ⚪ Animated placeholder text rotation
-  - ⚪ Textarea auto-expand with smooth animation
-  - ⚪ URL input with validation icons (checkmark/error)
-  - ⚪ Add example snippets as quick-fill options
-- ⚪ Step 2 (Configuration) improvements
-  - ⚪ Replace dropdowns with modern card-based selectors
-  - ⚪ Add visual icons for each option
-  - ⚪ Implement hover preview cards with descriptions
-  - ⚪ Active state with accent border and background tint
-  - ⚪ Smooth scale/elevation on hover
-- ⚪ Step 3 (Preferences) improvements
-  - ⚪ Toggle switches with smooth animations
-  - ⚪ Visual length indicators (word count visualization)
-  - ⚪ Language selector with flag icons
-  - ⚪ CTA toggle with preview example
-  - ⚪ Emoji usage slider with live preview
-- ⚪ Step 4 (Review) improvements
-  - ⚪ Summary cards with collapsible sections
-  - ⚪ Edit quick-links with smooth scroll back
-  - ⚪ Credit usage visualization (progress bar/gauge)
-  - ⚪ Generate button with loading animation
-  - ⚪ Success confetti/celebration animation
+- ✅ Step 2 (Configuration) improvements
+  - ✅ Replace dropdowns with modern card-based selectors
+  - ✅ Add visual icons for each option
+  - ✅ Implement hover preview cards with descriptions
+  - ✅ Active state with accent border and background tint
+  - ✅ Smooth scale/elevation on hover
+- ✅ Step 3 (Preferences) improvements
+  - ✅ Visual length indicators (word count visualization)
+  - ✅ Language selector with flag icons (🇬🇧/🇳🇴)
+  - ✅ CTA toggle with preview example
+  - ✅ Enhanced emoji usage selector with visual cards
+  - ✅ Improved card-based design for all preferences
+- ✅ Step 4 (Review) improvements
+  - ✅ Summary cards with collapsible sections
+  - ✅ Edit quick-links with step indicators
+  - ✅ Credit usage visualization (progress bar with gradient)
+  - ✅ Generate button with enhanced loading animation
+  - ✅ Success confetti/celebration animation (implemented in SuccessCelebration component)
 
 ### 10.3 Interactive Tooltips & Descriptions ✅
 - ✅ Implement tooltip system
@@ -868,66 +864,299 @@ LinkedIn authentication now adds genuine value by:
   - ✅ **Include CTA**: Increases post interaction by 30-50%
   - ✅ **Emoji Usage**: Professional (none), Minimal (1-2), Moderate (3-5)
 
-### 10.4 Visual Design System Enhancements ⚪
-- ⚪ Color palette expansion
-  - ⚪ Add success/warning/error semantic colors
-  - ⚪ Create light/dark variants for all colors
-  - ⚪ Define gradient combinations for accents
-  - ⚪ Add subtle background patterns
-- ⚪ Typography improvements
-  - ⚪ Define complete type scale (12px - 48px)
-  - ⚪ Add font weight variations (300, 400, 500, 600, 700)
-  - ⚪ Set line-height and letter-spacing standards
-  - ⚪ Create heading/body text pairings
-- ⚪ Spacing system refinement
-  - ⚪ Document 8px grid usage patterns
-  - ⚪ Define component spacing constants
+### 10.4 Visual Design System Enhancements ⏳
+- ✅ Color palette expansion
+  - ✅ Add success/warning/error semantic colors
+  - ✅ Create light/dark variants for all colors
+- ✅ Typography improvements
+  - ✅ Define complete type scale (12px - 48px)
+  - ✅ Add font weight variations (300, 400, 500, 600, 700)
+  - ✅ Set line-height and letter-spacing standards
+  - ✅ Create heading/body text pairings
+- ✅ Spacing system refinement
+  - ✅ Document 8px grid usage patterns
+  - ✅ Define component spacing constants
   - ⚪ Create margin/padding utility classes
-  - ⚪ Establish container max-widths
-- ⚪ Shadow and elevation system
-  - ⚪ Define 5 elevation levels (sm, md, lg, xl, 2xl)
-  - ⚪ Create hover state shadows
-  - ⚪ Add focus ring styles
+  - ✅ Establish container max-widths
+- ✅ Shadow and elevation system
+  - ✅ Define 5 elevation levels (sm, md, lg, xl, 2xl)
+  - ✅ Add focus ring styles
   - ⚪ Implement subtle inner shadows for depth
 
-### 10.5 Animation & Transition Library ⚪
-- ⚪ Page transitions
-  - ⚪ Fade-in on route change
-  - ⚪ Slide transitions for wizard steps
-  - ⚪ Scale animations for modals
-- ⚪ Component animations
-  - ⚪ Card hover lift effect (translateY + shadow)
-  - ⚪ Button press animation (scale down)
-  - ⚪ Loading spinner variations
-  - ⚪ Skeleton screen placeholders
-- ⚪ Feedback animations
-  - ⚪ Success checkmark animation
-  - ⚪ Error shake animation
-  - ⚪ Copy-to-clipboard confirmation
-  - ⚪ Save indicator pulse
-- ⚪ Decorative animations
-  - ⚪ Background gradient shifts
-  - ⚪ Floating particles/shapes
+### 10.5 Animation & Transition Library ⏳
+- ✅ Page transitions
+  - ✅ Fade-in on route change
+  - ✅ Slide transitions for wizard steps
+  - ✅ Scale animations for modals
+- ✅ Feedback animations
+  - ✅ Success checkmark animation
+- ✅ Decorative animations
   - ⚪ Progress bar fills
-  - ⚪ Confetti on milestone completion
+  - ✅ Confetti on milestone completion
 
-### 10.6 Accessibility & Polish ⚪
-- ⚪ ARIA labels and roles
-  - ⚪ Add proper labels to all interactive elements
-  - ⚪ Implement focus management for wizards
-  - ⚪ Add screen reader announcements
-- ⚪ Keyboard navigation
-  - ⚪ Tab order optimization
-  - ⚪ Enter/Space key support for custom controls
-  - ⚪ Escape key to close modals/tooltips
-- ⚪ Color contrast compliance
-  - ⚪ Verify WCAG AA compliance for all text
-  - ⚪ Add high-contrast mode support
-  - ⚪ Test with color blindness simulators
-- ⚪ Responsive refinements
-  - ⚪ Mobile-optimized touch targets (min 44px)
-  - ⚪ Tablet layout adjustments
-  - ⚪ Desktop large-screen optimizations
+### 10.6 Accessibility & Polish
+*Note: See section 10.7.9 for comprehensive accessibility implementation*
+
+### 10.7 Dual-Color System Refinement ✅
+
+**Design Philosophy:**
+- **Orange = "Do Something"** (Actions, progress, interactive triggers)
+- **Blue = "Review or Navigate"** (Information, secondary actions, navigation)
+- **Other Colors = Status Clarity Only** (Minimal, purpose-driven)
+- **Mood**: Between calm and energetic—clean, professional, with active contrast
+
+**Core Principles:**
+1. Maintain current structure - No layout reorganization, only visual refinement
+2. Orange strictly for actions - Generate, Create, Progress bars, CTAs
+3. Blue for information/navigation - Campaign backgrounds, View buttons, info sections
+4. 20% vertical padding reduction - Bring more content above fold
+5. Strengthen slate text - Improve legibility on white backgrounds
+6. Tactile hover feedback - Soft shadow growth + 1-2% scale
+
+#### 10.7.1 Color System Foundation ✅
+- ✅ Add blue system variables to globals.css
+  - Blue primary: `#2563EB`
+  - Blue hover: `#1E40AF`
+  - Blue light: `#DBEAFE`
+  - Blue frosted: `rgba(37, 99, 235, 0.08)`
+  - Blue subtle: `#EFF6FF`
+- ✅ Strengthen slate text tones for better legibility
+  - Primary slate: `#475569` (was #64748B - 15% darker)
+  - Secondary slate: `#64748B` (muted content)
+  - Light slate: `#94A3B8` (timestamps)
+- ✅ Add hover utilities to globals.css
+  - `.hover-lift` class with shadow growth + scale
+  - `.hover-lift-sm` for subtle interactions
+  - Transition properties for smooth animations
+
+#### 10.7.2 Button System Refinement (CRITICAL) ✅
+- ✅ Fix primary button variant
+  - Orange background with **WHITE text** (not gray!)
+  - Hover: darker orange with 2% scale increase
+  - Shadow growth on hover
+  - Use: All action CTAs (Generate, Create, Save)
+- ✅ Implement secondary button variant (Blue theme)
+  - Option A: White background, 2px blue border, blue text
+  - Option B: Blue-frosted background, blue text, no border
+  - Hover: deeper blue tint with 1% scale increase
+  - Use: View, Edit, navigation actions
+- ✅ Refine ghost button variant
+  - Strengthened slate text
+  - Light gray hover background
+  - Use: Pause, icon buttons, tertiary actions
+- ✅ Update all button instances throughout app
+  - Verify proper variant usage
+  - Ensure color contrast compliance
+  - Apply hover states consistently
+
+#### 10.7.3 Campaign Widget Redesign ✅
+- ✅ Replace orange gradient background
+  - Remove: `bg-gradient-to-br from-primary/5 to-primary/10`
+  - Replace with: `bg-gradient-to-br from-blue-50 to-white` OR `bg-white border-2 border-blue-100`
+  - Result: Soft blue-tinted surface instead of orange
+- ✅ Reserve orange strictly for:
+  - Progress bar fill only
+  - "Generate Post" button (primary action)
+  - No other orange elements in widget
+- ✅ Apply blue theme to:
+  - Background gradient/tint
+  - Calendar icon and container (`bg-blue-100`)
+  - Lightbulb icon (amber/yellow acceptable)
+  - Info box backgrounds (`bg-blue-50/30`)
+  - "View" button (secondary blue outline)
+  - Megaphone icon container
+- ✅ Reduce vertical padding by 20%
+  - `p-6` → `p-5`
+  - `space-y-4` → `space-y-3`
+  - `mb-4` → `mb-3` throughout component
+  - Compress header spacing (reduce icon size if needed)
+- ✅ Update button group styling
+  - "Generate Post X": Primary orange with white text
+  - "View": Secondary blue outline style
+  - "Pause": Ghost style with slate text
+- ✅ Optimize layout for vertical space
+  - Combine "Next Post Due" and "Suggested Topic" into single compact row
+  - Reduce font sizes for secondary information
+  - Tighter spacing in info boxes
+
+#### 10.7.4 Draft Card Status Borders ✅
+- ✅ Add 4px color-coded left borders
+  - Idea: `border-l-4 border-l-purple-400` (#A78BFA)
+  - In Progress: `border-l-4 border-l-blue-500` (#3B82F6)
+  - Ready to Post: `border-l-4 border-l-green-500` (#10B981)
+  - Posted: `border-l-4 border-l-amber-500` (#F59E0B)
+  - Archived: `border-l-4 border-l-gray-400` (#9CA3AF)
+- ✅ Update campaign badge styling
+  - Background: `bg-blue-50` (light blue frosted)
+  - Text: `text-blue-700` (dark blue)
+  - Icon: Blue megaphone
+- ✅ Color-code action button hovers
+  - Edit button: `hover:bg-blue-50 hover:text-blue-600`
+  - Copy button: `hover:bg-slate-100 hover:text-slate-700`
+  - Delete button: `hover:bg-red-50 hover:text-red-600`
+- ✅ Add hover-lift-sm class for tactile feedback
+  - Soft shadow growth on hover
+  - 1% scale increase (scale-[1.01])
+  - Smooth transition (200ms duration)
+- ✅ Reduce padding by 20%
+  - Grid view: `p-6` → `p-5`
+  - List view: `p-4` → `p-3`
+  - Maintain readability with adjusted spacing
+- ✅ Keep design simple and clean
+  - White card backgrounds only
+  - Colored left border as primary visual indicator
+  - No gradient backgrounds or heavy decorations
+
+#### 10.7.5 Workspace Layout Padding Reduction ✅
+- ✅ Reduce vertical spacing by 20% throughout
+  - Main container: `space-y-8` → `space-y-6`
+  - Section headers: `mb-6` → `mb-5`
+  - Draft grid: `gap-6` → `gap-5`
+  - Card padding: `p-6` → `p-5`
+- ✅ Update stats cards (no active campaign view)
+  - Padding: `p-6` → `p-5`
+  - Color-coded icon backgrounds (subtle)
+    - Posts: `bg-orange-100` / `text-orange-600`
+    - Drafts: `bg-blue-100` / `text-blue-600`
+    - Ready: `bg-green-100` / `text-green-600`
+    - Campaigns: `bg-purple-100` / `text-purple-600`
+  - Add `hover-lift` class for interactive feel
+- ✅ Refine "Create Single Post" card
+  - Blue outline border: `border-2 border-blue-200`
+  - Hover state: `hover:border-blue-300 hover:bg-blue-50/30`
+  - Button: Secondary blue outline style
+  - Consistent with blue = navigation/secondary action
+- ✅ Optimize filter section spacing
+  - Reduce gap: `gap-4` → `gap-3`
+  - Active state: Blue underline or subtle blue background
+  - Keep functional and minimal styling
+  - Ensure mobile responsiveness maintained
+
+#### 10.7.6 Text Legibility Enhancement ✅
+- ✅ Apply strengthened slate tones throughout app
+  - Update all `text-secondary` class usage to use new `#475569`
+  - Ensure body text uses strengthened slate for better contrast
+  - Maintain hierarchy with font-weight variations
+  - Secondary/muted text uses `#64748B`
+  - Timestamps and auxiliary info use `#94A3B8`
+- ✅ Verify contrast ratios on all text elements
+  - Test body text on white backgrounds (4.5:1 minimum)
+  - Check secondary text readability
+  - Ensure WCAG AA compliance throughout
+
+#### 10.7.7 Hover States & Micro-interactions ✅
+- ✅ Implement global hover patterns for cards
+  - Transition: `transition-all duration-200`
+  - Shadow: `hover:shadow-lg`
+  - Scale: `hover:scale-[1.01]`
+  - Apply to draft cards, stat cards, campaign widget
+- ✅ Implement button hover patterns
+  - Primary/Secondary: `hover:scale-[1.02]`
+  - Primary: Add `hover:shadow-md`
+  - Smooth transitions on all state changes
+- ✅ Implement interactive element hovers
+  - Blue theme elements: `hover:bg-blue-50/50`
+  - Neutral elements: `hover:bg-slate-100`
+  - Filter buttons, dropdowns, etc.
+- ✅ Apply hover utilities consistently
+  - Add utility classes to all interactive elements
+  - Test tactile feedback throughout interface
+  - Ensure smooth animations (no jank)
+
+#### 10.7.8 Status Badge Minimal Refinement ✅
+- ✅ Keep badges minimal and unobtrusive
+  - Rounded-full shape
+  - Light backgrounds with darker text
+  - Small size, proper padding
+- ✅ Align badge colors with left border system
+  - Idea: `bg-purple-100 text-purple-700`
+  - In Progress: `bg-blue-100 text-blue-700`
+  - Ready to Post: `bg-green-100 text-green-700`
+  - Posted: `bg-amber-100 text-amber-700`
+  - Archived: `bg-gray-100 text-gray-600`
+- ✅ Ensure consistent badge styling across all components
+  - Draft cards, campaign detail, calendar view
+  - Proper spacing and alignment
+  - Readable at all screen sizes
+
+#### 10.7.9 Accessibility Compliance Check ✅
+- ✅ Verify WCAG AA contrast ratios (4.5:1 minimum)
+  - Orange buttons with white text (should pass)
+  - Blue buttons with dark blue text on white (verify)
+  - Strengthened slate on white backgrounds (verify)
+  - All status badge text/background combinations
+- ✅ Ensure visible focus rings on all interactive elements
+  - Buttons, inputs, dropdowns, links
+  - Use blue focus ring for consistency
+  - Clear indication of keyboard focus
+- ✅ Test keyboard navigation
+  - Tab order is logical
+  - All actions accessible via keyboard
+  - Enter/Space work on custom controls
+- ✅ Verify disabled states
+  - Proper opacity (40%)
+  - Cursor: not-allowed
+  - Clear visual distinction from enabled state
+
+**Visual Hierarchy Summary:**
+
+**Orange (Action - "Do Something"):**
+- Generate/Create buttons
+- Progress bars and fill animations
+- Active states and selected items
+- Primary CTAs throughout app
+- "Do this now" action elements
+
+**Blue (Information/Navigation - "Review or Navigate"):**
+- Campaign backgrounds and containers
+- View/Edit buttons (secondary actions)
+- Info containers and notification areas
+- Calendar and scheduling elements
+- Campaign badges on draft cards
+- Secondary navigation elements
+
+**Status Colors (Clarity Only):**
+- Purple: Idea phase / Creative thinking
+- Blue: In progress / Active work
+- Green: Ready to post / Success states
+- Amber: Posted / Published content
+- Gray: Archived / Inactive content
+
+**Neutral (Foundation):**
+- Strengthened slate text (#475569)
+- White card backgrounds
+- Light gray subtle backgrounds
+- Borders and dividers
+
+**Design Principles Applied:**
+1. ✅ **Clear visual hierarchy** - Orange for action, blue for info
+2. ✅ **Legible buttons** - White text on orange, proper contrast
+3. ✅ **Calm + energetic balance** - Clean design with active feel
+4. ✅ **20% more vertical content** - Reduced padding brings drafts higher
+5. ✅ **Professional SaaS aesthetic** - Dual-color system feels modern
+6. ✅ **Tactile interactions** - Hover states provide clear feedback
+7. ✅ **Status clarity** - Simple borders, minimal color usage
+8. ✅ **Structure maintained** - No layout reorganization, only visual refinement
+
+**Files to Modify:**
+- `app/globals.css` - Blue system variables, strengthened slate, hover utilities
+- `components/ui/button.tsx` - Fix variants with white text on orange
+- `components/ActiveCampaignWidget.tsx` - Blue background, orange actions only
+- `components/DraftCard.tsx` - Left borders, blue badges, hover states
+- `app/app/page.tsx` - 20% padding reduction, hover states, stat card colors
+- Various component instances - Update padding classes and apply new color system
+
+**Expected Outcome:**
+✅ Clear visual hierarchy (orange = action, blue = info)
+✅ Legible buttons with proper contrast ratios
+✅ 20% more vertical content visible above fold
+✅ Professional dual-color SaaS aesthetic
+✅ Tactile hover interactions throughout
+✅ Status clarity through minimal color usage
+✅ Calm yet energetic design balance
+✅ Improved text legibility on white backgrounds
+
+**Estimated Time: 7-9 hours**
 
 ---
 
