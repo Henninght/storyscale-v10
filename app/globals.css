@@ -4,22 +4,97 @@
   --font-heading: "Outfit", sans-serif;
   --font-body: "Inter", sans-serif;
 
+  /* Primary colors (Orange - Action) */
   --color-primary: #f97316;
   --color-primary-hover: #ea580c;
+  --color-primary-light: #fb923c;
+  --color-primary-dark: #c2410c;
 
-  --color-secondary: #64748b;
-  --color-secondary-light: #94a3b8;
-  --color-secondary-dark: #475569;
+  /* Blue system (Information/Navigation) */
+  --color-blue: #2563eb;
+  --color-blue-hover: #1e40af;
+  --color-blue-light: #dbeafe;
+  --color-blue-frosted: rgba(37, 99, 235, 0.08);
+  --color-blue-subtle: #eff6ff;
 
+  /* Secondary colors (Slate text - strengthened) */
+  --color-secondary: #475569;
+  --color-secondary-light: #64748b;
+  --color-secondary-lighter: #94a3b8;
+  --color-secondary-dark: #334155;
+
+  /* Semantic colors */
+  --color-success: #10b981;
+  --color-success-light: #34d399;
+  --color-success-dark: #059669;
+
+  --color-warning: #f59e0b;
+  --color-warning-light: #fbbf24;
+  --color-warning-dark: #d97706;
+
+  --color-error: #ef4444;
+  --color-error-light: #f87171;
+  --color-error-dark: #dc2626;
+
+  --color-info: #3b82f6;
+  --color-info-light: #60a5fa;
+  --color-info-dark: #2563eb;
+
+  /* Background colors */
   --color-background: #f8fafc;
   --color-background-card: #ffffff;
+  --color-background-subtle: #f1f5f9;
 
+  /* Accent colors */
   --color-accent: #f59e0b;
   --color-accent-light: #fcd34d;
 
+  /* Layout dimensions */
   --width-sidebar: 240px;
   --width-sidebar-collapsed: 64px;
   --width-container: 1280px;
+
+  /* Typography scale */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-5xl: 3rem;      /* 48px */
+
+  /* Font weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Spacing scale (8px grid) */
+  --spacing-1: 0.5rem;   /* 8px */
+  --spacing-2: 1rem;     /* 16px */
+  --spacing-3: 1.5rem;   /* 24px */
+  --spacing-4: 2rem;     /* 32px */
+  --spacing-6: 3rem;     /* 48px */
+  --spacing-8: 4rem;     /* 64px */
+  --spacing-12: 6rem;    /* 96px */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(249, 115, 22, 0.2);
 }
 
 @layer base {
@@ -65,6 +140,25 @@
 
   .animation-delay-2000 {
     animation-delay: 2s;
+  }
+
+  /* Hover effects for tactile feedback */
+  .hover-lift {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .hover-lift:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hover-lift-sm {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .hover-lift-sm:hover {
+    transform: scale(1.01);
+    box-shadow: var(--shadow-md);
   }
 }
 
