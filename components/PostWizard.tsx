@@ -372,37 +372,56 @@ export function PostWizard() {
 
       {/* Progress Indicator */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex flex-1 items-center">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold transition-all duration-300 ${
-                  step === currentStep
-                    ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 ring-4 ring-primary/20'
-                    : step < currentStep
-                    ? 'bg-green-500 text-white shadow-md'
-                    : 'bg-slate-200 text-slate-500'
-                }`}
-              >
-                {step < currentStep ? <Check className="h-5 w-5 animate-in zoom-in duration-300" /> : step}
-              </div>
-              {step < 4 && (
-                <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200 mx-2">
-                  <div
-                    className={`h-full transition-all duration-500 ${
-                      step < currentStep ? 'bg-green-500 w-full' : 'w-0'
-                    }`}
-                  />
+            <div key={step} className="flex flex-1 items-center justify-center">
+              <div className="flex items-center w-full">
+                {step > 1 && (
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        step <= currentStep ? 'bg-green-500 w-full' : 'w-0'
+                      }`}
+                    />
+                  </div>
+                )}
+                <div
+                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full font-semibold transition-all duration-300 ${step === 1 ? '' : 'mx-2'} ${
+                    step === currentStep
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 ring-4 ring-primary/20'
+                      : step < currentStep
+                      ? 'bg-green-500 text-white shadow-md'
+                      : 'bg-slate-200 text-slate-500'
+                  }`}
+                >
+                  {step < currentStep ? <Check className="h-5 w-5 animate-in zoom-in duration-300" /> : step}
                 </div>
-              )}
+                {step < 4 && (
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        step < currentStep ? 'bg-green-500 w-full' : 'w-0'
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
-        <div className="mt-4 flex justify-between text-sm font-medium">
-          <span className={`transition-colors duration-200 ${currentStep === 1 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Input</span>
-          <span className={`transition-colors duration-200 ${currentStep === 2 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Configuration</span>
-          <span className={`transition-colors duration-200 ${currentStep === 3 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Preferences</span>
-          <span className={`transition-colors duration-200 ${currentStep === 4 ? 'text-primary font-semibold' : 'text-secondary/60'}`}>Review</span>
+        <div className="mt-4 flex">
+          {[
+            { label: 'Input', step: 1 },
+            { label: 'Configuration', step: 2 },
+            { label: 'Preferences', step: 3 },
+            { label: 'Review', step: 4 },
+          ].map(({ label, step }) => (
+            <div key={step} className="flex-1 text-center">
+              <span className={`text-sm font-medium transition-colors duration-200 ${currentStep === step ? 'text-primary font-semibold' : 'text-secondary/60'}`}>
+                {label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -603,6 +622,52 @@ function Step1({ input, referenceUrls, customInstructions, onUpdate }: Step1Prop
           {charCount < 50 && (
             <p className="mt-1 text-xs text-amber-600">Add at least {50 - charCount} more characters</p>
           )}
+
+          {/* Subtle Custom Instructions Toggle */}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span className="underline decoration-dotted">Add custom instructions</span>
+              <span className="text-xs text-slate-500">(optional)</span>
+              {showAdvanced ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+
+          {/* Expandable Custom Instructions */}
+          {showAdvanced && (
+            <div className="mt-3 rounded-lg border-2 border-blue-100 bg-blue-50/30 p-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="mb-2 flex items-start gap-2">
+                <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+                <div className="flex-1 text-xs text-slate-700">
+                  <p className="mb-1 font-medium">Guide the AI with specific instructions</p>
+                  <p className="text-slate-600">
+                    Examples: "Compare pricing of both products" • "Focus on sustainability metrics from reference 2" • "Use a question-based opening"
+                  </p>
+                </div>
+              </div>
+              <textarea
+                value={customInstructions || ''}
+                onChange={(e) => onUpdate({ customInstructions: e.target.value })}
+                placeholder="Example: Compare features of both tools. Focus on cost savings from reference 1. Use a story-based opening about my client."
+                maxLength={500}
+                className="w-full min-h-[80px] rounded-lg border border-slate-300 p-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
+              />
+              <div className="mt-1.5 flex items-center justify-between text-xs">
+                <span className="text-slate-500">💡 Be specific for better results</span>
+                <span className="font-medium text-slate-600">
+                  {(customInstructions || '').length} / 500
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -625,53 +690,6 @@ function Step1({ input, referenceUrls, customInstructions, onUpdate }: Step1Prop
             />
           ))}
         </div>
-      </div>
-
-      {/* Advanced Settings - Collapsible */}
-      <div className="rounded-lg border border-secondary/10 bg-slate-50/50">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-slate-100/50"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-secondary">Advanced: Custom Instructions</span>
-            <span className="rounded bg-slate-200 px-2 py-0.5 text-xs text-secondary/70">Optional</span>
-          </div>
-          {showAdvanced ? (
-            <ChevronUp className="h-4 w-4 text-secondary/60" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-secondary/60" />
-          )}
-        </button>
-
-        {showAdvanced && (
-          <div className="border-t border-secondary/10 px-4 pb-4 pt-3">
-            <div className="mb-3 flex items-start gap-2 rounded-lg bg-blue-50 p-3">
-              <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
-              <div className="text-xs text-blue-900">
-                <p className="mb-1 font-medium">Guide the AI with specific instructions:</p>
-                <ul className="ml-4 list-disc space-y-0.5 text-blue-800">
-                  <li>Be specific about which data or elements to include</li>
-                  <li>When comparing, explicitly mention all items to compare</li>
-                  <li>Specify desired structure, format, or narrative angle</li>
-                  <li>More detailed instructions lead to better results</li>
-                </ul>
-              </div>
-            </div>
-
-            <textarea
-              value={customInstructions || ''}
-              onChange={(e) => onUpdate({ customInstructions: e.target.value })}
-              placeholder="Example: Include pricing for both products. Focus on the sustainability metrics from reference 2. Use a question-based opening."
-              maxLength={500}
-              className="min-h-[100px] w-full rounded-lg border border-secondary/20 p-3 text-sm text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-            <div className="mt-1 text-right text-xs text-secondary/60">
-              {(customInstructions || '').length} / 500 characters
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

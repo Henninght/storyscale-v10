@@ -575,14 +575,14 @@ LinkedIn authentication now adds genuine value by:
   - ⚪ Optional grouped view in list mode
   - ⚪ Visual connection lines in timeline view
 
-### 8.8 Enhanced AI Generation for Campaigns 🔄
-- 🔄 **Campaign-Aware System Prompts**
-  - 🔄 Include campaign narrative arc in prompts
-  - 🔄 Add position-in-sequence context (post X of Y)
-  - 🔄 Reference campaign strategy goals
-  - 🔄 Include previous post themes (not full content)
-  - 🔄 Add tone progression instructions
-  - 🔄 Specify call-back references where relevant
+### 8.8 Enhanced AI Generation for Campaigns ✅
+- ✅ **Campaign-Aware System Prompts**
+  - ✅ Include campaign narrative arc in prompts
+  - ✅ Add position-in-sequence context (post X of Y)
+  - ✅ Reference campaign strategy goals
+  - ✅ Include previous post themes (not full content)
+  - ✅ Add tone progression instructions (early/mid/late phases)
+  - ✅ Specify call-back references where relevant (phase-based guidance)
 - ⚪ **Template Blueprints Enhancement**
   - ⚪ Extend templates with post-by-post guides
   - ⚪ Product Launch blueprint: Teaser → Problem → Solution → Features → Social Proof → CTA → Follow-up
@@ -716,6 +716,147 @@ LinkedIn authentication now adds genuine value by:
   - ⚪ Add to Campaign Description textarea
   - ⚪ Real-time feedback as user types
   - ⚪ Loading state during validation
+
+---
+
+## Phase 13: AI Style & Tone Training System 🎯
+
+### 13.1 Few-Shot Example System ⚪
+**Purpose:** Improve AI generation quality by providing style/tone-specific examples
+
+**Implementation:**
+- ⚪ Create `styleExamples` object with 12 curated LinkedIn post examples
+  - ⚪ Story-based + Professional (Challenge-Action-Result framework)
+  - ⚪ Story-based + Casual (Personal anecdote with lesson)
+  - ⚪ Story-based + Inspirational (Overcoming challenge narrative)
+  - ⚪ Story-based + Educational (Case study structure)
+  - ⚪ List format + Professional (Strategic framework)
+  - ⚪ List format + Educational (Numbered insights with takeaways)
+  - ⚪ List format + Casual (Quick tips with personality)
+  - ⚪ List format + Inspirational (Motivational lessons list)
+  - ⚪ Question-based + Professional (Thought-provoking with context)
+  - ⚪ Question-based + Casual (Simple engaging question)
+  - ⚪ How-to + Professional (Step-by-step framework)
+  - ⚪ How-to + Casual (Practical tips with personal touch)
+- ⚪ Build helper function `getExampleForStyle(style, tone)` to match examples
+- ⚪ Inject relevant example into system prompt before generation
+- ⚪ Add "EXAMPLE OF THIS STYLE" section with matched example
+- ⚪ Instruct AI to emulate structure but use user's specific content
+
+**Files Modified:**
+- `app/api/generate/route.ts` (lines 166-342)
+
+**Expected Outcome:** 30-50% improvement in style/tone accuracy
+
+**Time Estimate:** 3-4 hours
+
+### 13.2 User Feedback Collection System ⚪
+**Purpose:** Gather data on generation quality through explicit + behavioral feedback
+
+**Database Schema:**
+```typescript
+// New Firestore collection: /post_feedback/{feedbackId}
+{
+  draftId: string
+  userId: string
+  rating: 'thumbs_up' | 'thumbs_down' | null
+  regenerated: boolean  // User clicked regenerate
+  editPercentage: number  // Content change amount
+  timeToReady: number  // Minutes to mark ready_to_post
+  wizardSettings: WizardSettings  // Generation parameters
+  originalLength: number
+  finalLength: number
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+```
+
+**Implementation:**
+- ⚪ Add `PostFeedback` interface to `types/index.ts`
+- ⚪ Add feedback widget to `components/DraftEditor.tsx`
+  - ⚪ Thumbs up/down buttons with clean styling
+  - ⚪ "How's this draft?" prompt text
+  - ⚪ Saves feedback to Firestore on click
+- ⚪ Track behavioral metrics automatically:
+  - ⚪ Regeneration: Already tracked via handleRegenerate()
+  - ⚪ Edit percentage: Calculate on save comparing lengths
+  - ⚪ Time to ready: Track when status → ready_to_post
+- ⚪ Store feedback in `/post_feedback` collection
+  - ⚪ Include all wizard settings for analysis
+  - ⚪ Link to draft ID for reference
+  - ⚪ Timestamp all feedback events
+
+**Files Modified:**
+- `types/index.ts` - Add PostFeedback interface
+- `components/DraftEditor.tsx` - Add UI widget + tracking
+- Firestore schema - New collection
+
+**Expected Outcome:** Data-driven insights into quality patterns
+
+**Time Estimate:** 4-5 hours
+
+### 13.3 Analytics Dashboard (Optional) ⚪
+**Purpose:** Visualize feedback data to identify optimization opportunities
+
+**Implementation:**
+- ⚪ Create `/app/app/analytics/page.tsx`
+- ⚪ Display key metrics:
+  - ⚪ Most used style/tone/purpose combinations
+  - ⚪ Average rating by combination
+  - ⚪ Regeneration rate by settings
+  - ⚪ Edit percentage by parameters
+  - ⚪ Time to ready by configuration
+- ⚪ Build visualizations:
+  - ⚪ Heatmap: style × tone performance grid
+  - ⚪ Bar charts: regeneration rates
+  - ⚪ Tables: detailed breakdown with filters
+- ⚪ Add filters:
+  - ⚪ Date range selector
+  - ⚪ Tone/style/purpose filters
+  - ⚪ Rating threshold
+- ⚪ Create `/api/analytics/feedback` route
+  - ⚪ Aggregate feedback data
+  - ⚪ Calculate averages and trends
+  - ⚪ Return JSON for dashboard display
+
+**Files Created:**
+- `app/app/analytics/page.tsx` - Analytics dashboard
+- `app/api/analytics/feedback/route.ts` - Data aggregation API
+
+**Expected Outcome:** Clear visibility into what's working
+
+**Time Estimate:** 5-6 hours
+
+### 13.4 Prompt Optimization Loop (Ongoing) ⚪
+**Purpose:** Continuously improve prompts based on feedback data
+
+**Process:**
+1. **Monthly Review** (Manual)
+   - ⚪ Review analytics dashboard
+   - ⚪ Identify underperforming combinations (high regeneration, low thumbs-up)
+   - ⚪ Analyze successful patterns (low regeneration, high thumbs-up)
+   - ⚪ Note common edit patterns
+
+2. **Refinement** (Manual)
+   - ⚪ Update `styleExamples` for underperforming combinations
+   - ⚪ Refine system prompt instructions
+   - ⚪ Adjust tone descriptions based on feedback
+   - ⚪ Document changes and reasons
+
+3. **Testing** (Manual)
+   - ⚪ Generate test posts with updated prompts
+   - ⚪ Compare quality to previous versions
+   - ⚪ Deploy if improved
+
+4. **Future Automation** (Phase 2)
+   - ⚪ AI analyzes feedback patterns
+   - ⚪ Suggests prompt improvements
+   - ⚪ A/B tests variations
+   - ⚪ Auto-updates best performers
+
+**Expected Outcome:** Iterative quality improvements over time
+
+**Time Estimate:** 2-3 hours/month ongoing
 
 ---
 
@@ -1361,6 +1502,207 @@ LinkedIn authentication now adds genuine value by:
   - ⚪ Follow 8px grid system
   - ⚪ Consistent card shadows and spacing
   - ⚪ Smooth animations for idea loading/rating
+
+---
+
+## Phase 14: User Feedback System 💬
+
+### 14.1 Beta User Feedback Form ⚪
+**Purpose:** Collect structured feedback from beta users to improve product
+
+**Implementation:**
+- ⚪ Create `FeedbackButton.tsx` component
+  - ⚪ Floating button (bottom-right) with "Feedback" label
+  - ⚪ Non-intrusive trigger - only visible when needed
+  - ⚪ Slide-in panel (not modal) to avoid disruption
+- ⚪ Feedback form fields (~1 minute to complete)
+  - ⚪ Star rating (1-5) for overall impression
+  - ⚪ Category dropdown: Bug, Feature Request, Design, Other
+  - ⚪ Description textarea (optional)
+  - ⚪ Email input (optional, for follow-up)
+- ⚪ Form submission
+  - ⚪ Submit button with loading state
+  - ⚪ Success animation with thank you message
+  - ⚪ Auto-close after 2 seconds
+- ⚪ Best practices applied
+  - ⚪ Minimal required fields (only star rating)
+  - ⚪ Clear completion time indicator
+  - ⚪ Non-blocking, can be dismissed anytime
+  - ⚪ Smooth animations using Framer Motion
+
+**Files Created:**
+- `components/FeedbackButton.tsx` - Floating button + slide-in panel
+
+**Design Notes:**
+- Blue theme for secondary action (feedback = information gathering)
+- Floating button doesn't interfere with main actions
+- Slide-in panel preserves page context
+- Simple, clean design matching app aesthetic
+
+### 14.2 Testimonial/Star Rating Widget ⚪
+**Purpose:** Display social proof with customer testimonials and ratings
+
+**Implementation:**
+- ⚪ Create `TestimonialWidget.tsx` component
+  - ⚪ Carousel-based display with navigation
+  - ⚪ Smooth transitions between testimonials
+  - ⚪ Auto-play option (optional parameter)
+- ⚪ Testimonial card structure
+  - ⚪ 5-star rating display at top
+  - ⚪ Quote text (large, readable typography)
+  - ⚪ Author info with avatar/initial
+  - ⚪ Role and company display
+- ⚪ Navigation controls
+  - ⚪ Previous/Next buttons
+  - ⚪ Dot indicators for position
+  - ⚪ Click dots to jump to specific testimonial
+- ⚪ Create compact `TestimonialCard.tsx` variant
+  - ⚪ Single card display for sidebars
+  - ⚪ Hover effects for interactivity
+  - ⚪ Smaller footprint, same information
+
+**Files Created:**
+- `components/TestimonialWidget.tsx` - Main carousel component + compact card variant
+
+**Data Structure:**
+```typescript
+interface Testimonial {
+  id: string
+  name: string
+  role: string
+  company?: string
+  rating: number
+  quote: string
+  avatar?: string
+}
+```
+
+**Design Notes:**
+- Minimal, clean card design with ample whitespace
+- Star ratings provide quick trust signals
+- Decorative quote icon for visual interest
+- Placement: Dedicated section, not on every page
+- Avoids "spam" feel through intentional placement
+
+### 14.3 Feedback API Endpoint ⚪
+**Purpose:** Store user feedback in database for review
+
+**Implementation:**
+- ⚪ Create `/api/feedback` route
+- ⚪ Accept POST requests with feedback data
+  - ⚪ rating: number (1-5)
+  - ⚪ category: string
+  - ⚪ description: string (optional)
+  - ⚪ email: string (optional)
+  - ⚪ timestamp: ISO string
+- ⚪ Authenticate user via Firebase Auth token
+- ⚪ Store in Firestore `/feedback/{feedbackId}` collection
+- ⚪ Return success/error response
+- ⚪ Rate limiting to prevent abuse
+- ⚪ Input validation and sanitization
+
+**Database Schema:**
+```typescript
+// /feedback/{feedbackId}
+{
+  userId: string
+  rating: number  // 1-5
+  category: 'bug' | 'feature' | 'design' | 'other'
+  description: string
+  email: string | null
+  userAgent: string  // Browser info
+  page: string  // Where feedback was submitted
+  createdAt: Timestamp
+}
+```
+
+**Files Created:**
+- `app/api/feedback/route.ts` - Feedback submission endpoint
+
+### 14.4 Testimonials Management ⚪
+**Purpose:** Admin interface for managing testimonials (future phase)
+
+**Initial Implementation:**
+- ⚪ Seed testimonials in code (hardcoded array)
+- ⚪ Create sample data with 5-10 testimonials
+- ⚪ Ensure variety: different roles, companies, ratings
+- ⚪ Focus on specific benefits and outcomes
+
+**Future Enhancement (Optional):**
+- ⚪ Admin dashboard for adding/editing testimonials
+- ⚪ Store testimonials in Firestore
+- ⚪ Approval workflow for user-submitted testimonials
+- ⚪ Analytics on testimonial views/interactions
+
+### 14.5 Integration Points ⚪
+**Where to place feedback system:**
+
+- ⚪ **FeedbackButton (Floating)**
+  - ⚪ Globally available on all authenticated pages
+  - ⚪ Add to main layout component
+  - ⚪ Only show for logged-in users
+  - ⚪ Hide on mobile if screen too narrow
+
+- ⚪ **Testimonial Widget**
+  - ⚪ Landing page above pricing section
+  - ⚪ Optional: Settings page (social proof for upgrading)
+  - ⚪ Optional: Campaign success examples
+  - ⚪ Avoid placing on every page (reduces impact)
+
+**Files to Modify:**
+- `app/layout.tsx` - Add FeedbackButton for authenticated users
+- `app/page.tsx` (landing) - Add TestimonialWidget section
+- Optional: `app/app/settings/page.tsx` - Add compact testimonial cards
+
+### 14.6 UX Considerations ✅
+**Best practices implemented:**
+
+✅ **Non-Intrusive Design**
+- Floating button doesn't block main content
+- Slide-in panel (not modal) maintains context
+- Can be dismissed with backdrop click or X button
+- Only appears when user logged in (beta users)
+
+✅ **Short Form (1 minute)**
+- Only star rating required
+- All other fields optional
+- Clear time commitment shown
+- Progress/completion feedback
+
+✅ **User Control**
+- Multiple ways to dismiss
+- Optional email field for follow-up preference
+- Clear data usage explanation
+- Non-blocking workflow
+
+✅ **Visual Hierarchy**
+- Testimonials use white space effectively
+- Star ratings stand out clearly
+- Quotes are readable (large text)
+- Author info provides credibility
+
+✅ **Placement Strategy**
+- Testimonials in dedicated section (not everywhere)
+- Feedback button available but unobtrusive
+- Respects user's primary task flow
+- Avoids spam-like patterns
+
+### 14.7 Analytics & Review (Future) ⚪
+**Track feedback effectiveness:**
+
+- ⚪ Monitor feedback submission rate
+- ⚪ Categorize feedback by type
+- ⚪ Track rating distribution over time
+- ⚪ Identify common themes in descriptions
+- ⚪ Create admin dashboard for reviewing feedback
+- ⚪ Export feedback data for analysis
+
+**Expected Outcomes:**
+- Clear understanding of user pain points
+- Feature prioritization based on requests
+- Bug identification and tracking
+- Product-market fit validation
+- User satisfaction trends over time
 
 ---
 

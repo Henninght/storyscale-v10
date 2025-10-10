@@ -163,6 +163,107 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Few-shot examples for style/tone combinations based on LinkedIn best practices
+const styleExamples: Record<string, string> = {
+  'story-based-professional': `Three months ago, a client's revenue was down 40%. Challenge: outdated automation. Action: We rebuilt their workflow using modern tools. Result: 40% revenue increase in 8 weeks. Key lesson: automation isn't set-and-forget—it needs regular optimization.`,
+
+  'story-based-casual': `Coffee spilled on my keyboard during a client call. 😅 Instead of panicking, I laughed it off and said "let me grab my backup." The client appreciated the honesty. Lesson? Your humanity is your superpower. Don't hide behind perfection.`,
+
+  'story-based-inspirational': `Two years ago, I was stuck in a job that drained me. Every morning felt heavy. One decision changed everything: I bet on myself. Today, I'm building something I'm proud of. If you're waiting for the "perfect moment" to make a change—this is your sign. Start small, but start today.`,
+
+  'story-based-educational': `Last quarter, we analyzed 500+ customer support tickets. What we discovered: 73% of issues came from onboarding gaps. The fix? We rebuilt our first-week experience. Result: support tickets dropped 60% in 2 months. Takeaway: Your biggest problems often hide in plain sight.`,
+
+  'list_format-professional': `Strategic framework for quarterly planning:
+
+1. Review last quarter's KPIs
+2. Identify 3 growth priorities
+3. Allocate resources accordingly
+4. Set measurable milestones
+5. Schedule monthly check-ins
+
+Simple, but effective.`,
+
+  'list_format-educational': `5 lessons from analyzing 1000+ LinkedIn posts:
+
+1. First line hooks = 3x more reads
+2. Short paragraphs beat walls of text
+3. Questions drive 2x comments
+4. Stories outperform stats
+5. CTAs increase engagement 40%
+
+Save this for your next post.`,
+
+  'list_format-casual': `My non-negotiable daily habits:
+
+→ 30 min morning walk (clears my head)
+→ Phone on airplane mode until 10am
+→ One deep work block before lunch
+→ Afternoon energy dip = admin tasks
+→ Evening reflection: 3 wins from today
+
+What's your #1 productivity hack?`,
+
+  'list_format-inspirational': `Things I stopped apologizing for:
+
+• Taking breaks when I need them
+• Setting boundaries with my time
+• Saying no to opportunities that drain me
+• Prioritizing my mental health
+• Not responding immediately to every message
+
+Your energy is your most valuable asset. Protect it.`,
+
+  'question-based-professional': `Question for executives: How do you balance innovation with operational stability?
+
+In my experience, the 70-20-10 rule works well:
+• 70% core operations
+• 20% iterative improvements
+• 10% bold experiments
+
+What's your approach?`,
+
+  'question-based-casual': `Quick question: What's the one tool you couldn't live without at work? 🤔
+
+For me, it's Notion. Changed how I organize everything.
+
+Drop yours in the comments! ⬇️`,
+
+  'how-to-professional': `How to run effective 1-on-1s in 30 minutes:
+
+1. First 10 min: Their agenda (what's on their mind)
+2. Next 10 min: Your feedback (specific, actionable)
+3. Last 10 min: Action items (document decisions)
+
+Simple structure = better conversations.`,
+
+  'how-to-casual': `Struggling with inbox zero? Here's what worked for me:
+
+→ Unsubscribe ruthlessly (10 min investment, huge payoff)
+→ Use folders (3 max, don't overthink it)
+→ 2-minute rule: reply now or never
+→ Check email 3x daily, not 30x
+
+Try it for a week. You'll thank me. 😊`,
+};
+
+// Helper function to get relevant example for style/tone combination
+function getExampleForStyle(style: string, tone: string): string {
+  // Try exact match first (e.g., "story-based-professional")
+  const exactKey = `${style}-${tone}`;
+  if (styleExamples[exactKey]) {
+    return styleExamples[exactKey];
+  }
+
+  // Try style with "professional" as fallback
+  const fallbackKey = `${style}-professional`;
+  if (styleExamples[fallbackKey]) {
+    return styleExamples[fallbackKey];
+  }
+
+  // Return empty string if no match (AI will generate without example)
+  return '';
+}
+
 function buildSystemPrompt(profile: any, wizardSettings: any): string {
   const toneDescriptions: Record<string, string> = {
     professional: 'professional and authoritative',
@@ -199,6 +300,9 @@ function buildSystemPrompt(profile: any, wizardSettings: any): string {
 
   const accountType = profile.accountType || 'private';
   const isCompany = accountType === 'company';
+
+  // Get relevant example for the selected style/tone combination
+  const relevantExample = getExampleForStyle(wizardSettings.style, wizardSettings.tone);
 
   // Build profile context based on account type
   const profileContext = isCompany
@@ -268,7 +372,13 @@ ${voiceGuidelines}
 9. Avoid corporate jargon - write like you're talking to a colleague
 10. End with substance, not empty platitudes
 
-**ANTI-HALLUCINATION RULES (CRITICAL):**
+${relevantExample ? `**EXAMPLE POST (${styleDescriptions[wizardSettings.style]} + ${toneDescriptions[wizardSettings.tone]}):**
+
+${relevantExample}
+
+⚠️ This is a reference example showing the structure and flow. Use it as inspiration, but write about the user's specific topic and context. Do NOT copy it directly.
+
+` : ''}**ANTI-HALLUCINATION RULES (CRITICAL):**
 ⚠️ NEVER invent, estimate, or make up statistics, numbers, percentages, dates, or facts
 ⚠️ If reference content is provided, use ONLY the specific data contained within it
 ⚠️ If you don't have verified data for a claim, rephrase to avoid requiring specific numbers
@@ -308,12 +418,15 @@ function buildUserMessage(
   // Add comprehensive campaign context
   if (wizardSettings.campaignId) {
     const totalPosts = wizardSettings.aiStrategy?.postBlueprints?.length || '?';
+    const currentPostNum = wizardSettings.postNumber || 1;
+    const campaignPhase = currentPostNum <= totalPosts / 3 ? 'early' : currentPostNum <= (totalPosts * 2) / 3 ? 'mid' : 'late';
+
     message += `\n\n**CAMPAIGN CONTEXT:**`;
     message += `\n- Campaign: "${wizardSettings.campaignTheme}"`;
     if (wizardSettings.campaignDescription) {
       message += `\n- Description: ${wizardSettings.campaignDescription}`;
     }
-    message += `\n- This is post ${wizardSettings.postNumber || 1} of ${totalPosts} in the series`;
+    message += `\n- This is post ${currentPostNum} of ${totalPosts} in the series (${campaignPhase} phase)`;
 
     // Add strategic post blueprint if available
     if (wizardSettings.postBlueprint) {
@@ -330,11 +443,37 @@ function buildUserMessage(
       message += `\n\nEnsure this post fits naturally into this progression.`;
     }
 
-    // Add previous post for thematic continuity
+    // Add tone progression instructions based on campaign phase
+    message += `\n\n**TONE PROGRESSION GUIDANCE:**`;
+    if (campaignPhase === 'early') {
+      message += `\n- Early phase: Focus on building awareness and introducing core concepts`;
+      message += `\n- Keep it accessible and engaging to hook the audience`;
+      message += `\n- Establish credibility and set the stage for deeper insights`;
+    } else if (campaignPhase === 'mid') {
+      message += `\n- Mid phase: Deepen the conversation with more detailed insights`;
+      message += `\n- Build on established themes from earlier posts`;
+      message += `\n- Increase specificity and actionable takeaways`;
+      message += `\n- Reference themes (not specific posts) from the campaign so far`;
+    } else {
+      message += `\n- Late phase: Bring the campaign to a strong conclusion`;
+      message += `\n- Synthesize key themes from the entire series`;
+      message += `\n- Provide clear next steps or actionable insights`;
+      message += `\n- Consider subtle callbacks to campaign opening (if natural)`;
+      message += `\n- Leave the audience with lasting value`;
+    }
+
+    // Add previous post for thematic continuity with smart call-back logic
     if (wizardSettings.previousContent) {
       message += `\n\n**PREVIOUS POST (for thematic continuity):**`;
       message += `\n${wizardSettings.previousContent.slice(0, 600)}...`;
-      message += `\n\nIMPORTANT: Build on the themes and insights from the previous post. Maintain continuity in voice and perspective, but DON'T directly reference it unless necessary for the narrative. Create a natural progression, not forced callbacks.`;
+
+      if (campaignPhase === 'early') {
+        message += `\n\nIMPORTANT: Build on the themes from the previous post. Maintain continuity in voice and perspective, but DON'T directly reference it. Create a natural progression.`;
+      } else if (campaignPhase === 'mid') {
+        message += `\n\nIMPORTANT: Build on previous insights while deepening the conversation. You may briefly reference themes from earlier posts if it strengthens your point, but keep it natural—no forced callbacks. Example: "As we explored earlier..." or "Building on the foundation we've established..."`;
+      } else {
+        message += `\n\nIMPORTANT: This is the campaign's conclusion. Synthesize key themes from the series. You may reference earlier insights if it creates a satisfying narrative arc, but keep it subtle and purposeful. Focus on delivering lasting value.`;
+      }
     }
   }
 
