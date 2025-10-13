@@ -38,7 +38,8 @@
       "Bash(xxd:*)",
       "Bash(cat:*)",
       "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_ygUniw/**)",
-      "Bash(test -f vercel.json)"
+      "Bash(test -f vercel.json)",
+      "Bash(npm run build)"
     ],
     "deny": [],
     "ask": []

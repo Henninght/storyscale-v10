@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Plus, CheckCircle2, Clock, FileText, Settings, Archive, Calendar, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Plus, CheckCircle2, Clock, FileText, Settings, Archive, Calendar, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Campaign {
@@ -66,6 +66,7 @@ export default function CampaignDetailPage() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [strategyExpanded, setStrategyExpanded] = useState(false);
 
   useEffect(() => {
     fetchCampaignData();
@@ -414,32 +415,51 @@ export default function CampaignDetailPage() {
         </div>
       )}
 
-      {/* AI Strategy Section */}
+      {/* AI Strategy Section - Collapsible */}
       {campaign.aiStrategy && (
-        <div className="rounded-2xl border border-secondary/10 bg-white p-6">
-          <h3 className="mb-4 text-lg font-semibold text-secondary">AI Campaign Strategy</h3>
+        <div className="rounded-2xl border border-secondary/10 bg-white overflow-hidden">
+          <button
+            onClick={() => setStrategyExpanded(!strategyExpanded)}
+            className="w-full flex items-center justify-between p-6 text-left hover:bg-secondary/5 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-secondary">AI Campaign Strategy</h3>
+              <span className="text-xs text-secondary/60">
+                (Overview, narrative arc & success markers)
+              </span>
+            </div>
+            {strategyExpanded ? (
+              <ChevronUp className="h-5 w-5 text-secondary/60" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-secondary/60" />
+            )}
+          </button>
 
-          <div className="mb-4">
-            <div className="mb-2 text-sm font-medium text-secondary/70">Strategic Overview</div>
-            <p className="text-secondary">{campaign.aiStrategy.strategicOverview}</p>
-          </div>
+          {strategyExpanded && (
+            <div className="border-t border-secondary/10 p-6 space-y-4 animate-in slide-in-from-top-2 duration-300">
+              <div>
+                <div className="mb-2 text-sm font-medium text-secondary/70">Strategic Overview</div>
+                <p className="text-secondary">{campaign.aiStrategy.strategicOverview}</p>
+              </div>
 
-          <div className="mb-4">
-            <div className="mb-2 text-sm font-medium text-secondary/70">Narrative Arc</div>
-            <p className="text-secondary">{campaign.aiStrategy.narrativeArc}</p>
-          </div>
+              <div>
+                <div className="mb-2 text-sm font-medium text-secondary/70">Narrative Arc</div>
+                <p className="text-secondary">{campaign.aiStrategy.narrativeArc}</p>
+              </div>
 
-          {campaign.aiStrategy.successMarkers && campaign.aiStrategy.successMarkers.length > 0 && (
-            <div>
-              <div className="mb-2 text-sm font-medium text-secondary/70">Success Markers</div>
-              <ul className="space-y-1">
-                {campaign.aiStrategy.successMarkers.map((marker, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-secondary">
-                    <span className="text-primary">•</span>
-                    <span>{marker}</span>
-                  </li>
-                ))}
-              </ul>
+              {campaign.aiStrategy.successMarkers && campaign.aiStrategy.successMarkers.length > 0 && (
+                <div>
+                  <div className="mb-2 text-sm font-medium text-secondary/70">Success Markers</div>
+                  <ul className="space-y-1">
+                    {campaign.aiStrategy.successMarkers.map((marker, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-secondary">
+                        <span className="text-primary">•</span>
+                        <span>{marker}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -596,19 +616,46 @@ export default function CampaignDetailPage() {
                           <div className="mb-2 flex items-center gap-2">
                             <span className="text-lg">💡</span>
                             <div className="text-xs font-semibold uppercase tracking-wide text-primary">AI Suggested Topic</div>
+                            {/* Strategic Position Label */}
+                            <div className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                              {postNumber === 1 ? 'Opening' : postNumber === campaign.targetPostCount ? 'Closing' : `Part ${postNumber}`}
+                              {postNumber === 1 && ' • Awareness'}
+                              {postNumber > 1 && postNumber < campaign.targetPostCount && ' • Engagement'}
+                              {postNumber === campaign.targetPostCount && ' • Action'}
+                            </div>
                           </div>
                           <div className="mb-2 text-sm font-semibold text-secondary">{blueprint.topic}</div>
                           <div className="text-xs text-secondary/70">
                             <span className="font-medium">Goal:</span> {blueprint.goal}
                           </div>
+                          {/* Connection to Previous Post */}
+                          {index > 0 && campaign.aiStrategy?.postBlueprints?.[index - 1] && (
+                            <div className="mt-3 border-t border-primary/20 pt-3 text-xs text-secondary/60">
+                              <span className="font-medium">Builds on:</span> {campaign.aiStrategy.postBlueprints[index - 1].topic}
+                            </div>
+                          )}
                         </div>
                       )}
 
                       {isGenerated ? (
                         <>
                           {blueprint && (
-                            <div className="mb-2 rounded bg-primary/5 px-2 py-1">
-                              <div className="text-xs font-medium text-primary">📋 {blueprint.topic}</div>
+                            <div className="mb-2 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 rounded bg-primary/5 px-2 py-1">
+                                  <div className="text-xs font-medium text-primary">📋 {blueprint.topic}</div>
+                                </div>
+                                {/* Strategic Position Label for Generated Posts */}
+                                <div className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                  {postNumber === 1 ? 'Opening' : postNumber === campaign.targetPostCount ? 'Closing' : `Part ${postNumber}`}
+                                </div>
+                              </div>
+                              {/* Connection to Previous Post */}
+                              {index > 0 && campaign.aiStrategy?.postBlueprints?.[index - 1] && (
+                                <div className="rounded bg-slate-100 px-2 py-1 text-xs text-secondary/60">
+                                  <span className="font-medium">Builds on:</span> {campaign.aiStrategy.postBlueprints[index - 1].topic}
+                                </div>
+                              )}
                             </div>
                           )}
                           <div className="mt-2 rounded-lg bg-slate-50 p-3">

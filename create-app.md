@@ -124,54 +124,54 @@
 
 **Note:** Phase 8 sections 8.1-8.12 are complete and archived in finished-tasks.md. See that file for implementation details.
 
-### 8.13 Enhanced Campaign Detail Page with Post Details ⚪
-- ⚪ **Timeline Post Cards Enhancement**
-  - ⚪ Show AI-suggested topic from aiStrategy.postBlueprints[index].topic
-  - ⚪ Display post goal/purpose from blueprint
-  - ⚪ Increase content preview from 150 to 300 characters
-  - ⚪ Add strategic position label (e.g., "Opening • Awareness phase")
-  - ⚪ Show connection to previous post ("Builds on: [previous topic]")
-  - ⚪ Expandable section for full AI strategy details
-- ⚪ **Campaign Strategy Display Section**
-  - ⚪ Show strategic overview at top of timeline
-  - ⚪ Display narrative arc description
-  - ⚪ Show success markers in dedicated section
-  - ⚪ Add campaign metadata: tone, purpose, audience (if available)
+### 8.13 Enhanced Campaign Detail Page with Post Details ✅
+- ✅ **Timeline Post Cards Enhancement**
+  - ✅ Show AI-suggested topic from aiStrategy.postBlueprints[index].topic
+  - ✅ Display post goal/purpose from blueprint
+  - ✅ Increase content preview from 150 to 300 characters (400 chars)
+  - ✅ Add strategic position label (e.g., "Opening • Awareness phase")
+  - ✅ Show connection to previous post ("Builds on: [previous topic]")
+  - ✅ Expandable section for full AI strategy details
+- ✅ **Campaign Strategy Display Section**
+  - ✅ Show strategic overview at top of timeline
+  - ✅ Display narrative arc description
+  - ✅ Show success markers in dedicated section
+  - ✅ Add campaign metadata: tone, purpose, audience (if available)
 
-### 8.14 Campaign Wizard Advanced Configuration ⚪
-- ⚪ **Add Configuration Dropdowns to Step 1**
-  - ⚪ Tone dropdown: Professional, Casual, Inspirational, Educational
-  - ⚪ Purpose dropdown: Engagement, Lead Generation, Brand Awareness, Thought Leadership
-  - ⚪ Target Audience dropdown: Executives, Entrepreneurs, Professionals, Industry-Specific
-  - ⚪ Keep all in single card with 2-column grid layout
-  - ⚪ Add after template selection, before name/theme inputs
-- ⚪ **Update Form State & Database**
-  - ⚪ Add tone, purpose, audience to formData
-  - ⚪ Save to Firestore campaigns collection
-  - ⚪ Pass to /api/campaigns/brief for better AI strategy
-- ⚪ **Update Campaign TypeScript Interface**
-  - ⚪ Add tone, purpose, audience fields
-  - ⚪ Ensure aiStrategy structure is properly typed
+### 8.14 Campaign Wizard Advanced Configuration ✅
+- ✅ **Add Configuration Dropdowns to Step 1**
+  - ✅ Tone dropdown: Professional, Casual, Inspirational, Educational
+  - ✅ Purpose dropdown: Engagement, Lead Generation, Brand Awareness, Thought Leadership
+  - ✅ Target Audience dropdown: Executives, Entrepreneurs, Professionals, Industry-Specific
+  - ✅ Keep all in single card with 2-column grid layout
+  - ✅ Add after template selection, before name/theme inputs
+- ✅ **Update Form State & Database**
+  - ✅ Add tone, purpose, audience to formData
+  - ✅ Save to Firestore campaigns collection
+  - ✅ Pass to /api/campaigns/brief for better AI strategy
+- ✅ **Update Campaign TypeScript Interface**
+  - ✅ Add tone, purpose, audience fields
+  - ✅ Ensure aiStrategy structure is properly typed
 
-### 8.15 AI Campaign Input Validator (Bilingual Support) ⚪
-- ⚪ **Create Validation API Endpoint**
-  - ⚪ Route: /api/campaigns/validate-input
-  - ⚪ Accept: text, language (en/no), fieldType (theme/description)
-  - ⚪ Use Claude API to analyze input quality
-  - ⚪ Return: scores (clarity, specificity, actionability), feedback, suggestions
-  - ⚪ Support both English and Norwegian responses
-- ⚪ **Create Validation UI Component**
-  - ⚪ Component: components/CampaignInputValidator.tsx
-  - ⚪ Debounced validation (500ms after typing stops)
-  - ⚪ Quality indicator: 🔴 red / 🟡 yellow / 🟢 green badges
-  - ⚪ Expandable "AI Suggestions" section
-  - ⚪ Non-blocking (users can proceed regardless)
-  - ⚪ Clean, minimal design
-- ⚪ **Integration Points**
-  - ⚪ Add to Campaign Theme input field
-  - ⚪ Add to Campaign Description textarea
-  - ⚪ Real-time feedback as user types
-  - ⚪ Loading state during validation
+### 8.15 AI Campaign Input Validator (Bilingual Support) ✅
+- ✅ **Create Validation API Endpoint**
+  - ✅ Route: /api/campaigns/validate-input
+  - ✅ Accept: text, language (en/no), fieldType (theme/description)
+  - ✅ Use Claude API to analyze input quality
+  - ✅ Return: scores (clarity, specificity, actionability), feedback, suggestions
+  - ✅ Support both English and Norwegian responses
+- ✅ **Create Validation UI Component**
+  - ✅ Component: components/CampaignInputValidator.tsx
+  - ✅ Debounced validation (500ms after typing stops)
+  - ✅ Quality indicator: 🔴 red / 🟡 yellow / 🟢 green badges
+  - ✅ Expandable "AI Suggestions" section
+  - ✅ Non-blocking (users can proceed regardless)
+  - ✅ Clean, minimal design
+- ✅ **Integration Points**
+  - ✅ Add to Campaign Theme input field
+  - ✅ Add to Campaign Description textarea
+  - ✅ Real-time feedback as user types
+  - ✅ Loading state during validation
 
 ### 8.16 Campaign System Overhaul 🔄 (Major Refactor)
 
@@ -197,22 +197,22 @@
 
 **Solution: Template-Driven Structured Workflow**
 
-#### Phase 1: Reduce & Refine Templates (2-3 hours) ⚪
+#### Phase 1: Reduce & Refine Templates (2-3 hours) ⏳
 
 **Objective:** Simplify template options to two highly focused choices
 
 **Files to Modify:**
-- `lib/campaignTemplates.ts` - Reduce from 6 to 2 templates
+- `lib/campaignTemplates.ts` - Reduce from 6 to 2 templates ✅
 
 **Implementation:**
-- ⚪ **Keep only 2 templates:**
-  - ⚪ **Product Launch** - For announcing new products/features/services
-  - ⚪ **Thought Leadership** - For establishing expertise and industry authority
-- ⚪ **Remove templates:**
-  - ⚪ Educational Series (can be covered by Thought Leadership)
-  - ⚪ Company Updates (too generic)
-  - ⚪ Case Study Series (can be part of Product Launch or Thought Leadership)
-  - ⚪ Industry Insights (covered by Thought Leadership)
+- ✅ **Keep only 2 templates:**
+  - ✅ **Product Launch** - For announcing new products/features/services
+  - ✅ **Thought Leadership** - For establishing expertise and industry authority
+- ✅ **Remove templates:**
+  - ✅ Educational Series (can be covered by Thought Leadership)
+  - ✅ Company Updates (too generic)
+  - ✅ Case Study Series (can be part of Product Launch or Thought Leadership)
+  - ✅ Industry Insights (covered by Thought Leadership)
 - ⚪ **Update template structure** to include structured field definitions:
   ```typescript
   interface CampaignTemplate {
