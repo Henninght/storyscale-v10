@@ -248,9 +248,11 @@ export default function CampaignDetailPage() {
             Back to Campaigns
           </Button>
           <h1 className="text-3xl font-bold text-secondary">{campaign.name}</h1>
-          <p className="mt-2 text-secondary/80">{campaign.theme}</p>
+          <div className="mt-3 text-secondary/80 whitespace-pre-wrap">{campaign.theme}</div>
           {campaign.description && (
-            <p className="mt-2 text-sm text-secondary/60">{campaign.description}</p>
+            <div className="mt-3 rounded-lg bg-secondary/5 p-4 text-sm text-secondary/70 whitespace-pre-wrap">
+              {campaign.description}
+            </div>
           )}
         </div>
         <div className={`rounded-full px-4 py-2 text-sm font-medium ${

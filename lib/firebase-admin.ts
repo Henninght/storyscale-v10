@@ -26,15 +26,55 @@ function formatPrivateKey(key: string): string {
   return formattedKey;
 }
 
+function getPrivateKey(): string {
+  // Priority 1: Use base64-encoded key (Vercel-safe method)
+  if (process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64) {
+    try {
+      const decoded = Buffer.from(
+        process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64,
+        'base64'
+      ).toString('utf-8');
+
+      // Validate decoded key
+      if (!decoded.includes('BEGIN PRIVATE KEY') || !decoded.includes('END PRIVATE KEY')) {
+        throw new Error('Decoded base64 key is not in valid PEM format');
+      }
+
+      return decoded;
+    } catch (error) {
+      console.error('Failed to decode FIREBASE_ADMIN_PRIVATE_KEY_BASE64:', error);
+      throw new Error(
+        'FIREBASE_ADMIN_PRIVATE_KEY_BASE64 is invalid. ' +
+        'Generate it with: echo "YOUR_PRIVATE_KEY" | base64'
+      );
+    }
+  }
+
+  // Priority 2: Fall back to regular string key
+  if (!process.env.FIREBASE_ADMIN_PRIVATE_KEY) {
+    throw new Error(
+      'Neither FIREBASE_ADMIN_PRIVATE_KEY_BASE64 nor FIREBASE_ADMIN_PRIVATE_KEY is set. ' +
+      'For Vercel deployments, use FIREBASE_ADMIN_PRIVATE_KEY_BASE64 (recommended).'
+    );
+  }
+
+  // Warn if using raw key in production (likely to fail on Vercel)
+  if (process.env.VERCEL && !process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64) {
+    console.warn(
+      '⚠️  WARNING: Using FIREBASE_ADMIN_PRIVATE_KEY on Vercel. ' +
+      'This may cause "error:1E08010C:DECODER routines::unsupported". ' +
+      'Strongly recommend using FIREBASE_ADMIN_PRIVATE_KEY_BASE64 instead. ' +
+      'See VERCEL_DEPLOYMENT_FIX.md for instructions.'
+    );
+  }
+
+  return formatPrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
+}
+
 function initializeFirebaseAdmin(): App {
   if (!getApps().length) {
-    // Only initialize if we have the required environment variables
-    if (!process.env.FIREBASE_ADMIN_PRIVATE_KEY) {
-      throw new Error("FIREBASE_ADMIN_PRIVATE_KEY is not set");
-    }
-
     try {
-      const privateKey = formatPrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
+      const privateKey = getPrivateKey();
 
       return initializeApp({
         credential: cert({

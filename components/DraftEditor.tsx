@@ -37,7 +37,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = async (redirectToWorkspace = false) => {
+  const handleSave = async (redirectTo?: 'workspace' | 'campaign') => {
     setIsSaving(true);
     setJustSaved(false);
     try {
@@ -60,8 +60,10 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         updatedAt: new Date(),
       });
 
-      if (redirectToWorkspace) {
+      if (redirectTo === 'workspace') {
         router.push('/app');
+      } else if (redirectTo === 'campaign' && draft.campaignId) {
+        router.push(`/app/campaigns/${draft.campaignId}`);
       } else {
         setJustSaved(true);
         setTimeout(() => setJustSaved(false), 2000);
@@ -185,14 +187,26 @@ export function DraftEditor({ draft }: DraftEditorProps) {
     <div className="space-y-6">
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        <Button
-          variant="outline"
-          onClick={() => router.push('/app')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Workspace
-        </Button>
+        {/* Navigation Buttons */}
+        {draft.campaignId ? (
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/app/campaigns/${draft.campaignId}`)}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Campaign
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => router.push('/app')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Workspace
+          </Button>
+        )}
 
         <Button
           onClick={handleEnhance}
@@ -246,7 +260,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         </Button>
 
         <Button
-          onClick={() => handleSave(false)}
+          onClick={() => handleSave()}
           disabled={isSaving}
           variant="outline"
           className="ml-auto gap-2"
@@ -269,23 +283,44 @@ export function DraftEditor({ draft }: DraftEditorProps) {
           )}
         </Button>
 
-        <Button
-          onClick={() => handleSave(true)}
-          disabled={isSaving}
-          className="gap-2"
-        >
-          {isSaving ? (
-            <>
-              <Save className="h-4 w-4 animate-pulse" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Save & Go to Workspace
-            </>
-          )}
-        </Button>
+        {/* Save and Navigate Button */}
+        {draft.campaignId ? (
+          <Button
+            onClick={() => handleSave('campaign')}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Save className="h-4 w-4 animate-pulse" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save & Back to Campaign
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => handleSave('workspace')}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Save className="h-4 w-4 animate-pulse" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save & Go to Workspace
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Main Editor */}

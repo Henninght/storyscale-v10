@@ -118,6 +118,9 @@ function CampaignContextLoader({
       const campaignId = searchParams.get('campaign') || searchParams.get('campaignId');
       const postNumber = searchParams.get('postNumber');
 
+      // Wait for user to be authenticated before loading campaign
+      if (!userId) return;
+
       if (campaignId && !campaignLoaded) {
         try {
           const db = getFirestore();

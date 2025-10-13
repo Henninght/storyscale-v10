@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check if deploying to Vercel without base64 key
+if [ -n "$VERCEL" ] && [ -z "$FIREBASE_ADMIN_PRIVATE_KEY_BASE64" ]; then
+  echo "⚠️  WARNING: Deploying to Vercel without FIREBASE_ADMIN_PRIVATE_KEY_BASE64"
+  echo "This will likely cause deployment errors!"
+  echo "See VERCEL_DEPLOYMENT_FIX.md for instructions."
+  echo ""
+  read -p "Continue anyway? (y/N): " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi

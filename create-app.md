@@ -32,178 +32,7 @@
 
 ---
 
-## Phase 1: Foundation & Setup ✅
-
-### 1.1 Project Initialization ✅
-- ✅ Initialize Next.js 14+ with TypeScript and App Router
-- ✅ Configure Tailwind CSS with custom theme colors
-- ✅ Install core dependencies:
-  - ✅ Firebase SDK (firebase, firebase-admin)
-  - ✅ @anthropic-ai/sdk
-  - ✅ stripe
-  - ✅ date-fns
-- ✅ Set up Shadcn/ui component library
-- ✅ Configure 8px grid system and responsive breakpoints
-
-### 1.2 Environment & Configuration ✅
-- ✅ Create `.env.example` with all environment variables
-- ✅ Set up Firebase project (Firestore + Authentication)
-- ✅ Configure Vercel project and deploy
-- ✅ Initialize GitHub repository
-- ✅ Create Firestore security rules template
-- ✅ Create Firebase Storage rules template
-- ✅ Deploy Firestore security rules
-- ✅ Configure Firebase authorized domains
-
-### 1.3 Design System Foundation ✅
-- ✅ Install and configure fonts (Outfit 600/700, Inter 400/500/600)
-- ✅ Create reusable layout components:
-  - ✅ Sidebar component (240px, collapsible)
-  - ✅ Container component (max-w-1280px)
-- ✅ Build color palette constants
-- ✅ Extend Tailwind theme with custom values
-
----
-
-## Phase 2: Landing & Authentication
-
-### 2.1 Landing Page ✅
-- ✅ Hero section with value proposition
-- ✅ Create metaphorical "scaling up" animation
-- ✅ Feature highlights section (3-4 features)
-- ✅ Pricing table component (Free $0, Pro $20, Enterprise $40)
-- ✅ Smooth scroll navigation
-- ✅ Fade-in animations
-- ✅ CTA buttons (Sign Up, Login)
-
-### 2.2 Authentication System ✅
-- ✅ Set up Firebase Auth with Google OAuth provider
-- ✅ Implement email/password registration with verification
-- ✅ Create AuthContext and provider for session management
-- ✅ Build session management and token refresh logic
-- ✅ Create login form with validation
-- ✅ Create signup form with validation
-- ✅ Add error handling and user feedback
-- ✅ Enable Google sign-in in Firebase Console
-- ✅ Test authentication flows (local and production)
-- ✅ Fix Firebase API key configuration
-- ⚪ Create protected route middleware for `/app/*` - *optional for development*
-
----
-
-## Phase 3: Onboarding & Profile ✅
-
-### 3.1 Profile Creation Flow ✅
-- ✅ Multi-step onboarding wizard (6 questions)
-- ✅ Step: Professional background input
-- ✅ Step: Areas of expertise
-- ✅ Step: Target audience selection
-- ✅ Step: Goals for using Storyscale
-- ✅ Step: Preferred writing style
-- ✅ Step: Brand voice traits
-- ✅ Progress indicator component
-- ✅ Auto-save functionality (every 30s)
-- ✅ Store profile data in Firestore `/users/{uid}`
-- ✅ Redirect to dashboard on completion
-
-### 3.2 Settings Page ✅
-- ✅ Create settings layout
-- ✅ Build editable profile form
-- ✅ Pre-populate form with existing data
-- ✅ Add account settings section
-- ✅ Link to billing management
-- ✅ Save and validation logic
-- ✅ **Settings ARE working** - All profile fields (background, expertise, targetAudience, goals, writingStyle, brandVoice) are used in AI generation
-- ✅ **Bug Fixed:** Goals field type inconsistency - changed from `string | string[]` to `string` consistently
-- ✅ **Bug Fixed:** Replaced `window.location.href` with Next.js router.push() for navigation
-- ✅ **Bug Fixed:** Improved save confirmation UX - now shows green button with checkmark for 5 seconds
-- ✅ Add password change functionality (Firebase Auth updatePassword API with re-authentication)
-  - Only shown for email/password users (not Google OAuth)
-  - Validates password strength (min 6 characters)
-  - Confirms password match
-  - Proper error handling for wrong password and requires-recent-login
-- ✅ Add profile photo upload (Firebase Storage integration)
-  - Upload to Firebase Storage at `profile-photos/{uid}/{timestamp}-{filename}`
-  - Image preview with loading spinner
-  - Validates file type (images only) and size (max 5MB)
-  - Updates both Firebase Auth and Firestore user document
-- ✅ Add delete account option with confirmation dialog
-  - Danger Zone section with clear warnings
-  - Two-step confirmation (button click + type "DELETE")
-  - Deletes all user data: drafts, campaigns, user document, and Firebase Auth account
-  - Proper error handling for requires-recent-login
-- ✅ Add data export feature (download user data as JSON - GDPR compliance)
-  - Exports complete user data: profile, subscription, drafts, campaigns, metadata
-  - Downloads as JSON file with timestamp
-  - GDPR-compliant data portability
-- ⚪ Add email notification preferences (future enhancement)
-- ⚪ Add default content preferences (pre-fill wizard settings - future enhancement)
-
-### 3.3 LinkedIn Integration (Authentication + Profile Enhancement) ✅
-**Difficulty Assessment:** ⭐⭐☆☆☆ Easy (2-3 hours implementation)
-
-**Sign In with LinkedIn (OAuth) - FULLY IMPLEMENTED ✅**
-- ✅ Add LinkedIn OAuth provider to Firebase Auth using OAuthProvider('oidc.linkedin')
-- ✅ Update login page with "Continue with LinkedIn" button
-- ✅ Update signup page with "Continue with LinkedIn" button
-- ✅ Display LinkedIn connection status in settings page
-- ✅ Show active sign-in methods (Google/LinkedIn/Email) in Connected Accounts section
-- ✅ Allow unlinking/relinking provider accounts
-  - Link providers: `linkWithPopup()` for Google and LinkedIn
-  - Unlink providers: `unlink()` with safety check (must keep at least 1 provider)
-  - Real-time provider status using `user.providerData`
-- ✅ Automatic user document creation for new LinkedIn sign-ins
-- ✅ Redirect to onboarding for new users, app for returning users
-
-**LinkedIn Profile Data Integration ✅ (ADDS REAL VALUE)**
-- ✅ Extract and store LinkedIn profile data in Firestore
-  - Stores: name, email, photoURL, connectedAt timestamp
-  - Saved in `users/{uid}/linkedinProfile` document
-- ✅ Pre-populate onboarding form for LinkedIn sign-ups
-  - Detects `?source=linkedin` URL parameter
-  - Shows LinkedIn connection notification banner on step 3
-  - Pre-fills background field with intelligent starter text
-  - Displays personalized welcome message with user's LinkedIn name
-- ✅ Display LinkedIn profile in settings
-  - Shows LinkedIn profile photo, name, email
-  - Displays connection date
-  - Expands when LinkedIn is linked, collapses when not
-  - Branded LinkedIn blue (#0A66C2) styling
-
-**Implementation Details:**
-- Uses Firebase OAuthProvider with LinkedIn OIDC provider (`oidc.linkedin`)
-- Scopes: `openid`, `profile`, `email`
-- Auth context provides `signInWithLinkedIn()` method
-- Login/signup pages store LinkedIn profile metadata:
-  ```typescript
-  linkedinProfile: {
-    connectedAt: new Date().toISOString(),
-    name: user.displayName,
-    email: user.email,
-    photoURL: user.photoURL,
-  }
-  ```
-- Onboarding page:
-  - Detects LinkedIn sign-in via URL parameter
-  - Pre-populates background: `"I'm {name} looking to share insights..."`
-  - Shows branded notification banner with checkmark
-- Settings page shows Connected Accounts section with:
-  - Google account (link/unlink)
-  - LinkedIn account with profile preview when connected
-  - Email/Password (shown as "Primary Method")
-  - Visual status indicators (Connected/Not connected)
-
-**LinkedIn Posting API - NOT FEASIBLE ❌**
-- LinkedIn has deprecated consumer posting APIs
-- Requires LinkedIn Marketing Developer Platform partnership (enterprise only)
-- **Current Solution:** Users manually copy-paste content to LinkedIn (workflow is fine)
-
-**Value Proposition:**
-LinkedIn authentication now adds genuine value by:
-1. Streamlining onboarding with auto-populated profile data
-2. Professional brand alignment (LinkedIn users on a LinkedIn content tool)
-3. Multiple sign-in options for convenience and account recovery
-4. Future potential: could request additional LinkedIn scopes for deeper profile data (job title, company, industry)
+## Phase 3: Onboarding & Profile (Setup)
 
 ### 3.4 Firebase & LinkedIn OAuth Configuration ⚪
 **Status:** Implementation complete in code, Firebase/LinkedIn portal setup pending
@@ -291,382 +120,9 @@ LinkedIn authentication now adds genuine value by:
 
 ---
 
-## Phase 4: Core Dashboard ✅
-
-### 4.1 Dashboard Layout ✅
-- ✅ Create fixed 240px left sidebar
-- ✅ Implement mobile collapsible view (icon-only)
-- ✅ Navigation items:
-  - ✅ Workspace
-  - ✅ Create New Post
-  - ✅ All Drafts
-  - ✅ Campaigns
-  - ✅ Calendar View
-  - ✅ Settings
-  - ✅ Billing
-- ✅ User profile section (bottom) with avatar and plan badge
-- ✅ Responsive main content area
-
-### 4.2 Dashboard Home (Workspace) ✅
-- ✅ Stats cards component:
-  - ✅ Posts used this month vs limit
-  - ✅ Drafts in progress
-  - ✅ Posts ready to share
-  - ✅ Active campaign status
-- ✅ Recent drafts section with grid/list toggle
-- ✅ Draft card component:
-  - ✅ Preview (80-100 characters)
-  - ✅ Color-coded status badge
-  - ✅ Creation date
-  - ✅ Language flag (EN/NO)
-  - ✅ Quick action buttons (Edit, Delete, Copy)
-- ✅ Filter functionality (status, language, tags)
-- ✅ Sort options (date, status, campaign)
-
----
-
-## Phase 5: Post Creation (⚡ PRIORITY FEATURE) ✅
-
-### 5.1 Post Creation Wizard - Step 1: Input ✅
-- ✅ Create wizard layout with progress indicator
-- ✅ Large textarea with character counter
-- ✅ Validation: 50-2000 characters
-- ✅ Optional reference URLs (up to 3 inputs)
-- ✅ Auto-save implementation (every 30s)
-- ✅ Next button validation
-
-### 5.2 Post Creation Wizard - Step 2: Configuration ✅
-- ✅ Tone dropdown:
-  - ✅ Professional, Casual, Inspirational, Educational
-- ✅ Purpose dropdown:
-  - ✅ Engagement, Lead Generation, Brand Awareness, Thought Leadership
-- ✅ Target audience dropdown:
-  - ✅ Executives, Entrepreneurs, Professionals, Industry-specific
-- ✅ Post style dropdown:
-  - ✅ Story-Based, List Format, Question-Based, How-To
-- ✅ Back and Next navigation
-
-### 5.3 Post Creation Wizard - Step 3: Preferences ✅
-- ✅ Language toggle (English/Norwegian)
-- ✅ Post length options:
-  - ✅ Short (50-150 words)
-  - ✅ Medium (150-300 words)
-  - ✅ Long (300-500 words)
-- ✅ Include CTA toggle
-- ✅ Emoji usage dropdown:
-  - ✅ None, Minimal, Moderate
-- ✅ Back and Next navigation
-
-### 5.4 Post Creation Wizard - Step 4: Review & Generate ✅
-- ✅ Display summary of all selections
-- ✅ Show post credit usage alert
-- ✅ Check monthly limit before generation
-- ✅ Generate button with loading state
-- ✅ Progress indicator during generation
-- ✅ Error handling and user feedback
-- ✅ Back button to edit settings
-
-### 5.5 Claude API Integration ✅
-- ✅ Create `/api/generate` route
-- ✅ Authenticate user via Firebase Auth token
-- ✅ Build system prompt:
-  - ✅ Include user profile (background, expertise, audience, style, voice, goals)
-  - ✅ Add generation rules (language, human tone, avoid jargon)
-  - ✅ Apply wizard settings (tone, purpose, style, length, CTA, emoji)
-- ✅ Build user message:
-  - ✅ Include wizard input text
-  - ✅ Add reference URLs if provided
-  - ✅ If campaign: add theme, post number, previous content
-- ✅ Call Anthropic Claude API
-- ✅ Handle token limits and errors
-- ✅ Store wizard settings with draft for re-generation
-- ✅ Increment `postsUsedThisMonth` counter
-- ✅ Return generated content
-
----
-
-## Phase 6: Content Editor ✅
-
-### 6.1 Editor Interface ✅
-- ✅ Large editable textarea with character counter
-- ✅ Action buttons:
-  - ✅ Enhance (improve with AI)
-  - ✅ Regenerate (use original settings)
-  - ✅ Back to Workspace
-  - ✅ Save Draft
-  - ✅ Copy to Clipboard
-- ✅ Loading states for AI actions
-- ⚪ Success/error notifications (using alerts for now)
-
-### 6.2 Enhance Functionality ✅
-- ✅ Create `/api/enhance` route
-- ✅ Send current content to Claude with improvement prompt
-- ✅ Maintain user's original settings and context
-- ✅ Update editor with enhanced content
-- ✅ Create new version entry
-
-### 6.3 Regenerate Functionality ✅
-- ✅ Load original wizard settings
-- ✅ Call generate API with same parameters
-- ✅ Replace content in editor
-- ✅ Create new version entry
-
-### 6.4 Version Management ✅
-- ✅ Version history sidebar component
-- ✅ Create `/drafts/{draftId}/versions` subcollection on save
-- ✅ Display version list with timestamps
-- ✅ Load previous version functionality
-- ✅ Track which version is current
-- ⚪ Diff view (optional enhancement)
-
-### 6.5 Draft Metadata ✅
-- ✅ Status dropdown component:
-  - ✅ Idea, In Progress, Ready to Post, Posted, Archived
-- ✅ Tag input with autocomplete
-- ⚪ Scheduled date picker
-- ✅ Manual save functionality
-- ✅ Update Firestore document
-
----
-
-## Phase 7: Draft Management ✅
-
-### 7.1 All Drafts Page ✅
-- ✅ Create drafts list layout
-- ✅ Search functionality (title/content)
-- ✅ Filter controls:
-  - ✅ Status filter
-  - ✅ Language filter
-  - ✅ Tag filter
-- ✅ Sort controls:
-  - ✅ Date created
-  - ✅ Last modified
-  - ✅ Status
-- ✅ Grid/list view toggle
-- ⚪ Bulk selection checkboxes
-- ⚪ Bulk action buttons (status change, tag, delete)
-- ⚪ Pagination or infinite scroll
-- ✅ Empty state component
-
-### 7.2 Calendar View ✅
-- ✅ Create monthly calendar component
-- ✅ Fetch drafts with scheduled dates
-- ✅ Display draft indicators on dates
-- ✅ Color-code indicators by status
-- ✅ Day detail modal/popover
-- ✅ Show all drafts for selected date
-- ✅ Navigate to draft editor from calendar
-- ⚪ Optional: Drag-and-drop reschedule
-
----
-
 ## Phase 8: Campaign Planning & Intelligence 🎯
 
-### 8.1 Campaign Creation ✅
-- ✅ Create campaign modal/page
-- ✅ Campaign form fields:
-  - ✅ Name input
-  - ✅ Theme and description textarea
-  - ✅ Language selection (EN/NO)
-  - ✅ Start and end date pickers
-  - ✅ Posting frequency dropdown (Daily, 3x/week, Weekly)
-  - ✅ Target number of posts input
-  - ✅ Content style dropdown
-  - ✅ Optional template selection
-- ✅ **Multiple active campaigns support** - removed single campaign limit
-- ✅ Store campaign in Firestore `/campaigns/{campaignId}`
-
-### 8.2 Campaign Detail Page ✅
-- ✅ Campaign header with name and description
-- ✅ Progress bar (posts completed/target)
-- ✅ Timeline component showing all posts
-- ✅ Status indicators for each post
-- ✅ Scheduled dates (calculated from frequency)
-- ✅ "Generate Next Post" button:
-  - ✅ Show only after previous post marked Posted/Ready
-  - ✅ Include campaign context in generation
-  - ✅ Pass previous post content for continuity
-  - ✅ Display post number (e.g., "Post 3 of 10")
-- ✅ Edit campaign settings button
-- ✅ Complete/archive campaign action
-
-### 8.3 Campaign Templates ✅
-- ✅ Create campaign templates library
-- ✅ Seed templates:
-  - ✅ Product Launch (8 posts, 3x/week)
-  - ✅ Thought Leadership Series (10 posts, weekly)
-  - ✅ Educational Series (12 posts, 3x/week)
-  - ✅ Company Updates (6 posts, weekly)
-  - ✅ Case Study Series (5 posts, weekly)
-  - ✅ Industry Insights (10 posts, 3x/week)
-- ✅ Template selection UI in campaign creation
-- ✅ Pre-populate campaign settings from template
-- ✅ Template preview component
-
-### 8.4 Sequential Post Generation ✅
-- ✅ Update generate API to handle campaign context
-- ✅ Pass campaign theme to Claude
-- ✅ Include previous post content
-- ✅ Add post sequence number (e.g., "This is post 3 of 10")
-- ✅ Maintain continuity in tone and messaging
-- ✅ Link generated draft to campaign
-- ✅ Increment campaign post counter
-
-### 8.5 AI Campaign Strategist (Marketing Manager Brain) ✅
-- ✅ **Campaign Brief Generator API** (`/api/campaigns/brief`)
-  - ✅ Analyze campaign goal input from user
-  - ✅ Generate strategic overview (3-4 sentence campaign approach)
-  - ✅ Create post-by-post blueprint with specific topics
-  - ✅ Define narrative arc (how posts build on each other)
-  - ✅ Suggest success markers to watch for
-  - ✅ Return structured JSON with strategy + post topics
-- ✅ **Dynamic Strategy Adaptation API** (`/api/campaigns/[id]/restrategize`)
-  - ✅ Accept user edits to any post topic
-  - ✅ Re-analyze campaign flow with change
-  - ✅ Update subsequent posts to maintain narrative coherence
-  - ✅ Preserve locked posts (already generated/posted)
-  - ✅ Return updated topics with change reasons
-  - ✅ Implement cascade logic (early edits = more impact)
-- ✅ **Next Post Guidance API** (`/api/campaigns/[id]/next-post-guide`)
-  - ✅ Analyze campaign position (early/mid/late sequence)
-  - ✅ Define specific goal for upcoming post
-  - ✅ Show connection to previous post
-  - ✅ Suggest optimal angle/approach
-  - ✅ Provide context for AI generation
-
-### 8.6 Customizable Campaign Strategy ✅
-- ✅ **Campaign Creation Wizard Enhancement**
-  - ✅ Step 1: User defines goal, post count, frequency
-  - ✅ Step 2: AI generates initial strategy + post topics
-  - ✅ Step 3: Inline editing interface for all topics
-  - ✅ Real-time preview of strategy changes
-  - ✅ Impact indicators showing which posts will adjust
-  - ✅ [Use This Strategy] or [Customize Topics] options
-- ✅ **Strategy Editor Component**
-  - ✅ Edit overall campaign approach (narrative arc)
-  - ✅ Inline edit for individual post topics
-  - ✅ Live AI updates when topics change
-  - ✅ Preview modal showing before/after comparison
-  - ✅ Locked indicator for generated/posted posts
-  - ✅ User-customized vs AI-suggested badges
-- ✅ **Edit Flow UI/UX**
-  - ✅ Click any post topic to edit
-  - ✅ AI immediately adjusts surrounding posts
-  - ✅ Show "Strategy adjusted" notification
-  - ✅ Display impacted posts with [UPDATED] badge
-  - ✅ Confirm changes before applying
-
-### 8.7 Active Campaign Widget (Dashboard Integration) ✅
-- ✅ **Replace Static Campaign Stat Card**
-  - ✅ Prominent card at top of dashboard
-  - ✅ Show active campaign name + progress
-  - ✅ Display next post due date
-  - ✅ AI-suggested topic for next post
-  - ✅ Quick "Generate Post X" button
-  - ✅ "View Campaign" and "Pause" actions
-- ✅ **Alternative Path Option**
-  - ✅ "Create Single Post Instead" card below
-  - ✅ Clear distinction between campaign vs standalone
-  - ✅ User choice emphasized
-- ✅ **Campaign-Aware Draft Cards**
-  - ✅ Add campaign badge/icon to draft cards
-  - ✅ Show campaign name on hover
-  - ✅ Filter option: "Campaign Posts" vs "Single Posts"
-  - ⚪ Optional grouped view in list mode
-  - ⚪ Visual connection lines in timeline view
-
-### 8.8 Enhanced AI Generation for Campaigns ✅
-- ✅ **Campaign-Aware System Prompts**
-  - ✅ Include campaign narrative arc in prompts
-  - ✅ Add position-in-sequence context (post X of Y)
-  - ✅ Reference campaign strategy goals
-  - ✅ Include previous post themes (not full content)
-  - ✅ Add tone progression instructions (early/mid/late phases)
-  - ✅ Specify call-back references where relevant (phase-based guidance)
-- ⚪ **Template Blueprints Enhancement**
-  - ⚪ Extend templates with post-by-post guides
-  - ⚪ Product Launch blueprint: Teaser → Problem → Solution → Features → Social Proof → CTA → Follow-up
-  - ⚪ Thought Leadership blueprint: Trend → Analysis → Perspective → Prediction → Discussion
-  - ⚪ AI uses blueprint to guide specific post generation
-- ⚪ **Smart Content Variations**
-  - ⚪ Automatically vary post length across campaign
-  - ⚪ Mix hook styles (question, story, stat, statement)
-  - ⚪ Alternate emoji usage patterns
-  - ⚪ Vary CTA approaches
-
-### 8.9 Campaign Detail Page Redesign 🔄
-- ⚪ **Strategy Overview Section**
-  - ⚪ Editable campaign strategy (narrative arc)
-  - ⚪ Visual flow indicator (text-based, clean)
-  - ⚪ Campaign goal reminder
-  - ⚪ [Edit Strategy] button
-- ⚪ **AI Insights Panel**
-  - ⚪ Next post recommendation
-  - ⚪ Campaign health indicator
-  - ⚪ Tone consistency check
-  - ⚪ Content diversity metrics
-  - ⚪ Suggested improvements
-- ⚪ **Enhanced Timeline View**
-  - ⚪ Each post has [Edit Topic] button
-  - ⚪ Show post goal/purpose on hover
-  - ⚪ Visual indicators for locked vs editable
-  - ⚪ Connection context between posts
-  - ⚪ Scheduled dates with auto-calculation
-- ⚪ **Campaign Actions**
-  - ⚪ Generate next post (with AI context)
-  - ⚪ Optimize entire campaign
-  - ⚪ Export campaign plan
-  - ⚪ Complete/archive with confirmation
-
-### 8.10 Workspace Campaign Integration 🔄
-- 🔄 **Campaign-First Navigation Option**
-  - 🔄 Toggle workspace view: All Posts / Campaign Posts
-  - 🔄 Campaign lens filtering
-  - 🔄 Quick campaign switcher in sidebar
-- 🔄 **Campaign Progress Tracking**
-  - 🔄 Show campaign completion % in workspace
-  - 🔄 Next post due date alerts
-  - 🔄 Campaign momentum indicators
-- ⚪ **Scheduled Date Integration**
-  - ⚪ Calendar view shows campaign posts
-  - ⚪ Auto-schedule based on frequency
-  - ⚪ Drag-to-reschedule (optional)
-  - ⚪ Campaign timeline in calendar
-
-### 8.11 Database Schema Updates ✅
-- ✅ **Campaign Collection Enhancement**
-  - ✅ Add `aiStrategy` object:
-    - ✅ `overallApproach`: string (narrative arc)
-    - ✅ `postBlueprints`: array of post plans
-      - ✅ `position`: number
-      - ✅ `topic`: string
-      - ✅ `goal`: string
-      - ✅ `locked`: boolean
-      - ✅ `userCustomized`: boolean
-    - ✅ `suggestions`: array (AI recommendations)
-  - ⚪ Add `performance` object:
-    - ⚪ `coherenceScore`: number
-    - ⚪ `diversityScore`: number
-    - ⚪ `completionRate`: number
-
-### 8.12 Clean UX/UI Patterns ✅
-- ✅ **Design Principles**
-  - ✅ Clear typography hierarchy (size/weight only)
-  - ✅ Ample whitespace for breathing room
-  - ✅ Simple borders and dividers
-  - ✅ Status via text, minimal colors
-  - ✅ Progress via simple bars, no fancy charts
-- ✅ **Information Architecture**
-  - ✅ AI suggestions in clearly labeled boxes
-  - ✅ "Why this matters" explanations visible
-  - ✅ One clear primary action per screen
-  - ✅ Optional/advanced features collapsed
-- ✅ **User Control Indicators**
-  - ✅ Every AI suggestion has [Use This] or [Customize]
-  - ✅ Can skip AI strategy entirely (DIY mode)
-  - ✅ Can edit any AI-generated content
-  - ✅ Can pause/modify campaign anytime
-  - ✅ Clear locked/unlocked indicators
+**Note:** Phase 8 sections 8.1-8.12 are complete and archived in finished-tasks.md. See that file for implementation details.
 
 ### 8.13 Enhanced Campaign Detail Page with Post Details ⚪
 - ⚪ **Timeline Post Cards Enhancement**
@@ -716,6 +172,315 @@ LinkedIn authentication now adds genuine value by:
   - ⚪ Add to Campaign Description textarea
   - ⚪ Real-time feedback as user types
   - ⚪ Loading state during validation
+
+### 8.16 Campaign System Overhaul 🔄 (Major Refactor)
+
+**Context:** The current campaign system has fundamental disconnect issues between creation and post generation, resulting in poor post quality and user confusion.
+
+**Problems Identified:**
+1. **Disconnected Creation Flow**
+   - Users enter vague campaign themes in freeform textarea
+   - No structured data collection about actual product/topic
+   - AI generates generic campaign briefs from minimal input
+   - Post blueprints lack specificity despite AI strategy
+
+2. **Generic Post Generation**
+   - Post wizard requires manual user input for each post
+   - Users don't know what specific information to provide
+   - Campaign context not effectively leveraged
+   - Generated posts contain "jibberish" and aren't rooted in campaign
+
+3. **Too Many Template Choices**
+   - Six templates causing decision paralysis
+   - Users unsure which template fits their needs
+   - Templates don't drive meaningful differentiation
+
+**Solution: Template-Driven Structured Workflow**
+
+#### Phase 1: Reduce & Refine Templates (2-3 hours) ⚪
+
+**Objective:** Simplify template options to two highly focused choices
+
+**Files to Modify:**
+- `lib/campaignTemplates.ts` - Reduce from 6 to 2 templates
+
+**Implementation:**
+- ⚪ **Keep only 2 templates:**
+  - ⚪ **Product Launch** - For announcing new products/features/services
+  - ⚪ **Thought Leadership** - For establishing expertise and industry authority
+- ⚪ **Remove templates:**
+  - ⚪ Educational Series (can be covered by Thought Leadership)
+  - ⚪ Company Updates (too generic)
+  - ⚪ Case Study Series (can be part of Product Launch or Thought Leadership)
+  - ⚪ Industry Insights (covered by Thought Leadership)
+- ⚪ **Update template structure** to include structured field definitions:
+  ```typescript
+  interface CampaignTemplate {
+    id: string
+    name: string
+    description: string
+    icon: string
+    defaultSettings: {
+      frequency: string
+      style: string
+      targetPostCount: number
+      tone: string
+      purpose: string
+    }
+    requiredFields: Array<{
+      id: string
+      label: string
+      type: 'text' | 'textarea' | 'select' | 'multiselect'
+      placeholder: string
+      helperText: string
+      required: boolean
+      options?: string[]  // For select/multiselect
+    }>
+  }
+  ```
+- ⚪ **Define Product Launch required fields:**
+  - ⚪ Product/Feature Name
+  - ⚪ What problem does it solve? (textarea)
+  - ⚪ Key features/benefits (multiselect or bullet list)
+  - ⚪ Target customers (text)
+  - ⚪ Launch date/timeline (date)
+  - ⚪ Unique selling proposition (textarea)
+- ⚪ **Define Thought Leadership required fields:**
+  - ⚪ Core topic/expertise area
+  - ⚪ Key insights/perspectives to share (textarea)
+  - ⚪ Supporting evidence (case studies, data, experience)
+  - ⚪ Target audience pain points (textarea)
+  - ⚪ Desired audience action/takeaway
+
+#### Phase 2: Template-Specific Input Wizards (4-5 hours) ⚪
+
+**Objective:** Create dynamic wizard forms that collect structured data based on template selection
+
+**Files to Create:**
+- `components/campaigns/ProductLaunchWizard.tsx` - Product Launch specific form
+- `components/campaigns/ThoughtLeadershipWizard.tsx` - Thought Leadership specific form
+- `components/campaigns/TemplateFieldRenderer.tsx` - Reusable field renderer component
+
+**Files to Modify:**
+- `app/app/campaigns/page.tsx` - Update campaign creation wizard
+
+**Implementation:**
+- ⚪ **Create ProductLaunchWizard component**
+  - ⚪ Step 1: Basic campaign info (name, dates, frequency)
+  - ⚪ Step 2: Product details form (all required fields from template)
+  - ⚪ Step 3: AI strategy generation with structured inputs
+  - ⚪ Step 4: Review and confirm
+  - ⚪ Form validation ensuring all required fields completed
+  - ⚪ Save structured data to campaign document
+- ⚪ **Create ThoughtLeadershipWizard component**
+  - ⚪ Same 4-step structure but with different fields
+  - ⚪ Expertise area, insights, evidence collection
+  - ⚪ Audience pain points and desired outcomes
+- ⚪ **Create TemplateFieldRenderer component**
+  - ⚪ Renders appropriate input based on field type
+  - ⚪ Handles validation and helper text display
+  - ⚪ Consistent styling across all template forms
+  - ⚪ Support for text, textarea, select, multiselect, date inputs
+- ⚪ **Update campaign creation page**
+  - ⚪ Template selection as first step
+  - ⚪ Conditionally render appropriate wizard based on selection
+  - ⚪ Pass template configuration to wizard component
+  - ⚪ Store template ID and structured data in campaign document
+
+#### Phase 3: Structured Brief Generation (3-4 hours) ⚪
+
+**Objective:** Enhance AI campaign brief generation to use structured inputs instead of vague text
+
+**Files to Modify:**
+- `app/api/campaigns/brief/route.ts` - Enhance with structured input handling
+
+**Implementation:**
+- ⚪ **Update request body to accept structured data:**
+  ```typescript
+  interface BriefRequest {
+    templateId: 'product-launch' | 'thought-leadership'
+    campaignGoal: string  // Keep for backward compatibility
+    postCount: number
+    structuredInputs: {
+      [key: string]: any  // Template-specific fields
+    }
+    style: string
+    tone: string
+    purpose: string
+    audience: string
+  }
+  ```
+- ⚪ **Build template-specific prompts:**
+  - ⚪ Product Launch prompt includes: product name, problem, features, USP, target customers
+  - ⚪ Thought Leadership prompt includes: expertise area, insights, evidence, audience pain points
+  - ⚪ Structured format makes it clear what each post should cover
+- ⚪ **Enhance post blueprint generation:**
+  - ⚪ Use specific product features/benefits for Product Launch posts
+  - ⚪ Use specific insights/perspectives for Thought Leadership posts
+  - ⚪ Generate topics that directly reference structured inputs
+  - ⚪ Create more specific goals for each post (not generic)
+- ⚪ **Example Product Launch blueprint:**
+  ```
+  Post 1: Teaser - "The problem with [specific pain point]"
+  Post 2: Solution intro - "Introducing [product name]"
+  Post 3: Feature spotlight - "[Specific feature 1] and why it matters"
+  Post 4: Use case - "How [target customer] uses [product]"
+  Post 5: Social proof - "Early results from beta users"
+  Post 6: Launch day - "Available now: Here's how to get started"
+  ```
+- ⚪ **Update campaign document structure:**
+  - ⚪ Store `templateId` field
+  - ⚪ Store `structuredInputs` object with all template fields
+  - ⚪ Keep `aiStrategy` with enhanced blueprints
+
+#### Phase 4: Smart Post Input Pre-filling (3-4 hours) ⚪
+
+**Objective:** Pre-populate post wizard with campaign context and required elements to guide users
+
+**Files to Modify:**
+- `components/PostWizard.tsx` - Enhance campaign context handling
+- `app/api/generate/route.ts` - Already has good campaign context (lines 419-478)
+
+**Implementation:**
+- ⚪ **Enhance PostWizard Step 1 (Input) for campaign posts:**
+  - ⚪ Load campaign document with structured inputs
+  - ⚪ Load post blueprint for current post number
+  - ⚪ Pre-fill input textarea with helpful scaffold:
+    ```
+    [Campaign: Product Launch for {productName}]
+
+    Post {X} of {Y}: {blueprintTopic}
+    Goal: {blueprintGoal}
+
+    Key points to cover:
+    • {Relevant structured input 1}
+    • {Relevant structured input 2}
+    • {Relevant structured input 3}
+
+    Your thoughts:
+    [Cursor starts here - user adds their angle/story]
+    ```
+  - ⚪ Show campaign context card with reminder of product/topic details
+  - ⚪ Make it clear user should expand on the scaffold, not replace it
+- ⚪ **Update wizard data loading (PostWizard.tsx lines 116-165):**
+  - ⚪ Fetch campaign document including `structuredInputs`
+  - ⚪ Extract relevant fields for current post
+  - ⚪ Build scaffold text based on template type
+  - ⚪ Set as initial `input` value in wizard state
+- ⚪ **Enhance generate API prompt (already good, minor additions):**
+  - ⚪ Explicitly reference structured inputs in prompt
+  - ⚪ Remind AI to use specific product features/insights
+  - ⚪ Include scaffold in user message so AI sees full context
+  - ⚪ Keep existing campaign context handling (lines 419-478)
+
+#### Phase 5: Update Campaign Creation Flow (2-3 hours) ⚪
+
+**Objective:** Wire up new template-driven wizard to campaign creation page
+
+**Files to Modify:**
+- `app/app/campaigns/page.tsx` - Major refactor of wizard structure
+
+**Implementation:**
+- ⚪ **Update wizard steps:**
+  1. **Step 1: Template Selection**
+     - ⚪ Display 2 template cards (Product Launch, Thought Leadership)
+     - ⚪ Show description, icon, use cases for each
+     - ⚪ Select button sets `selectedTemplate` state
+  2. **Step 2: Basic Info**
+     - ⚪ Campaign name, dates, frequency (keep existing)
+     - ⚪ Remove vague "theme" textarea (replaced by structured inputs)
+  3. **Step 3: Template-Specific Details**
+     - ⚪ Render `ProductLaunchWizard` or `ThoughtLeadershipWizard`
+     - ⚪ Collect all structured inputs
+     - ⚪ Validation before proceeding
+  4. **Step 4: AI Strategy Generation**
+     - ⚪ Call `/api/campaigns/brief` with structured data
+     - ⚪ Show generated strategy with specific post topics
+     - ⚪ Allow editing individual topics (existing feature)
+  5. **Step 5: Confirmation**
+     - ⚪ Review all inputs and strategy
+     - ⚪ Create campaign button
+- ⚪ **Update form state management:**
+  - ⚪ Add `templateId` field
+  - ⚪ Add `structuredInputs` object
+  - ⚪ Remove generic `theme` field
+  - ⚪ Update validation logic
+- ⚪ **Update campaign creation:**
+  - ⚪ Save template ID and structured inputs to Firestore
+  - ⚪ Ensure all data properly stored for later use
+
+#### Phase 6: Testing & Validation (2 hours) ⚪
+
+**Objective:** Ensure end-to-end flow works and posts are higher quality
+
+**Testing Checklist:**
+- ⚪ **Template selection:**
+  - ⚪ Both templates display correctly
+  - ⚪ Selection triggers correct wizard component
+- ⚪ **Structured data collection:**
+  - ⚪ All required fields validated
+  - ⚪ Helper text displays correctly
+  - ⚪ Form saves properly to state
+- ⚪ **AI strategy generation:**
+  - ⚪ Structured inputs passed to API
+  - ⚪ Generated blueprints reference specific inputs
+  - ⚪ Topics are specific, not generic
+- ⚪ **Post generation:**
+  - ⚪ Wizard pre-fills with campaign context
+  - ⚪ User can expand on scaffold
+  - ⚪ Generated posts reference actual product/topic
+  - ⚪ Posts feel cohesive within campaign
+- ⚪ **Edge cases:**
+  - ⚪ Missing required fields blocked at validation
+  - ⚪ Error handling for API failures
+  - ⚪ Existing campaigns still viewable (backward compatibility)
+
+**Success Criteria:**
+✅ Users can only select from 2 clear templates
+✅ Campaign creation collects specific, actionable information
+✅ AI generates specific post topics based on structured inputs
+✅ Post wizard guides users with pre-filled campaign context
+✅ Generated posts actually reference the product/topic/insights
+✅ Posts feel rooted in the campaign, not generic
+
+**Estimated Total Time: 16-21 hours**
+
+**Files Summary:**
+- **To Create:**
+  - `components/campaigns/ProductLaunchWizard.tsx`
+  - `components/campaigns/ThoughtLeadershipWizard.tsx`
+  - `components/campaigns/TemplateFieldRenderer.tsx`
+- **To Modify:**
+  - `lib/campaignTemplates.ts` (reduce to 2 templates, add field definitions)
+  - `app/app/campaigns/page.tsx` (refactor wizard structure)
+  - `app/api/campaigns/brief/route.ts` (handle structured inputs)
+  - `components/PostWizard.tsx` (pre-fill with campaign context)
+  - `app/api/generate/route.ts` (minor enhancements, mostly already good)
+
+**Database Schema Update:**
+```typescript
+// Add to /campaigns/{campaignId}
+{
+  // ... existing fields ...
+  templateId: 'product-launch' | 'thought-leadership'
+  structuredInputs: {
+    // Product Launch example:
+    productName: string
+    problemSolved: string
+    keyFeatures: string[]
+    targetCustomers: string
+    launchDate: string
+    uniqueSellingProposition: string
+
+    // Thought Leadership example:
+    expertiseArea: string
+    keyInsights: string
+    evidence: string
+    audiencePainPoints: string
+    desiredAction: string
+  }
+}
+```
 
 ---
 
@@ -921,26 +686,7 @@ LinkedIn authentication now adds genuine value by:
 ## Phase 10: Design & UX Enhancement 🎨
 
 ### 10.1 Welcome/Onboarding Wizard Visual Upgrade ✅
-- ✅ Add gradient backgrounds and visual hierarchy
-  - ✅ Implement subtle gradient overlays on wizard steps
-  - ✅ Add visual progress animations (step completion effects)
-  - ✅ Create modern card shadows with soft depth
-  - ✅ Add smooth transitions between steps (slide/fade effects)
-- ✅ Enhance typography and spacing
-  - ✅ Implement better heading hierarchy (larger, bolder step titles)
-  - ✅ Add descriptive subtitles with improved color contrast
-  - ✅ Increase whitespace for breathing room
-  - ✅ Add decorative icons for each step
-- ✅ Add micro-interactions and feedback
-  - ✅ Checkbox/radio button animations (checkmark animation, ripple effect)
-  - ✅ Input field focus animations (border glow, label lift)
-  - ✅ Button hover effects (lift, color shift, shadow expansion)
-  - ✅ Progress bar pulse animation on step completion
-- ✅ Implement contextual illustrations
-  - ✅ Add welcome hero illustration/icon with animated orange gradient circle
-  - ✅ Step-specific decorative graphics
-  - ✅ Success celebration animation with confetti and checkmark
-  - ✅ Background patterns with animated gradient orbs for visual interest
+**Note:** Section 10.1 is complete and archived in finished-tasks.md.
 
 ### 10.2 Draft Creation Wizard Visual Upgrade ⏳
 - ✅ Enhanced step indicators
@@ -972,38 +718,7 @@ LinkedIn authentication now adds genuine value by:
   - ✅ Success confetti/celebration animation (implemented in SuccessCelebration component)
 
 ### 10.3 Interactive Tooltips & Descriptions ✅
-- ✅ Implement tooltip system
-  - ✅ Add @radix-ui/react-tooltip library
-  - ✅ Create reusable InfoTooltip component
-  - ✅ Design consistent tooltip styling (dark theme with smooth animations)
-  - ✅ Add smooth fade-in animations (300ms delay)
-- ✅ Tone option tooltips
-  - ✅ **Professional**: Establishes credibility for corporate audiences
-  - ✅ **Casual**: Conversational language for authentic connections
-  - ✅ **Inspirational**: Motivating content focused on growth
-  - ✅ **Educational**: Clear teaching-focused content
-- ✅ Purpose option tooltips
-  - ✅ **Engagement**: Sparks conversations and comments
-  - ✅ **Lead Generation**: Drives action toward services
-  - ✅ **Brand Awareness**: Increases visibility and recognition
-  - ✅ **Thought Leadership**: Establishes industry authority
-- ✅ Audience option tooltips
-  - ✅ **Executives**: Strategic, high-level insights
-  - ✅ **Entrepreneurs**: Growth strategies and practical advice
-  - ✅ **Professionals**: Tactical tips and career development
-  - ✅ **Industry-Specific**: Niche terminology and specialized challenges
-- ✅ Style option tooltips
-  - ✅ **Story-Based**: Narrative structure for engagement
-  - ✅ **List Format**: Scannable bullet points and tips
-  - ✅ **Question-Based**: Drives curiosity and discussion
-  - ✅ **How-To**: Actionable instructions and processes
-- ✅ Length option tooltips
-  - ✅ **Short (50-150 words)**: Quick, punchy posts
-  - ✅ **Medium (150-300 words)**: Optimal for LinkedIn algorithm
-  - ✅ **Long (300-500 words)**: In-depth thought leadership
-- ✅ Additional setting tooltips
-  - ✅ **Include CTA**: Increases post interaction by 30-50%
-  - ✅ **Emoji Usage**: Professional (none), Minimal (1-2), Moderate (3-5)
+**Note:** Section 10.3 is complete and archived in finished-tasks.md.
 
 ### 10.4 Visual Design System Enhancements ⏳
 - ✅ Color palette expansion
@@ -1039,265 +754,7 @@ LinkedIn authentication now adds genuine value by:
 *Note: See section 10.7.9 for comprehensive accessibility implementation*
 
 ### 10.7 Dual-Color System Refinement ✅
-
-**Design Philosophy:**
-- **Orange = "Do Something"** (Actions, progress, interactive triggers)
-- **Blue = "Review or Navigate"** (Information, secondary actions, navigation)
-- **Other Colors = Status Clarity Only** (Minimal, purpose-driven)
-- **Mood**: Between calm and energetic—clean, professional, with active contrast
-
-**Core Principles:**
-1. Maintain current structure - No layout reorganization, only visual refinement
-2. Orange strictly for actions - Generate, Create, Progress bars, CTAs
-3. Blue for information/navigation - Campaign backgrounds, View buttons, info sections
-4. 20% vertical padding reduction - Bring more content above fold
-5. Strengthen slate text - Improve legibility on white backgrounds
-6. Tactile hover feedback - Soft shadow growth + 1-2% scale
-
-#### 10.7.1 Color System Foundation ✅
-- ✅ Add blue system variables to globals.css
-  - Blue primary: `#2563EB`
-  - Blue hover: `#1E40AF`
-  - Blue light: `#DBEAFE`
-  - Blue frosted: `rgba(37, 99, 235, 0.08)`
-  - Blue subtle: `#EFF6FF`
-- ✅ Strengthen slate text tones for better legibility
-  - Primary slate: `#475569` (was #64748B - 15% darker)
-  - Secondary slate: `#64748B` (muted content)
-  - Light slate: `#94A3B8` (timestamps)
-- ✅ Add hover utilities to globals.css
-  - `.hover-lift` class with shadow growth + scale
-  - `.hover-lift-sm` for subtle interactions
-  - Transition properties for smooth animations
-
-#### 10.7.2 Button System Refinement (CRITICAL) ✅
-- ✅ Fix primary button variant
-  - Orange background with **WHITE text** (not gray!)
-  - Hover: darker orange with 2% scale increase
-  - Shadow growth on hover
-  - Use: All action CTAs (Generate, Create, Save)
-- ✅ Implement secondary button variant (Blue theme)
-  - Option A: White background, 2px blue border, blue text
-  - Option B: Blue-frosted background, blue text, no border
-  - Hover: deeper blue tint with 1% scale increase
-  - Use: View, Edit, navigation actions
-- ✅ Refine ghost button variant
-  - Strengthened slate text
-  - Light gray hover background
-  - Use: Pause, icon buttons, tertiary actions
-- ✅ Update all button instances throughout app
-  - Verify proper variant usage
-  - Ensure color contrast compliance
-  - Apply hover states consistently
-
-#### 10.7.3 Campaign Widget Redesign ✅
-- ✅ Replace orange gradient background
-  - Remove: `bg-gradient-to-br from-primary/5 to-primary/10`
-  - Replace with: `bg-gradient-to-br from-blue-50 to-white` OR `bg-white border-2 border-blue-100`
-  - Result: Soft blue-tinted surface instead of orange
-- ✅ Reserve orange strictly for:
-  - Progress bar fill only
-  - "Generate Post" button (primary action)
-  - No other orange elements in widget
-- ✅ Apply blue theme to:
-  - Background gradient/tint
-  - Calendar icon and container (`bg-blue-100`)
-  - Lightbulb icon (amber/yellow acceptable)
-  - Info box backgrounds (`bg-blue-50/30`)
-  - "View" button (secondary blue outline)
-  - Megaphone icon container
-- ✅ Reduce vertical padding by 20%
-  - `p-6` → `p-5`
-  - `space-y-4` → `space-y-3`
-  - `mb-4` → `mb-3` throughout component
-  - Compress header spacing (reduce icon size if needed)
-- ✅ Update button group styling
-  - "Generate Post X": Primary orange with white text
-  - "View": Secondary blue outline style
-  - "Pause": Ghost style with slate text
-- ✅ Optimize layout for vertical space
-  - Combine "Next Post Due" and "Suggested Topic" into single compact row
-  - Reduce font sizes for secondary information
-  - Tighter spacing in info boxes
-
-#### 10.7.4 Draft Card Status Borders ✅
-- ✅ Add 4px color-coded left borders
-  - Idea: `border-l-4 border-l-purple-400` (#A78BFA)
-  - In Progress: `border-l-4 border-l-blue-500` (#3B82F6)
-  - Ready to Post: `border-l-4 border-l-green-500` (#10B981)
-  - Posted: `border-l-4 border-l-amber-500` (#F59E0B)
-  - Archived: `border-l-4 border-l-gray-400` (#9CA3AF)
-- ✅ Update campaign badge styling
-  - Background: `bg-blue-50` (light blue frosted)
-  - Text: `text-blue-700` (dark blue)
-  - Icon: Blue megaphone
-- ✅ Color-code action button hovers
-  - Edit button: `hover:bg-blue-50 hover:text-blue-600`
-  - Copy button: `hover:bg-slate-100 hover:text-slate-700`
-  - Delete button: `hover:bg-red-50 hover:text-red-600`
-- ✅ Add hover-lift-sm class for tactile feedback
-  - Soft shadow growth on hover
-  - 1% scale increase (scale-[1.01])
-  - Smooth transition (200ms duration)
-- ✅ Reduce padding by 20%
-  - Grid view: `p-6` → `p-5`
-  - List view: `p-4` → `p-3`
-  - Maintain readability with adjusted spacing
-- ✅ Keep design simple and clean
-  - White card backgrounds only
-  - Colored left border as primary visual indicator
-  - No gradient backgrounds or heavy decorations
-
-#### 10.7.5 Workspace Layout Padding Reduction ✅
-- ✅ Reduce vertical spacing by 20% throughout
-  - Main container: `space-y-8` → `space-y-6`
-  - Section headers: `mb-6` → `mb-5`
-  - Draft grid: `gap-6` → `gap-5`
-  - Card padding: `p-6` → `p-5`
-- ✅ Update stats cards (no active campaign view)
-  - Padding: `p-6` → `p-5`
-  - Color-coded icon backgrounds (subtle)
-    - Posts: `bg-orange-100` / `text-orange-600`
-    - Drafts: `bg-blue-100` / `text-blue-600`
-    - Ready: `bg-green-100` / `text-green-600`
-    - Campaigns: `bg-purple-100` / `text-purple-600`
-  - Add `hover-lift` class for interactive feel
-- ✅ Refine "Create Single Post" card
-  - Blue outline border: `border-2 border-blue-200`
-  - Hover state: `hover:border-blue-300 hover:bg-blue-50/30`
-  - Button: Secondary blue outline style
-  - Consistent with blue = navigation/secondary action
-- ✅ Optimize filter section spacing
-  - Reduce gap: `gap-4` → `gap-3`
-  - Active state: Blue underline or subtle blue background
-  - Keep functional and minimal styling
-  - Ensure mobile responsiveness maintained
-
-#### 10.7.6 Text Legibility Enhancement ✅
-- ✅ Apply strengthened slate tones throughout app
-  - Update all `text-secondary` class usage to use new `#475569`
-  - Ensure body text uses strengthened slate for better contrast
-  - Maintain hierarchy with font-weight variations
-  - Secondary/muted text uses `#64748B`
-  - Timestamps and auxiliary info use `#94A3B8`
-- ✅ Verify contrast ratios on all text elements
-  - Test body text on white backgrounds (4.5:1 minimum)
-  - Check secondary text readability
-  - Ensure WCAG AA compliance throughout
-
-#### 10.7.7 Hover States & Micro-interactions ✅
-- ✅ Implement global hover patterns for cards
-  - Transition: `transition-all duration-200`
-  - Shadow: `hover:shadow-lg`
-  - Scale: `hover:scale-[1.01]`
-  - Apply to draft cards, stat cards, campaign widget
-- ✅ Implement button hover patterns
-  - Primary/Secondary: `hover:scale-[1.02]`
-  - Primary: Add `hover:shadow-md`
-  - Smooth transitions on all state changes
-- ✅ Implement interactive element hovers
-  - Blue theme elements: `hover:bg-blue-50/50`
-  - Neutral elements: `hover:bg-slate-100`
-  - Filter buttons, dropdowns, etc.
-- ✅ Apply hover utilities consistently
-  - Add utility classes to all interactive elements
-  - Test tactile feedback throughout interface
-  - Ensure smooth animations (no jank)
-
-#### 10.7.8 Status Badge Minimal Refinement ✅
-- ✅ Keep badges minimal and unobtrusive
-  - Rounded-full shape
-  - Light backgrounds with darker text
-  - Small size, proper padding
-- ✅ Align badge colors with left border system
-  - Idea: `bg-purple-100 text-purple-700`
-  - In Progress: `bg-blue-100 text-blue-700`
-  - Ready to Post: `bg-green-100 text-green-700`
-  - Posted: `bg-amber-100 text-amber-700`
-  - Archived: `bg-gray-100 text-gray-600`
-- ✅ Ensure consistent badge styling across all components
-  - Draft cards, campaign detail, calendar view
-  - Proper spacing and alignment
-  - Readable at all screen sizes
-
-#### 10.7.9 Accessibility Compliance Check ✅
-- ✅ Verify WCAG AA contrast ratios (4.5:1 minimum)
-  - Orange buttons with white text (should pass)
-  - Blue buttons with dark blue text on white (verify)
-  - Strengthened slate on white backgrounds (verify)
-  - All status badge text/background combinations
-- ✅ Ensure visible focus rings on all interactive elements
-  - Buttons, inputs, dropdowns, links
-  - Use blue focus ring for consistency
-  - Clear indication of keyboard focus
-- ✅ Test keyboard navigation
-  - Tab order is logical
-  - All actions accessible via keyboard
-  - Enter/Space work on custom controls
-- ✅ Verify disabled states
-  - Proper opacity (40%)
-  - Cursor: not-allowed
-  - Clear visual distinction from enabled state
-
-**Visual Hierarchy Summary:**
-
-**Orange (Action - "Do Something"):**
-- Generate/Create buttons
-- Progress bars and fill animations
-- Active states and selected items
-- Primary CTAs throughout app
-- "Do this now" action elements
-
-**Blue (Information/Navigation - "Review or Navigate"):**
-- Campaign backgrounds and containers
-- View/Edit buttons (secondary actions)
-- Info containers and notification areas
-- Calendar and scheduling elements
-- Campaign badges on draft cards
-- Secondary navigation elements
-
-**Status Colors (Clarity Only):**
-- Purple: Idea phase / Creative thinking
-- Blue: In progress / Active work
-- Green: Ready to post / Success states
-- Amber: Posted / Published content
-- Gray: Archived / Inactive content
-
-**Neutral (Foundation):**
-- Strengthened slate text (#475569)
-- White card backgrounds
-- Light gray subtle backgrounds
-- Borders and dividers
-
-**Design Principles Applied:**
-1. ✅ **Clear visual hierarchy** - Orange for action, blue for info
-2. ✅ **Legible buttons** - White text on orange, proper contrast
-3. ✅ **Calm + energetic balance** - Clean design with active feel
-4. ✅ **20% more vertical content** - Reduced padding brings drafts higher
-5. ✅ **Professional SaaS aesthetic** - Dual-color system feels modern
-6. ✅ **Tactile interactions** - Hover states provide clear feedback
-7. ✅ **Status clarity** - Simple borders, minimal color usage
-8. ✅ **Structure maintained** - No layout reorganization, only visual refinement
-
-**Files to Modify:**
-- `app/globals.css` - Blue system variables, strengthened slate, hover utilities
-- `components/ui/button.tsx` - Fix variants with white text on orange
-- `components/ActiveCampaignWidget.tsx` - Blue background, orange actions only
-- `components/DraftCard.tsx` - Left borders, blue badges, hover states
-- `app/app/page.tsx` - 20% padding reduction, hover states, stat card colors
-- Various component instances - Update padding classes and apply new color system
-
-**Expected Outcome:**
-✅ Clear visual hierarchy (orange = action, blue = info)
-✅ Legible buttons with proper contrast ratios
-✅ 20% more vertical content visible above fold
-✅ Professional dual-color SaaS aesthetic
-✅ Tactile hover interactions throughout
-✅ Status clarity through minimal color usage
-✅ Calm yet energetic design balance
-✅ Improved text legibility on white backgrounds
-
-**Estimated Time: 7-9 hours**
+**Note:** Section 10.7 and all subsections (10.7.1-10.7.9) are complete and archived in finished-tasks.md.
 
 ---
 
@@ -1655,37 +1112,7 @@ interface Testimonial {
 - Optional: `app/app/settings/page.tsx` - Add compact testimonial cards
 
 ### 14.6 UX Considerations ✅
-**Best practices implemented:**
-
-✅ **Non-Intrusive Design**
-- Floating button doesn't block main content
-- Slide-in panel (not modal) maintains context
-- Can be dismissed with backdrop click or X button
-- Only appears when user logged in (beta users)
-
-✅ **Short Form (1 minute)**
-- Only star rating required
-- All other fields optional
-- Clear time commitment shown
-- Progress/completion feedback
-
-✅ **User Control**
-- Multiple ways to dismiss
-- Optional email field for follow-up preference
-- Clear data usage explanation
-- Non-blocking workflow
-
-✅ **Visual Hierarchy**
-- Testimonials use white space effectively
-- Star ratings stand out clearly
-- Quotes are readable (large text)
-- Author info provides credibility
-
-✅ **Placement Strategy**
-- Testimonials in dedicated section (not everywhere)
-- Feedback button available but unobtrusive
-- Respects user's primary task flow
-- Avoids spam-like patterns
+**Note:** Section 14.6 is complete and archived in finished-tasks.md.
 
 ### 14.7 Analytics & Review (Future) ⚪
 **Track feedback effectiveness:**

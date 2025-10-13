@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { ChevronDown, ChevronUp, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 interface ValidationResult {
   scores: {
@@ -20,9 +20,10 @@ interface Props {
   text: string;
   language: 'en' | 'no';
   fieldType: 'theme' | 'description';
+  onApplySuggestion?: (suggestion: string) => void;
 }
 
-export function CampaignInputValidator({ text, language, fieldType }: Props) {
+export function CampaignInputValidator({ text, language, fieldType, onApplySuggestion }: Props) {
   const [validating, setValidating] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -147,9 +148,8 @@ export function CampaignInputValidator({ text, language, fieldType }: Props) {
     <div className="mt-2 rounded-lg border border-secondary/20 bg-secondary/5 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium text-secondary">
-            {language === 'no' ? 'AI Kvalitetsvurdering' : 'AI Quality Check'}
+            {language === 'no' ? 'Kvalitetsvurdering' : 'Quality Check'}
           </span>
         </div>
 
@@ -193,11 +193,22 @@ export function CampaignInputValidator({ text, language, fieldType }: Props) {
               </button>
 
               {showSuggestions && (
-                <ul className="mt-2 space-y-1">
+                <ul className="mt-2 space-y-2">
                   {result.suggestions.map((suggestion, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm text-secondary/80">
-                      <span className="text-primary">•</span>
-                      <span>{suggestion}</span>
+                    <li key={index} className="flex items-start justify-between gap-3 rounded-lg border border-secondary/10 bg-white p-3 text-sm text-secondary/80">
+                      <div className="flex items-start gap-2 flex-1">
+                        <span className="text-primary mt-0.5">•</span>
+                        <span>{suggestion}</span>
+                      </div>
+                      {onApplySuggestion && (
+                        <button
+                          type="button"
+                          onClick={() => onApplySuggestion(suggestion)}
+                          className="flex-shrink-0 rounded bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
+                        >
+                          {language === 'no' ? 'Legg til' : 'Add'}
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>

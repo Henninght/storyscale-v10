@@ -36,7 +36,9 @@
       "mcp__playwright__browser_type",
       "Bash(pkill:*)",
       "Bash(xxd:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_ygUniw/**)",
+      "Bash(test -f vercel.json)"
     ],
     "deny": [],
     "ask": []

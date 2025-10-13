@@ -521,18 +521,27 @@ export default function CampaignsPage() {
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Campaign Theme *
                 </label>
-                <input
-                  type="text"
+                <p className="mb-3 text-sm text-slate-600">
+                  Describe your campaign goal. AI will analyze and help you refine it for better results.
+                </p>
+                <textarea
                   value={formData.theme}
                   onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                  placeholder="e.g., Launching our new AI-powered analytics tool"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 min-h-[120px] resize-y"
+                  placeholder="Example: Launch our new AI-powered analytics tool that helps marketing teams track campaign performance in real-time. We want to build awareness among marketing managers and generate qualified leads."
                   required
                 />
                 <CampaignInputValidator
                   text={formData.theme}
                   language={formData.language}
                   fieldType="theme"
+                  onApplySuggestion={(suggestion) => {
+                    const currentText = formData.theme.trim();
+                    const newText = currentText
+                      ? `${currentText}\n• ${suggestion}`
+                      : suggestion;
+                    setFormData({ ...formData, theme: newText });
+                  }}
                 />
               </div>
 
@@ -553,6 +562,13 @@ export default function CampaignsPage() {
                     text={formData.description}
                     language={formData.language}
                     fieldType="description"
+                    onApplySuggestion={(suggestion) => {
+                      const currentText = formData.description.trim();
+                      const newText = currentText
+                        ? `${currentText}\n• ${suggestion}`
+                        : suggestion;
+                      setFormData({ ...formData, description: newText });
+                    }}
                   />
                 )}
               </div>
@@ -786,26 +802,38 @@ export default function CampaignsPage() {
                   <div className="space-y-4">
                     <div className="rounded-lg border border-slate-300 p-4">
                       <h3 className="mb-3 font-semibold text-slate-700">Campaign Summary</h3>
-                      <dl className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <dt className="text-slate-700/60">Name:</dt>
+                      <dl className="space-y-3 text-sm">
+                        <div>
+                          <dt className="mb-1 text-slate-700/60">Name:</dt>
                           <dd className="font-medium text-slate-700">{formData.name}</dd>
                         </div>
-                        <div className="flex justify-between">
-                          <dt className="text-slate-700/60">Goal:</dt>
-                          <dd className="font-medium text-slate-700">{formData.theme}</dd>
+                        <div>
+                          <dt className="mb-1 text-slate-700/60">Campaign Goals:</dt>
+                          <dd className="rounded-lg bg-slate-50 p-3 text-slate-700 whitespace-pre-wrap">{formData.theme}</dd>
                         </div>
-                        <div className="flex justify-between">
-                          <dt className="text-slate-700/60">Posts:</dt>
-                          <dd className="font-medium text-slate-700">{formData.targetPostCount}</dd>
-                        </div>
-                        <div className="flex justify-between">
-                          <dt className="text-slate-700/60">Frequency:</dt>
-                          <dd className="font-medium text-slate-700">{formData.frequency.replace('_', '/').replace('x', '×')}</dd>
-                        </div>
-                        <div className="flex justify-between">
-                          <dt className="text-slate-700/60">Language:</dt>
-                          <dd className="font-medium text-slate-700 uppercase">{formData.language}</dd>
+                        {formData.description && (
+                          <div>
+                            <dt className="mb-1 text-slate-700/60">Description:</dt>
+                            <dd className="rounded-lg bg-slate-50 p-3 text-slate-700/80 whitespace-pre-wrap">{formData.description}</dd>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                          <div>
+                            <dt className="text-slate-700/60">Posts:</dt>
+                            <dd className="font-medium text-slate-700">{formData.targetPostCount}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-slate-700/60">Frequency:</dt>
+                            <dd className="font-medium text-slate-700">{formData.frequency.replace('_', '/').replace('x', '×')}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-slate-700/60">Language:</dt>
+                            <dd className="font-medium text-slate-700 uppercase">{formData.language}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-slate-700/60">Style:</dt>
+                            <dd className="font-medium capitalize text-slate-700">{formData.style.replace('-', ' ')}</dd>
+                          </div>
                         </div>
                       </dl>
                     </div>
