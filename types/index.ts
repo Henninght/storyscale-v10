@@ -146,3 +146,34 @@ export type Tone = typeof TONE_OPTIONS[number];
 export type Purpose = typeof PURPOSE_OPTIONS[number];
 export type Audience = typeof AUDIENCE_OPTIONS[number];
 export type Style = typeof STYLE_OPTIONS[number];
+
+// Post Feedback Types
+export type FeedbackRating = "thumbs_up" | "thumbs_down" | null;
+
+export interface PostFeedback {
+  draftId: string;
+  userId: string;
+  rating: FeedbackRating;
+  regenerated: number; // Number of times regenerated
+  editPercentage: number; // Percentage of content edited from original
+  timeToReady: number; // Time in seconds from creation to "ready_to_post" status
+  wizardSettings: WizardSettings;
+  originalLength: number;
+  finalLength: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// App Feedback Types (general user feedback)
+export type FeedbackCategory = "bug" | "feature" | "design" | "other";
+
+export interface AppFeedback {
+  userId: string;
+  rating: number; // 1-5 stars
+  category: FeedbackCategory;
+  description: string;
+  email: string | null;
+  userAgent: string;
+  page: string; // Page where feedback was submitted
+  createdAt: Timestamp;
+}

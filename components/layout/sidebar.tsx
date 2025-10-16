@@ -15,6 +15,7 @@ import {
   X,
   LogOut,
   BarChart3,
+  MessageSquare,
 } from "lucide-react";
 
 const navigation = [
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Create New Post", href: "/app/create", icon: PenSquare },
   { name: "Campaigns", href: "/app/campaigns", icon: Megaphone },
   { name: "Calendar View", href: "/app/calendar", icon: Calendar },
+  { name: "Feedback", href: "/app/feedback", icon: MessageSquare },
   { name: "Settings", href: "/app/settings", icon: Settings },
   { name: "Billing", href: "/app/billing", icon: CreditCard },
 ];

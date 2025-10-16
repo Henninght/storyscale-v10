@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getFirestore, doc, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, collection, addDoc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft } from 'lucide-react';
+import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VersionHistory } from '@/components/VersionHistory';
+import { FeedbackRating } from '@/types';
 
 interface DraftEditorProps {
   draft: any;
@@ -29,7 +30,35 @@ export function DraftEditor({ draft }: DraftEditorProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Feedback tracking state
+  const [feedbackRating, setFeedbackRating] = useState<FeedbackRating>(null);
+  const [regenerationCount, setRegenerationCount] = useState(0);
+  const [originalContent] = useState(draft.content);
+  const [feedbackId, setFeedbackId] = useState<string | null>(null);
+
   const charCount = content.length;
+
+  // Load existing feedback on mount
+  useEffect(() => {
+    const loadFeedback = async () => {
+      try {
+        const db = getFirestore();
+        const feedbackRef = doc(db, 'post_feedback', draft.id);
+        const feedbackDoc = await getDoc(feedbackRef);
+
+        if (feedbackDoc.exists()) {
+          const feedbackData = feedbackDoc.data();
+          setFeedbackRating(feedbackData.rating);
+          setRegenerationCount(feedbackData.regenerated || 0);
+          setFeedbackId(feedbackDoc.id);
+        }
+      } catch (error) {
+        console.error('Error loading feedback:', error);
+      }
+    };
+
+    loadFeedback();
+  }, [draft.id]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content);
@@ -164,6 +193,9 @@ export function DraftEditor({ draft }: DraftEditorProps) {
       });
 
       setContent(result.content);
+
+      // Track regeneration
+      setRegenerationCount(prev => prev + 1);
     } catch (error) {
       console.error('Regeneration failed:', error);
       alert(error instanceof Error ? error.message : 'Failed to regenerate content');
@@ -181,6 +213,82 @@ export function DraftEditor({ draft }: DraftEditorProps) {
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter((tag) => tag !== tagToRemove));
+  };
+
+  const handleFeedback = async (rating: 'thumbs_up' | 'thumbs_down') => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Calculate edit percentage (Levenshtein distance or simple character comparison)
+      const editPercentage = calculateEditPercentage(originalContent, content);
+
+      // Calculate time to ready (if status is ready_to_post)
+      const timeToReady = calculateTimeToReady();
+
+      const db = getFirestore();
+      const feedbackRef = doc(db, 'post_feedback', draft.id);
+
+      const feedbackData = {
+        draftId: draft.id,
+        userId: user.uid,
+        rating,
+        regenerated: regenerationCount,
+        editPercentage,
+        timeToReady,
+        wizardSettings: draft.wizardSettings,
+        originalLength: originalContent.length,
+        finalLength: content.length,
+        updatedAt: serverTimestamp(),
+      };
+
+      if (feedbackId) {
+        // Update existing feedback
+        await updateDoc(feedbackRef, feedbackData);
+      } else {
+        // Create new feedback
+        await setDoc(feedbackRef, {
+          ...feedbackData,
+          createdAt: serverTimestamp(),
+        });
+        setFeedbackId(draft.id);
+      }
+
+      setFeedbackRating(rating);
+    } catch (error) {
+      console.error('Error saving feedback:', error);
+    }
+  };
+
+  const calculateEditPercentage = (original: string, current: string): number => {
+    if (original === current) return 0;
+    if (original.length === 0) return 100;
+
+    // Simple character-level diff
+    let differences = 0;
+    const maxLength = Math.max(original.length, current.length);
+
+    for (let i = 0; i < maxLength; i++) {
+      if (original[i] !== current[i]) {
+        differences++;
+      }
+    }
+
+    return Math.round((differences / maxLength) * 100);
+  };
+
+  const calculateTimeToReady = (): number => {
+    // Calculate time from draft creation to now (in seconds)
+    if (draft.createdAt && draft.createdAt.seconds) {
+      const createdAt = draft.createdAt.seconds * 1000;
+      const now = Date.now();
+      return Math.round((now - createdAt) / 1000);
+    }
+    return 0;
   };
 
   return (
@@ -320,6 +428,47 @@ export function DraftEditor({ draft }: DraftEditorProps) {
               </>
             )}
           </Button>
+        )}
+      </div>
+
+      {/* Feedback Widget */}
+      <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-blue-50 to-purple-50 p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-slate-800">How's the AI-generated content?</h3>
+            <p className="text-sm text-slate-600 mt-1">Your feedback helps us improve</p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => handleFeedback('thumbs_up')}
+              variant={feedbackRating === 'thumbs_up' ? 'default' : 'outline'}
+              className={`gap-2 transition-all ${
+                feedbackRating === 'thumbs_up'
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'hover:bg-green-50 hover:border-green-300'
+              }`}
+            >
+              <ThumbsUp className={`h-5 w-5 ${feedbackRating === 'thumbs_up' ? 'fill-current' : ''}`} />
+              Good
+            </Button>
+            <Button
+              onClick={() => handleFeedback('thumbs_down')}
+              variant={feedbackRating === 'thumbs_down' ? 'default' : 'outline'}
+              className={`gap-2 transition-all ${
+                feedbackRating === 'thumbs_down'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'hover:bg-red-50 hover:border-red-300'
+              }`}
+            >
+              <ThumbsDown className={`h-5 w-5 ${feedbackRating === 'thumbs_down' ? 'fill-current' : ''}`} />
+              Needs Work
+            </Button>
+          </div>
+        </div>
+        {regenerationCount > 0 && (
+          <div className="mt-3 text-xs text-slate-500">
+            Regenerated {regenerationCount} {regenerationCount === 1 ? 'time' : 'times'}
+          </div>
         )}
       </div>
 
