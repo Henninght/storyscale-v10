@@ -3,6 +3,7 @@ import { Container } from "@/components/layout";
 import { PricingCard } from "@/components/pricing/pricing-card";
 import { ArrowRight, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { PageTransition } from "@/components/PageTransition";
+// import { TestimonialWidget } from "@/components/TestimonialWidget"; // Commented out until real testimonials are added
 
 export default function Home() {
   return (
@@ -128,6 +129,22 @@ export default function Home() {
           </div>
         </Container>
       </section>
+
+      {/* Testimonials Section - Hidden until real testimonials are added */}
+      {/* <section className="py-20 sm:py-32 bg-gradient-to-b from-white to-background">
+        <Container>
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-secondary sm:text-4xl">
+              Loved by professionals worldwide
+            </h2>
+            <p className="mt-4 text-lg text-secondary/80">
+              Join thousands of content creators who trust Storyscale to amplify their LinkedIn presence
+            </p>
+          </div>
+
+          <TestimonialWidget />
+        </Container>
+      </section> */}
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20 sm:py-32 bg-background">
