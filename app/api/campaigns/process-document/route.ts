@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
-import { anthropic } from '@/lib/anthropic';
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic';
 import * as mammoth from 'mammoth';
 import officeParser from 'officeparser';
 
@@ -73,36 +73,8 @@ export async function POST(req: NextRequest) {
         let text = '';
 
         if (file.type === 'application/pdf') {
-          // For PDFs, we'll send directly to Claude with vision
-          // Claude supports PDF analysis natively
-          const base64 = buffer.toString('base64');
-
-          // Use Claude's PDF support
-          const pdfAnalysis = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 2000,
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'document',
-                    source: {
-                      type: 'base64',
-                      media_type: 'application/pdf',
-                      data: base64,
-                    },
-                  },
-                  {
-                    type: 'text',
-                    text: 'Extract all text content from this PDF document. Return only the text content, no analysis.',
-                  },
-                ],
-              },
-            ],
-          });
-
-          text = pdfAnalysis.content[0].type === 'text' ? pdfAnalysis.content[0].text : '';
+          // For PDFs, use officeparser which also handles PDFs
+          text = await officeParser.parseOfficeAsync(buffer);
         } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
           // DOCX - use mammoth
           const result = await mammoth.extractRawText({ buffer });
@@ -161,7 +133,7 @@ Return ONLY valid JSON, no markdown formatting or extra text.`;
     const userMessage = `Analyze these campaign documents and extract campaign information:\n\n${combinedText}`;
 
     const analysisResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_MODEL,
       max_tokens: 2000,
       system: systemPrompt,
       messages: [
