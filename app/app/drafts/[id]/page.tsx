@@ -18,6 +18,15 @@ export default function DraftPage() {
     const fetchDraft = async () => {
       try {
         const auth = getAuth();
+
+        // Wait for auth to initialize
+        await new Promise<void>((resolve) => {
+          const unsubscribe = auth.onAuthStateChanged((user) => {
+            unsubscribe();
+            resolve();
+          });
+        });
+
         const user = auth.currentUser;
 
         if (!user) {
