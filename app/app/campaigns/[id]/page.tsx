@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Plus, CheckCircle2, Clock, FileText, Settings, Archive, Calendar, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Plus, CheckCircle2, Clock, FileText, Settings, Archive, Calendar, TrendingUp, ChevronDown, ChevronUp, Sparkles, Target, Zap, Award, Users, TrendingUp as TrendingUpIcon, CheckCircle, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Campaign {
@@ -31,6 +31,7 @@ interface Campaign {
     strategicOverview: string;
     narrativeArc: string;
     successMarkers: string[];
+    successMarkersCompleted?: boolean[];
     postBlueprints: Array<{
       position: number;
       topic: string;
@@ -66,7 +67,8 @@ export default function CampaignDetailPage() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [strategyExpanded, setStrategyExpanded] = useState(false);
+  const [strategyExpanded, setStrategyExpanded] = useState(true); // Default to expanded for better UX
+  const [successMarkersCompleted, setSuccessMarkersCompleted] = useState<boolean[]>([]);
 
   useEffect(() => {
     fetchCampaignData();
@@ -94,13 +96,22 @@ export default function CampaignDetailPage() {
       }
 
       const campaignData = campaignSnap.data();
-      setCampaign({
+      const campaignObject = {
         id: campaignSnap.id,
         ...campaignData,
         startDate: campaignData.startDate?.toDate(),
         endDate: campaignData.endDate?.toDate(),
         createdAt: campaignData.createdAt?.toDate(),
-      } as Campaign);
+      } as Campaign;
+
+      setCampaign(campaignObject);
+
+      // Initialize success markers completed state
+      if (campaignObject.aiStrategy?.successMarkers) {
+        const completed = campaignObject.aiStrategy.successMarkersCompleted ||
+          new Array(campaignObject.aiStrategy.successMarkers.length).fill(false);
+        setSuccessMarkersCompleted(completed);
+      }
 
       // Fetch campaign drafts
       const draftsRef = collection(db, 'drafts');
@@ -190,6 +201,30 @@ export default function CampaignDetailPage() {
     } catch (error) {
       console.error('Error archiving campaign:', error);
       alert('Failed to archive campaign. Please try again.');
+    }
+  };
+
+  const handleToggleSuccessMarker = async (index: number) => {
+    if (!campaign) return;
+
+    const newCompleted = [...successMarkersCompleted];
+    newCompleted[index] = !newCompleted[index];
+    setSuccessMarkersCompleted(newCompleted);
+
+    // Update in Firestore
+    try {
+      const db = getFirestore();
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      await updateDoc(campaignRef, {
+        'aiStrategy.successMarkersCompleted': newCompleted,
+        updatedAt: Timestamp.now(),
+      });
+    } catch (error) {
+      console.error('Error updating success markers:', error);
+      // Revert on error
+      const revertCompleted = [...successMarkersCompleted];
+      revertCompleted[index] = !revertCompleted[index];
+      setSuccessMarkersCompleted(revertCompleted);
     }
   };
 
@@ -415,18 +450,24 @@ export default function CampaignDetailPage() {
         </div>
       )}
 
-      {/* AI Strategy Section - Collapsible */}
+      {/* AI Strategy Section - Enhanced */}
       {campaign.aiStrategy && (
-        <div className="rounded-2xl border border-secondary/10 bg-white overflow-hidden">
+        <div className="rounded-2xl border border-secondary/10 bg-white overflow-hidden shadow-sm">
+          {/* Collapsible Header with Gradient */}
           <button
             onClick={() => setStrategyExpanded(!strategyExpanded)}
-            className="w-full flex items-center justify-between p-6 text-left hover:bg-secondary/5 transition-colors"
+            className="w-full flex items-center justify-between p-6 text-left bg-gradient-to-r from-primary/5 via-purple-50/50 to-blue-50/50 hover:from-primary/10 hover:via-purple-50 hover:to-blue-50 transition-all"
           >
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-secondary">AI Campaign Strategy</h3>
-              <span className="text-xs text-secondary/60">
-                (Overview, narrative arc & success markers)
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-primary/10 p-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-secondary">AI Campaign Strategy</h3>
+                <span className="text-xs text-secondary/60">
+                  Your roadmap to success
+                </span>
+              </div>
             </div>
             {strategyExpanded ? (
               <ChevronUp className="h-5 w-5 text-secondary/60" />
@@ -436,28 +477,122 @@ export default function CampaignDetailPage() {
           </button>
 
           {strategyExpanded && (
-            <div className="border-t border-secondary/10 p-6 space-y-4 animate-in slide-in-from-top-2 duration-300">
-              <div>
-                <div className="mb-2 text-sm font-medium text-secondary/70">Strategic Overview</div>
-                <p className="text-secondary">{campaign.aiStrategy.strategicOverview}</p>
+            <div className="p-6 space-y-6 animate-in slide-in-from-top-2 duration-300">
+              {/* Strategic Overview Card */}
+              <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50/30 p-6 border border-secondary/10">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="rounded-lg bg-white p-2 shadow-sm">
+                    <Target className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-secondary mb-1">Strategic Overview</h4>
+                    <p className="text-sm text-secondary/70">Your campaign's core approach</p>
+                  </div>
+                </div>
+                <p className="text-secondary leading-relaxed">{campaign.aiStrategy.strategicOverview}</p>
               </div>
 
-              <div>
-                <div className="mb-2 text-sm font-medium text-secondary/70">Narrative Arc</div>
-                <p className="text-secondary">{campaign.aiStrategy.narrativeArc}</p>
+              {/* Narrative Arc - Visual Journey */}
+              <div className="rounded-xl bg-white p-6 border border-secondary/10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="h-5 w-5 text-amber-500" />
+                  <h4 className="font-semibold text-secondary">Content Journey</h4>
+                </div>
+
+                {/* Parse and display narrative arc as visual phases */}
+                <div className="relative">
+                  {campaign.aiStrategy.narrativeArc.includes('→') ? (
+                    <div className="flex flex-wrap gap-3">
+                      {campaign.aiStrategy.narrativeArc.split('→').map((phase, index, array) => (
+                        <div key={index} className="flex items-center">
+                          <div className="group relative">
+                            <div className="rounded-lg border-2 border-primary/20 bg-gradient-to-br from-white to-primary/5 p-4 hover:border-primary/40 hover:shadow-md transition-all">
+                              <div className="flex items-center gap-2">
+                                <div className="rounded-full bg-primary/10 w-8 h-8 flex items-center justify-center text-sm font-bold text-primary">
+                                  {index + 1}
+                                </div>
+                                <span className="font-medium text-secondary text-sm">
+                                  {phase.trim()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          {index < array.length - 1 && (
+                            <div className="mx-2 flex items-center">
+                              <div className="h-0.5 w-8 bg-gradient-to-r from-primary/30 to-primary/10"></div>
+                              <div className="ml-1 text-primary/40">→</div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-secondary">{campaign.aiStrategy.narrativeArc}</p>
+                  )}
+                </div>
               </div>
 
+              {/* Success Markers - Interactive Checkboxes */}
               {campaign.aiStrategy.successMarkers && campaign.aiStrategy.successMarkers.length > 0 && (
-                <div>
-                  <div className="mb-2 text-sm font-medium text-secondary/70">Success Markers</div>
-                  <ul className="space-y-1">
-                    {campaign.aiStrategy.successMarkers.map((marker, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm text-secondary">
-                        <span className="text-primary">•</span>
-                        <span>{marker}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="rounded-xl bg-white p-6 border border-secondary/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Award className="h-5 w-5 text-green-500" />
+                      <h4 className="font-semibold text-secondary">Success Markers</h4>
+                    </div>
+                    <div className="text-sm text-secondary/60">
+                      {successMarkersCompleted.filter(Boolean).length} / {campaign.aiStrategy.successMarkers.length} completed
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mb-4 h-2 w-full rounded-full bg-secondary/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
+                      style={{
+                        width: `${(successMarkersCompleted.filter(Boolean).length / campaign.aiStrategy.successMarkers.length) * 100}%`
+                      }}
+                    />
+                  </div>
+
+                  {/* Interactive Checkboxes */}
+                  <div className="space-y-3">
+                    {campaign.aiStrategy.successMarkers.map((marker, index) => {
+                      const isCompleted = successMarkersCompleted[index] || false;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleToggleSuccessMarker(index)}
+                          className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                            isCompleted
+                              ? 'border-green-200 bg-green-50/50 hover:bg-green-50'
+                              : 'border-secondary/10 bg-white hover:border-primary/30 hover:bg-primary/5'
+                          }`}
+                        >
+                          <div className="flex-shrink-0 mt-0.5">
+                            {isCompleted ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-secondary/30" />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isCompleted ? 'text-secondary/70 line-through' : 'text-secondary'}`}>
+                            {marker}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Celebration Message */}
+                  {successMarkersCompleted.filter(Boolean).length === campaign.aiStrategy.successMarkers.length && (
+                    <div className="mt-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4">
+                      <div className="flex items-center gap-2 text-green-700">
+                        <Award className="h-5 w-5" />
+                        <span className="font-medium">Congratulations! All success markers achieved! 🎉</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

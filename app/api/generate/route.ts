@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { fetchMultipleUrls } from '@/lib/urlFetcher';
-import { anthropic } from '@/lib/anthropic';
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic';
 
 export async function POST(req: NextRequest) {
   try {
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     let message;
     try {
       message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5',
+        model: CLAUDE_MODEL,
         max_tokens: 2000,
         system: systemPrompt,
         messages: [

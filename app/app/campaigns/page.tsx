@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getFirestore, collection, query, where, getDocs, addDoc, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { Megaphone, Plus, Calendar, Target, TrendingUp, Sparkles } from 'lucide-react';
+import { Megaphone, Plus, Calendar, Target, TrendingUp, Sparkles, Upload, X, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { campaignTemplates, CampaignTemplate } from '@/lib/campaignTemplates';
 import { CampaignInputValidator } from '@/components/CampaignInputValidator';
@@ -55,6 +55,12 @@ export default function CampaignsPage() {
   const [generatingBrief, setGeneratingBrief] = useState(false);
   const [editingPostIndex, setEditingPostIndex] = useState<number | null>(null);
   const [editedTopic, setEditedTopic] = useState('');
+
+  // Document upload state
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [processingDocuments, setProcessingDocuments] = useState(false);
+  const [documentError, setDocumentError] = useState<string | null>(null);
+  const [extractedFromDocuments, setExtractedFromDocuments] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -191,6 +197,90 @@ export default function CampaignsPage() {
   const handleCancelEdit = () => {
     setEditingPostIndex(null);
     setEditedTopic('');
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Validate file types and sizes
+    const maxSize = 7 * 1024 * 1024; // 7MB
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+
+    const invalidFiles = files.filter(file =>
+      !allowedTypes.includes(file.type) || file.size > maxSize
+    );
+
+    if (invalidFiles.length > 0) {
+      setDocumentError('Some files are invalid. Only PDF, DOCX, and PPTX files under 7MB are allowed.');
+      return;
+    }
+
+    setUploadedFiles(prev => [...prev, ...files]);
+    setDocumentError(null);
+    e.target.value = ''; // Reset input
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleProcessDocuments = async () => {
+    if (uploadedFiles.length === 0) return;
+
+    setProcessingDocuments(true);
+    setDocumentError(null);
+
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      const token = await user.getIdToken();
+
+      // Create FormData with files
+      const formDataToSend = new FormData();
+      uploadedFiles.forEach(file => {
+        formDataToSend.append('files', file);
+      });
+
+      const response = await fetch('/api/campaigns/process-document', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        // Auto-fill form fields with extracted data
+        setFormData(prev => ({
+          ...prev,
+          name: data.data.name || prev.name,
+          theme: data.data.theme || prev.theme,
+          description: data.data.description || prev.description,
+          audience: data.data.suggestedAudience || prev.audience,
+          tone: data.data.suggestedTone || prev.tone,
+          style: data.data.suggestedStyle || prev.style,
+          purpose: data.data.suggestedPurpose || prev.purpose,
+        }));
+
+        setExtractedFromDocuments(true);
+      } else {
+        setDocumentError(data.error || 'Failed to process documents. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error processing documents:', error);
+      setDocumentError('Failed to process documents. Please try again.');
+    } finally {
+      setProcessingDocuments(false);
+    }
   };
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
@@ -442,10 +532,132 @@ export default function CampaignsPage() {
                 )}
               </div>
 
+              {/* Document Upload Section */}
+              <div className="rounded-lg border-2 border-blue-100 bg-blue-50/30 p-6">
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-slate-700 flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-blue-600" />
+                    Upload Campaign Documents (Optional)
+                  </h3>
+                  <p className="mt-1.5 text-sm text-slate-600">
+                    Upload product briefs, marketing decks, or campaign plans to auto-fill campaign details.
+                  </p>
+                </div>
+
+                {/* Privacy Warning */}
+                <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-800">
+                    <strong>Privacy Notice:</strong> Don't upload sensitive or confidential information. Uploaded documents are processed by AI and then discarded.
+                  </div>
+                </div>
+
+                {/* File Upload Input */}
+                <div className="mb-4">
+                  <input
+                    type="file"
+                    id="document-upload"
+                    accept=".pdf,.docx,.pptx"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="document-upload"
+                    className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white p-6 cursor-pointer transition-all hover:border-primary hover:bg-primary/5"
+                  >
+                    <Upload className="h-5 w-5 text-slate-600" />
+                    <span className="text-sm font-medium text-slate-700">
+                      Click to upload or drag files here
+                    </span>
+                  </label>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Supports PDF, DOCX, PPTX • Maximum 7MB per file • Multiple files allowed
+                  </p>
+                </div>
+
+                {/* Uploaded Files List */}
+                {uploadedFiles.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    <div className="text-sm font-medium text-slate-700">
+                      Uploaded Files ({uploadedFiles.length})
+                    </div>
+                    {uploadedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm text-slate-700">{file.name}</span>
+                          <span className="text-xs text-slate-500">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(index)}
+                          className="rounded p-1 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Process Button */}
+                {uploadedFiles.length > 0 && (
+                  <Button
+                    type="button"
+                    onClick={handleProcessDocuments}
+                    disabled={processingDocuments}
+                    className="w-full"
+                  >
+                    {processingDocuments ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Processing Documents...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Extract Campaign Data from Documents
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {/* Success Message */}
+                {extractedFromDocuments && (
+                  <div className="mt-4 rounded-lg bg-green-50 border border-green-200 p-3 flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-green-800">
+                      <strong>Success!</strong> Campaign data extracted from documents. Review and edit the fields below as needed.
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {documentError && (
+                  <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-800">
+                      {documentError}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Configuration Dropdowns */}
               <div>
                 <label className="mb-3 block text-sm font-medium text-slate-700">
                   Campaign Configuration
+                  {extractedFromDocuments && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">
+                      (Auto-filled from documents - editable)
+                    </span>
+                  )}
                 </label>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
@@ -505,6 +717,11 @@ export default function CampaignsPage() {
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Campaign Name *
+                  {extractedFromDocuments && formData.name && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">
+                      (Auto-filled from documents)
+                    </span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -520,6 +737,11 @@ export default function CampaignsPage() {
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Campaign Theme *
+                  {extractedFromDocuments && formData.theme && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">
+                      (Auto-filled from documents)
+                    </span>
+                  )}
                 </label>
                 <p className="mb-3 text-sm text-slate-600">
                   Describe your campaign goal. AI will analyze and help you refine it for better results.
@@ -549,6 +771,11 @@ export default function CampaignsPage() {
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Description
+                  {extractedFromDocuments && formData.description && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">
+                      (Auto-filled from documents)
+                    </span>
+                  )}
                 </label>
                 <textarea
                   value={formData.description}
