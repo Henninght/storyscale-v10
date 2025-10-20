@@ -6,6 +6,8 @@ import { getAuth } from 'firebase/auth';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Plus, CheckCircle2, Clock, FileText, Settings, Archive, Calendar, TrendingUp, ChevronDown, ChevronUp, Sparkles, Target, Zap, Award, Users, TrendingUp as TrendingUpIcon, CheckCircle, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MentorWizardSuggestion } from '@/components/MentorWizardSuggestion';
+import { getCampaignMentorAdvice, getCampaignCompletionAdvice } from '@/lib/campaignMentorAdvice';
 
 interface Campaign {
   id: string;
@@ -69,10 +71,43 @@ export default function CampaignDetailPage() {
   const [generating, setGenerating] = useState(false);
   const [strategyExpanded, setStrategyExpanded] = useState(true); // Default to expanded for better UX
   const [successMarkersCompleted, setSuccessMarkersCompleted] = useState<boolean[]>([]);
+  const [mentorshipEnabled, setMentorshipEnabled] = useState(false);
+  const [mentorTemperature, setMentorTemperature] = useState(3);
+  const [mentorName, setMentorName] = useState('Alex');
 
   useEffect(() => {
     fetchCampaignData();
   }, [campaignId]);
+
+  // Load mentorship settings
+  useEffect(() => {
+    const loadMentorshipSettings = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const db = getFirestore();
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const settings = userData.profile?.mentorshipSettings;
+
+          if (settings?.enabled) {
+            setMentorshipEnabled(true);
+            setMentorTemperature(settings.temperature || 3);
+            setMentorName(settings.mentorName || 'Alex');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading mentorship settings:', error);
+      }
+    };
+
+    loadMentorshipSettings();
+  }, []);
 
   const fetchCampaignData = async () => {
     try {
@@ -269,6 +304,10 @@ export default function CampaignDetailPage() {
   const lastDraft = drafts[drafts.length - 1];
   const isLastDraftReady = !lastDraft || lastDraft.status === 'ready_to_post' || lastDraft.status === 'posted';
 
+  // Generate mentor advice
+  const mentorAdvice = mentorshipEnabled ? getCampaignMentorAdvice(campaign, drafts, mentorTemperature) : null;
+  const completionAdvice = mentorshipEnabled ? getCampaignCompletionAdvice(campaign, drafts, mentorTemperature) : null;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -329,6 +368,26 @@ export default function CampaignDetailPage() {
           <div className="mt-1 text-xs text-secondary/40">live</div>
         </div>
       </div>
+
+      {/* Mentor Advice */}
+      {mentorAdvice && (
+        <MentorWizardSuggestion
+          message={mentorAdvice}
+          temperature={mentorTemperature}
+          mentorName={mentorName}
+          type="strategic"
+        />
+      )}
+
+      {/* Completion Advice */}
+      {completionAdvice && (
+        <MentorWizardSuggestion
+          message={completionAdvice}
+          temperature={mentorTemperature}
+          mentorName={mentorName}
+          type="pattern"
+        />
+      )}
 
       {/* Progress Card */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-6">

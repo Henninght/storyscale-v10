@@ -222,9 +222,9 @@ export const MENTOR_PERSONAS: Record<string, MentorPersonality> = {
     signOffs: ['Make it happen', 'Get after it', 'Go!', 'Show me what you got'],
     encouragements: [
       "That's what I'm talking about!",
-      'Now we're cooking',
+      "Now we're cooking",
       'Excellent work',
-      'You're leveling up',
+      "You're leveling up",
     ],
     challenges: [
       'Push harder',
