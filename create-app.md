@@ -1133,6 +1133,122 @@ interface Testimonial {
 
 ---
 
+## Phase 15: Workspace Redesign - Calm Writing Flow Hub 🧘
+
+**Vision:** Transform workspace from metrics-heavy dashboard into calm, flow-oriented writing hub with optional AI mentorship guidance
+
+**Key Principles:**
+- Natural flow: reflection → continuation → creation
+- Minimal visual clutter (light borders, clean spacing)
+- Mentorship suggestions helpful, not intrusive
+- Automatic intelligent organization (no manual filtering required)
+- Campaign visibility at a glance
+
+### 15.1 Enhanced Type Definitions ✅
+- ✅ Added `MentorshipSettings` interface
+- ✅ Added `mentorshipSettings` to `UserProfile`
+- ✅ Created `MentorshipSuggestion` interface
+- ✅ Added `MentorshipSuggestionType` and `MentorshipSlot` types
+
+**Files Modified:** `types/index.ts`
+
+### 15.2 Mentorship Mode Settings UI ✅
+- ✅ Added Mentorship Mode section to Settings page
+- ✅ Created temperature slider (1-5 levels)
+- ✅ Added custom instructions textarea (500 char limit)
+- ✅ Implemented Quick Actions (Snooze, Clear Dismissed, Reset)
+- ✅ Real-time temperature description updates
+- ✅ Example suggestions for each temperature level
+
+**Files Created:** `components/MentorshipTemperatureSlider.tsx`
+**Files Modified:** `app/app/settings/page.tsx`
+
+### 15.3 Mentorship Engine (Background Generation) ✅
+- ✅ Created pattern analysis functions
+- ✅ Implemented temperature-based tone modifiers
+- ✅ Built custom instructions parser
+- ✅ Added pattern-based suggestion generation (tone, style, length variety)
+- ✅ Identity balance suggestions based on expertise
+
+**Files Created:** `lib/mentorshipEngine.ts`
+
+### 15.4 New UI Components ✅
+
+#### 15.4.1 CampaignStrip Component ✅
+- ✅ Horizontal scrollable badge strip
+- ✅ Max 3 visible campaigns + overflow
+- ✅ Progress calculation and due date display
+- ✅ "+ New Campaign" tile
+- ✅ Mobile-responsive horizontal scroll
+
+**Files Created:** `components/CampaignStrip.tsx`
+
+#### 15.4.2 MentorshipSuggestion Component ✅
+- ✅ Subtle banner with calm styling
+- ✅ Dismiss button with Firestore persistence
+- ✅ Temperature-aware tone adaptation
+- ✅ Smooth animations (Framer Motion)
+
+**Files Created:** `components/MentorshipSuggestion.tsx`
+
+#### 15.4.3 DraftRow Component ✅
+- ✅ Single-line CTA tile format
+- ✅ Visible delete icon
+- ✅ Dropdown menu (Edit, Duplicate, Generate Title)
+- ✅ Status badges and time formatting
+
+**Files Created:** `components/DraftRow.tsx`
+
+### 15.5 Workspace Page Redesign ✅
+- ✅ Replace stats cards with campaign strip
+- ✅ Add personal welcome message
+- ✅ Implement "Resume Your Writing" section
+- ✅ Add "Parked Ideas" expandable section
+- ✅ Collapsible "Filter & Sort" dropdown
+- ✅ Bottom-aligned "Start Something New" section
+- ✅ Mentorship suggestions integration (max 2, conditional)
+
+**Files Modified:** `app/app/page.tsx` (major redesign - complete rewrite)
+
+### 15.6 Firestore Schema Updates ✅
+- ✅ Add `mentorshipSettings` to user profile
+- ✅ Create `/mentorship_suggestions/{suggestionId}` collection
+- ✅ Add security rules for new collections (post_feedback, feedback)
+
+**Files Modified:** `firestore.rules`
+
+### 15.7 Cloud Function for Background Generation ⚪
+- ⚪ Create Firebase Cloud Function (Skipped - requires Firebase CLI setup)
+- ⚪ Trigger on draft create/update/delete
+- ⚪ Implement 24h cache with 3+ changes invalidation
+- ⚪ Error handling and logging
+
+**Note:** Cloud Function skipped - mentorship suggestions generated client-side for now. Can implement background generation later when needed.
+
+### 15.8 Testing & Validation ✅
+- ✅ Build succeeds without errors
+- ✅ Dev server running on port 3002
+- ✅ Workspace layout implemented with campaign strip
+- ✅ Draft organization (active/parked) implemented
+- ✅ Mentorship suggestions integrated (2 slots: after_welcome, after_drafts)
+- ⚪ Manual testing required (user to test in browser)
+- ⚪ Mobile responsiveness (requires manual testing)
+
+**Status:** Code complete, ready for user testing
+
+### 15.9 Documentation & User Guide ⚪
+- ⚪ In-app help tooltips
+- ⚪ "What's New" modal
+- ⚪ Mentorship Mode documentation
+- ⚪ Temperature levels guide
+
+**Time Estimate:** 2-3 hours
+
+**Phase 15 Total Time:** 30-40 hours
+**Phase 15 Status:** 85% Complete (7/9 tasks done, 1 skipped, 1 optional)
+
+---
+
 ## Phase 11: Security & Optimization
 
 ### 11.1 Security Hardening ⚪

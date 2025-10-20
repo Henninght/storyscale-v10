@@ -1,474 +1,347 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, CheckCircle2, Clock, Megaphone, Grid3x3, List, Plus } from "lucide-react";
-import { DraftCard } from "@/components/DraftCard";
-import { ActiveCampaignWidget } from "@/components/ActiveCampaignWidget";
-import { getFirestore, collection, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { Plus, ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { CampaignStrip } from "@/components/CampaignStrip";
+import { DraftRow } from "@/components/DraftRow";
+import { MentorshipSuggestion } from "@/components/MentorshipSuggestion";
+import { getFirestore, collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
-import { useRouter, usePathname } from 'next/navigation';
-import type { Campaign } from '@/types';
+import { useRouter } from 'next/navigation';
+import type { Campaign, Draft, UserProfile, MentorshipSuggestion as MentorshipSuggestionType } from '@/types';
 import { PageTransition } from '@/components/PageTransition';
-
-type DraftStatus = 'idea' | 'in_progress' | 'ready_to_post' | 'posted' | 'archived';
-type Language = 'en' | 'no';
-
-interface Draft {
-  id: string;
-  content: string;
-  status: DraftStatus;
-  language: Language;
-  createdAt: Date;
-  campaignId?: string;
-}
+import { generateSuggestions, createSuggestion } from '@/lib/mentorshipEngine';
+import { Timestamp } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [statusFilter, setStatusFilter] = useState<DraftStatus | 'all'>('all');
-  const [languageFilter, setLanguageFilter] = useState<Language | 'all'>('all');
-  const [campaignFilter, setCampaignFilter] = useState<'all' | 'campaign' | 'single'>('all');
-  const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
-  const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<any>({ tier: 'free' });
-  const [stats, setStats] = useState({
-    postsThisMonth: 0,
-    draftsInProgress: 0,
-    readyToPost: 0,
-    activeCampaigns: 0,
-  });
-  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [drafts, setDrafts] = useState<(Draft & { id: string })[]>([]);
+  const [campaigns, setCampaigns] = useState<(Campaign & { id: string })[]>([]);
   const [campaignMap, setCampaignMap] = useState<Map<string, string>>(new Map());
-  const [isCampaignCollapsed, setIsCampaignCollapsed] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [mentorshipSuggestions, setMentorshipSuggestions] = useState<MentorshipSuggestionType[]>([]);
+  const [showParked, setShowParked] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('all');
 
-  // Fetch drafts and subscription
+  // Fetch data
   useEffect(() => {
-    const fetchDrafts = async () => {
-      // Wait for auth to initialize
-      if (authLoading) {
+    const fetchData = async () => {
+      if (authLoading || !user) {
+        setLoading(false);
         return;
       }
 
       try {
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
         const db = getFirestore();
 
-        // Fetch user subscription and stats (always get fresh data)
+        // Fetch user profile
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
+        let userData: any = null;
 
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-
-          // Always update subscription state with fresh data from Firestore
-          const currentSubscription = userData.subscription || { tier: 'free' };
-          setSubscription(currentSubscription);
-
-          // Update stats with actual postsUsedThisMonth from user doc
-          const postsUsed = userData.postsUsedThisMonth || 0;
-          setStats(prev => ({ ...prev, postsThisMonth: postsUsed }));
-        } else {
-          // If no user doc exists yet, ensure we have default subscription
-          setSubscription({ tier: 'free' });
+          userData = userDoc.data();
+          setUserProfile(userData.profile || null);
         }
 
         // Fetch drafts
         const draftsRef = collection(db, 'drafts');
-        // Note: Removed orderBy to avoid requiring composite index
-        // Sorting is done in-memory instead
-        const q = query(
-          draftsRef,
-          where('userId', '==', user.uid)
-        );
+        const draftsQuery = query(draftsRef, where('userId', '==', user.uid));
+        const draftsSnapshot = await getDocs(draftsQuery);
+        const fetchedDrafts = draftsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt,
+          updatedAt: doc.data().updatedAt,
+        })) as (Draft & { id: string })[];
 
-        const querySnapshot = await getDocs(q);
-        const fetchedDrafts: Draft[] = [];
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          fetchedDrafts.push({
-            id: doc.id,
-            content: data.content,
-            status: data.status,
-            language: data.language,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            campaignId: data.campaignId,
-          });
+        // Sort by most recent
+        fetchedDrafts.sort((a, b) => {
+          const aTime = a.updatedAt instanceof Timestamp ? a.updatedAt.toMillis() : 0;
+          const bTime = b.updatedAt instanceof Timestamp ? b.updatedAt.toMillis() : 0;
+          return bTime - aTime;
         });
-
-        // Sort by createdAt descending in-memory
-        fetchedDrafts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
         setDrafts(fetchedDrafts);
 
-        // Fetch all campaigns (not just active)
+        // Fetch campaigns
         const campaignsRef = collection(db, 'campaigns');
         const campaignsQuery = query(
           campaignsRef,
-          where('userId', '==', user.uid)
+          where('userId', '==', user.uid),
+          where('status', '==', 'active')
         );
         const campaignsSnapshot = await getDocs(campaignsQuery);
-        const campaignsData = campaignsSnapshot.docs.map(doc => ({
+        const fetchedCampaigns = campaignsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         })) as (Campaign & { id: string })[];
 
-        // Create campaign map (id -> name)
+        setCampaigns(fetchedCampaigns);
+
+        // Create campaign map
         const newCampaignMap = new Map<string, string>();
-        campaignsData.forEach(campaign => {
+        fetchedCampaigns.forEach(campaign => {
           newCampaignMap.set(campaign.id, campaign.name);
         });
         setCampaignMap(newCampaignMap);
 
-        // Set active campaigns for stats
-        const activeCampaigns = campaignsData.filter(c => c.status === 'active');
-        setCampaigns(activeCampaigns);
+        // Generate mentorship suggestions (if enabled)
+        if (userData?.profile?.mentorshipSettings?.enabled) {
+          const settings = userData.profile.mentorshipSettings;
+          const suggestions = generateSuggestions({
+            temperature: settings.temperature || 3,
+            customInstructions: settings.customInstructions || '',
+            userProfile: userData.profile,
+            recentDrafts: fetchedDrafts.slice(0, 10),
+          });
 
-        // Calculate stats
-        const inProgress = fetchedDrafts.filter(d => d.status === 'in_progress').length;
-        const ready = fetchedDrafts.filter(d => d.status === 'ready_to_post').length;
+          // Create suggestion objects
+          const now = Timestamp.now();
+          const expiresAt = Timestamp.fromMillis(now.toMillis() + 24 * 60 * 60 * 1000); // 24h
 
-        setStats(prev => ({
-          ...prev,
-          draftsInProgress: inProgress,
-          readyToPost: ready,
-          activeCampaigns: campaignsData.length,
-        }));
+          const suggestionObjects: MentorshipSuggestionType[] = suggestions.map((msg, idx) => ({
+            id: `temp-${idx}`,
+            userId: user.uid,
+            message: msg,
+            type: 'variety' as const,
+            slot: idx === 0 ? ('after_welcome' as const) : ('after_drafts' as const),
+            temperature: settings.temperature || 3,
+            context: {
+              draftCount: fetchedDrafts.length,
+              patterns: [],
+            },
+            createdAt: now,
+            expiresAt,
+          }));
+
+          setMentorshipSuggestions(suggestionObjects);
+        }
       } catch (error) {
-        console.error('Error fetching drafts:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDrafts();
+    fetchData();
   }, [user, authLoading]);
 
-  // Refresh data when navigating to this page
-  useEffect(() => {
-    if (pathname === '/app' && user && !loading) {
-      // Refetch subscription data when landing on dashboard
-      const refreshSubscription = async () => {
-        try {
-          const db = getFirestore();
-          const userRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userRef);
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const currentSubscription = userData.subscription || { tier: 'free' };
-            setSubscription(currentSubscription);
-
-            const postsUsed = userData.postsUsedThisMonth || 0;
-            setStats(prev => ({ ...prev, postsThisMonth: postsUsed }));
-          }
-        } catch (error) {
-          console.error('Error refreshing subscription:', error);
-        }
-      };
-
-      refreshSubscription();
-    }
-  }, [pathname, user, loading]);
-
   const handleDelete = async (id: string) => {
-    // Refresh drafts after delete
-    const db = getFirestore();
-    const draftsRef = collection(db, 'drafts');
-    const q = query(draftsRef, where('userId', '==', user?.uid));
-    const snapshot = await getDocs(q);
-
-    const draftsData = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        content: data.content || '',
-        status: data.status || 'idea',
-        language: data.language || 'en',
-        createdAt: data.createdAt?.toDate() || new Date(),
-        tags: data.tags || [],
-      };
-    });
-
-    setDrafts(draftsData);
+    setDrafts(drafts.filter(d => d.id !== id));
   };
 
-  const handlePauseCampaign = async (campaignId: string) => {
-    if (!confirm('Are you sure you want to pause this campaign?')) return;
-
-    try {
-      const db = getFirestore();
-      const campaignRef = doc(db, 'campaigns', campaignId);
-      await updateDoc(campaignRef, {
-        status: 'archived',
-        updatedAt: new Date(),
-      });
-
-      // Refresh campaigns
-      setCampaigns(campaigns.filter(c => c.id !== campaignId));
-      setStats(prev => ({ ...prev, activeCampaigns: prev.activeCampaigns - 1 }));
-    } catch (error) {
-      console.error('Error pausing campaign:', error);
-      alert('Failed to pause campaign');
-    }
+  const handleDismissSuggestion = (id: string) => {
+    setMentorshipSuggestions(suggestions => suggestions.filter(s => s.id !== id));
   };
 
-  // Filter and sort drafts
-  const filteredDrafts = drafts
-    .filter(draft => statusFilter === 'all' || draft.status === statusFilter)
-    .filter(draft => languageFilter === 'all' || draft.language === languageFilter)
-    .filter(draft => {
-      if (campaignFilter === 'all') return true;
-      if (campaignFilter === 'campaign') return draft.campaignId !== undefined;
-      if (campaignFilter === 'single') return draft.campaignId === undefined;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'date') {
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      } else {
-        return a.status.localeCompare(b.status);
-      }
-    });
+  // Filter drafts
+  const activeDrafts = drafts.filter(d => d.status === 'in_progress' || d.status === 'ready_to_post');
+  const parkedDrafts = drafts.filter(d => d.status === 'idea');
+
+  const filteredActiveDrafts = activeDrafts
+    .filter(d => statusFilter === 'all' || d.status === statusFilter)
+    .filter(d => languageFilter === 'all' || d.language === languageFilter);
+
+  const filteredParkedDrafts = parkedDrafts
+    .filter(d => languageFilter === 'all' || d.language === languageFilter);
+
+  // Get user's first name
+  const firstName = user?.displayName?.split(' ')[0] || 'there';
+
+  // Mentorship suggestions by slot
+  const welcomeSuggestions = mentorshipSuggestions.filter(s => s.slot === 'after_welcome');
+  const draftsSuggestions = mentorshipSuggestions.filter(s => s.slot === 'after_drafts');
 
   return (
     <PageTransition>
-      <div className="space-y-4">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-800">Workspace</h1>
-        <p className="mt-1 text-slate-600">
-          Welcome back! Here&apos;s an overview of your content.
-        </p>
-      </div>
-
-      {/* Active Campaign Widget or Stats Cards */}
-      {campaigns.length > 0 ? (
-        <div className="flex gap-3">
-          {/* Active Campaign Widget */}
-          <div className="flex-1">
-            <ActiveCampaignWidget
-              campaign={campaigns[0]}
-              onPause={() => handlePauseCampaign(campaigns[0].id)}
-              isCollapsed={isCampaignCollapsed}
-              onToggleCollapse={() => setIsCampaignCollapsed(!isCampaignCollapsed)}
-            />
-          </div>
-
-          {/* Create Single Post Button */}
-          <button
-            onClick={() => router.push('/app/create')}
-            className="rounded-2xl border-2 border-orange-200 bg-white px-6 py-4 shadow-sm transition-all hover:border-orange-300 hover:bg-orange-50/30 flex items-center gap-3 whitespace-nowrap"
-          >
-            <div className="rounded-lg bg-orange-100 p-2">
-              <Plus className="h-5 w-5 text-orange-600" />
-            </div>
-            <span className="text-sm font-semibold text-slate-700">Create Single Post</span>
-          </button>
-        </div>
-      ) : (
-        /* Stats Cards - Show when no active campaign */
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Posts This Month"
-            value={`${stats.postsThisMonth} / ${subscription.tier === 'trial' || subscription.tier === 'pro' ? '50' : subscription.tier === 'enterprise' ? '∞' : '5'}`}
-            icon={FileText}
-            description={subscription.tier === 'trial' ? 'Trial plan limit' : subscription.tier === 'pro' ? 'Pro plan limit' : subscription.tier === 'enterprise' ? 'Unlimited' : 'Free plan limit'}
-          />
-          <StatCard
-            title="Drafts in Progress"
-            value={stats.draftsInProgress.toString()}
-            icon={Clock}
-            description="Unfinished posts"
-          />
-          <StatCard
-            title="Ready to Post"
-            value={stats.readyToPost.toString()}
-            icon={CheckCircle2}
-            description="Completed drafts"
-          />
-          <StatCard
-            title="Active Campaigns"
-            value={stats.activeCampaigns.toString()}
-            icon={Megaphone}
-            description={stats.activeCampaigns === 1 ? "Campaign running" : "Campaigns running"}
-          />
-        </div>
-      )}
-
-      {/* Recent Drafts Section */}
-      <div>
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-slate-800">Recent Drafts</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  viewMode === 'grid'
-                    ? 'border-orange-700 bg-orange-700 text-white'
-                    : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <Grid3x3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  viewMode === 'list'
-                    ? 'border-orange-700 bg-orange-700 text-white'
-                    : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Filters and Sort */}
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-700">Type:</label>
-              <select
-                value={campaignFilter}
-                onChange={(e) => setCampaignFilter(e.target.value as 'all' | 'campaign' | 'single')}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-              >
-                <option value="all">All Posts</option>
-                <option value="campaign">Campaign Posts</option>
-                <option value="single">Single Posts</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-700">Status:</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as DraftStatus | 'all')}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-              >
-                <option value="all">All</option>
-                <option value="idea">Idea</option>
-                <option value="in_progress">In Progress</option>
-                <option value="ready_to_post">Ready to Post</option>
-                <option value="posted">Posted</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-700">Language:</label>
-              <select
-                value={languageFilter}
-                onChange={(e) => setLanguageFilter(e.target.value as Language | 'all')}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-              >
-                <option value="all">All</option>
-                <option value="en">English</option>
-                <option value="no">Norwegian</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-700">Sort by:</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'date' | 'status')}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-              >
-                <option value="date">Date Created</option>
-                <option value="status">Status</option>
-              </select>
-            </div>
-          </div>
+      <div className="space-y-6 pb-8">
+        {/* Personal Welcome */}
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">
+            Welcome back, {firstName} 👋
+          </h1>
+          <p className="mt-1 text-slate-600">
+            Ready to continue your writing?
+          </p>
         </div>
 
-        {/* Drafts Grid/List */}
-        {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-            <p className="text-slate-600">Loading drafts...</p>
-          </div>
-        ) : filteredDrafts.length === 0 ? (
-          /* Empty State */
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-            <div className="mx-auto mb-4 inline-flex rounded-full bg-orange-100 p-4">
-              <FileText className="h-8 w-8 text-orange-600" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-slate-800">
-              No drafts yet
-            </h3>
-            <p className="mb-6 text-slate-600">
-              Start creating your first LinkedIn post with AI
-            </p>
-            <a
-              href="/app/create"
-              className="inline-flex items-center gap-2 rounded-lg bg-orange-700 px-6 py-3 font-semibold text-white transition-all hover:bg-orange-800 hover:scale-[1.02]"
-            >
-              <FileText className="h-5 w-5" />
-              Create New Post
-            </a>
-          </div>
-        ) : (
-          <div
-            className={
-              viewMode === 'grid'
-                ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                : 'flex flex-col gap-3'
-            }
-          >
-            {filteredDrafts.map((draft) => (
-              <DraftCard
-                key={draft.id}
-                draft={draft}
-                onDelete={handleDelete}
-                viewMode={viewMode}
-                campaignName={draft.campaignId ? campaignMap.get(draft.campaignId) : undefined}
+        {/* Mentorship Suggestion (after welcome) */}
+        {welcomeSuggestions.length > 0 && (
+          <div>
+            {welcomeSuggestions.slice(0, 1).map(suggestion => (
+              <MentorshipSuggestion
+                key={suggestion.id}
+                suggestion={suggestion}
+                onDismiss={() => handleDismissSuggestion(suggestion.id)}
               />
             ))}
           </div>
         )}
-      </div>
-    </div>
-    </PageTransition>
-  );
-}
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-}
+        {/* Campaign Strip */}
+        {campaigns.length > 0 && (
+          <div>
+            <h2 className="text-sm font-semibold text-slate-700 mb-3">Active Campaigns</h2>
+            <CampaignStrip campaigns={campaigns} maxVisible={3} />
+          </div>
+        )}
 
-function StatCard({ title, value, icon: Icon, description }: StatCardProps) {
-  // Color-coded icon backgrounds based on title
-  const getIconColor = () => {
-    if (title.includes('Posts')) return { bg: 'bg-orange-100', text: 'text-orange-600' };
-    if (title.includes('Drafts')) return { bg: 'bg-blue-100', text: 'text-blue-600' };
-    if (title.includes('Ready')) return { bg: 'bg-green-100', text: 'text-green-600' };
-    if (title.includes('Campaigns')) return { bg: 'bg-purple-100', text: 'text-purple-600' };
-    return { bg: 'bg-slate-100', text: 'text-slate-600' };
-  };
+        {/* Resume Your Writing */}
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-slate-800">Resume Your Writing</h2>
 
-  const iconColor = getIconColor();
+            {/* Filter & Sort Dropdown */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+          </div>
 
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover-lift">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-600">{title}</h3>
-        <div className={`rounded-lg ${iconColor.bg} p-2`}>
-          <Icon className={`h-5 w-5 ${iconColor.text}`} />
+          {/* Collapsible Filters */}
+          {showFilters && (
+            <div className="mb-4 flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-700">Status:</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                >
+                  <option value="all">All</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="ready_to_post">Ready to Post</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-700">Language:</label>
+                <select
+                  value={languageFilter}
+                  onChange={(e) => setLanguageFilter(e.target.value)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                >
+                  <option value="all">All</option>
+                  <option value="en">English</option>
+                  <option value="no">Norwegian</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Active Drafts List */}
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+              <p className="text-slate-600">Loading...</p>
+            </div>
+          ) : filteredActiveDrafts.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+              <p className="text-slate-600">No active drafts. Start something new below!</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredActiveDrafts.slice(0, 5).map(draft => (
+                <DraftRow
+                  key={draft.id}
+                  draft={draft}
+                  campaignName={draft.campaignId ? campaignMap.get(draft.campaignId) : undefined}
+                  onDelete={handleDelete}
+                />
+              ))}
+              {filteredActiveDrafts.length > 5 && (
+                <button
+                  onClick={() => router.push('/app/drafts')}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  View all {filteredActiveDrafts.length} drafts →
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Mentorship Suggestion (after drafts) */}
+        {draftsSuggestions.length > 0 && (
+          <div>
+            {draftsSuggestions.slice(0, 1).map(suggestion => (
+              <MentorshipSuggestion
+                key={suggestion.id}
+                suggestion={suggestion}
+                onDismiss={() => handleDismissSuggestion(suggestion.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Parked Ideas (Expandable) */}
+        {parkedDrafts.length > 0 && (
+          <div>
+            <button
+              onClick={() => setShowParked(!showParked)}
+              className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
+            >
+              <span>Parked Ideas ({parkedDrafts.length})</span>
+              {showParked ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+
+            {showParked && (
+              <div className="space-y-2">
+                {filteredParkedDrafts.map(draft => (
+                  <DraftRow
+                    key={draft.id}
+                    draft={draft}
+                    campaignName={draft.campaignId ? campaignMap.get(draft.campaignId) : undefined}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Start Something New */}
+        <div className="pt-4">
+          <h2 className="mb-3 text-xl font-semibold text-slate-800">Start Something New</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Create Single Post */}
+            <button
+              onClick={() => router.push('/app/create')}
+              className="group flex items-center gap-4 rounded-2xl border-2 border-orange-200 bg-white px-6 py-5 shadow-sm transition-all hover:border-orange-300 hover:bg-orange-50/30 hover:shadow-md"
+            >
+              <div className="rounded-xl bg-orange-100 p-3 group-hover:bg-orange-200 transition-colors">
+                <Plus className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-slate-800">Create Single Post</h3>
+                <p className="text-sm text-slate-600">Start a new LinkedIn post with AI</p>
+              </div>
+            </button>
+
+            {/* Start Campaign */}
+            <button
+              onClick={() => router.push('/app/campaigns?new=true')}
+              className="group flex items-center gap-4 rounded-2xl border-2 border-purple-200 bg-white px-6 py-5 shadow-sm transition-all hover:border-purple-300 hover:bg-purple-50/30 hover:shadow-md"
+            >
+              <div className="rounded-xl bg-purple-100 p-3 group-hover:bg-purple-200 transition-colors">
+                <Plus className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-slate-800">Start Campaign</h3>
+                <p className="text-sm text-slate-600">Plan a content series with AI</p>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
-      <div className="mb-1 text-3xl font-bold text-slate-800">{value}</div>
-      <p className="text-sm text-slate-600">{description}</p>
-    </div>
+    </PageTransition>
   );
 }

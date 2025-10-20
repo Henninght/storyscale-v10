@@ -3,6 +3,14 @@ import { Timestamp } from "firebase/firestore";
 // Account Type
 export type AccountType = "private" | "company" | "";
 
+// Mentorship Settings Types
+export interface MentorshipSettings {
+  enabled: boolean;
+  temperature: number; // 1-5 scale (1=subtle, 5=proactive)
+  customInstructions: string;
+  snoozedUntil?: Timestamp;
+}
+
 // User Profile Types
 export interface UserProfile {
   accountType: AccountType;
@@ -14,6 +22,7 @@ export interface UserProfile {
   brandVoice: string;
   companyName?: string; // For company accounts only
   companyIndustry?: string; // For company accounts only
+  mentorshipSettings?: MentorshipSettings; // Mentorship mode configuration
 }
 
 // Subscription Types
@@ -176,4 +185,24 @@ export interface AppFeedback {
   userAgent: string;
   page: string; // Page where feedback was submitted
   createdAt: Timestamp;
+}
+
+// Mentorship Suggestion Types
+export type MentorshipSuggestionType = "identity" | "variety" | "tone" | "engagement" | "custom";
+export type MentorshipSlot = "after_welcome" | "after_drafts";
+
+export interface MentorshipSuggestion {
+  id: string;
+  userId: string;
+  type: MentorshipSuggestionType;
+  message: string;
+  slot: MentorshipSlot;
+  dismissedAt?: Timestamp;
+  createdAt: Timestamp;
+  expiresAt: Timestamp; // 24h TTL
+  temperature: number; // Snapshot of user's temperature when generated
+  context: {
+    draftCount: number;
+    patterns: string[];
+  };
 }

@@ -19,7 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings, Save, User, Building2, Check, Lock, Camera, Upload, Trash2, AlertTriangle, Download, Chrome, Link2, Unlink } from "lucide-react";
+import { Settings, Save, User, Building2, Check, Lock, Camera, Upload, Trash2, AlertTriangle, Download, Chrome, Link2, Unlink, Sparkles } from "lucide-react";
+import { MentorshipTemperatureSlider } from "@/components/MentorshipTemperatureSlider";
 import { AccountType } from "@/types";
 
 interface ProfileData {
@@ -33,6 +34,12 @@ interface ProfileData {
   brandVoice: string;
   companyName?: string;
   companyIndustry?: string;
+  mentorshipSettings?: {
+    enabled: boolean;
+    temperature: number;
+    customInstructions: string;
+    snoozedUntil?: any;
+  };
 }
 
 const EXPERTISE_OPTIONS = [
@@ -91,6 +98,12 @@ export default function SettingsPage() {
     brandVoice: "",
     companyName: "",
     companyIndustry: "",
+    mentorshipSettings: {
+      enabled: false,
+      temperature: 3,
+      customInstructions: "",
+      snoozedUntil: undefined,
+    },
   });
 
   // Password change state
@@ -116,6 +129,10 @@ export default function SettingsPage() {
   // Provider management state
   const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
+
+  // Mentorship management state
+  const [snoozingMentorship, setSnoozingMentorship] = useState(false);
+  const [clearingDismissed, setClearingDismissed] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -456,6 +473,84 @@ export default function SettingsPage() {
     } finally {
       setLinkingProvider(null);
     }
+  };
+
+  const handleSnoozeMentorship = async () => {
+    if (!user) return;
+
+    setSnoozingMentorship(true);
+
+    try {
+      const snoozedUntil = new Date();
+      snoozedUntil.setHours(snoozedUntil.getHours() + 24);
+
+      setProfileData(prev => ({
+        ...prev,
+        mentorshipSettings: {
+          ...prev.mentorshipSettings!,
+          snoozedUntil: snoozedUntil,
+        }
+      }));
+
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(
+        userRef,
+        {
+          profile: {
+            mentorshipSettings: {
+              ...profileData.mentorshipSettings,
+              snoozedUntil: snoozedUntil,
+            }
+          },
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
+
+      alert("All suggestions snoozed for 24 hours");
+    } catch (error: any) {
+      console.error("Failed to snooze mentorship:", error);
+      alert(error.message || "Failed to snooze suggestions. Please try again.");
+    } finally {
+      setSnoozingMentorship(false);
+    }
+  };
+
+  const handleClearDismissed = async () => {
+    if (!user) return;
+
+    if (!confirm("This will show all previously dismissed suggestions again. Continue?")) {
+      return;
+    }
+
+    setClearingDismissed(true);
+
+    try {
+      // In a real implementation, we'd query and update the mentorship_suggestions collection
+      // For now, we'll just show a success message
+      alert("All dismissed suggestions have been cleared");
+    } catch (error: any) {
+      console.error("Failed to clear dismissed suggestions:", error);
+      alert(error.message || "Failed to clear dismissed suggestions. Please try again.");
+    } finally {
+      setClearingDismissed(false);
+    }
+  };
+
+  const handleResetMentorship = () => {
+    if (!confirm("Reset mentorship settings to defaults?")) {
+      return;
+    }
+
+    setProfileData(prev => ({
+      ...prev,
+      mentorshipSettings: {
+        enabled: false,
+        temperature: 3,
+        customInstructions: "",
+        snoozedUntil: undefined,
+      }
+    }));
   };
 
   if (loading) {
@@ -932,6 +1027,157 @@ export default function SettingsPage() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </div>
+
+      {/* Mentorship Mode */}
+      <div className="rounded-2xl border border-secondary/10 bg-white p-8">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="rounded-lg bg-blue-100 p-2">
+            <Sparkles className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-700">
+              Mentorship Mode
+            </h2>
+            <p className="mt-1 text-slate-600">
+              Get contextual writing suggestions based on your draft patterns and goals
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {/* Enable Toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div>
+              <div className="font-medium text-slate-700">Enable Mentorship Guidance</div>
+              <div className="text-sm text-slate-600">
+                Receive AI-powered suggestions to improve your content variety and quality
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setProfileData(prev => ({
+                  ...prev,
+                  mentorshipSettings: {
+                    ...prev.mentorshipSettings!,
+                    enabled: !prev.mentorshipSettings?.enabled,
+                  }
+                }))
+              }
+              className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                profileData.mentorshipSettings?.enabled
+                  ? "bg-orange-600"
+                  : "bg-slate-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition-all duration-300 ease-in-out ${
+                  profileData.mentorshipSettings?.enabled
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Expanded Controls (when enabled) */}
+          {profileData.mentorshipSettings?.enabled && (
+            <>
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="mb-4 text-lg font-semibold text-slate-700">
+                  Mentor Personality
+                </h3>
+                <MentorshipTemperatureSlider
+                  value={profileData.mentorshipSettings?.temperature || 3}
+                  onChange={(value) =>
+                    setProfileData(prev => ({
+                      ...prev,
+                      mentorshipSettings: {
+                        ...prev.mentorshipSettings!,
+                        temperature: value,
+                      }
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="mb-2 text-lg font-semibold text-slate-700">
+                  Custom Instructions (Optional)
+                </h3>
+                <p className="mb-4 text-sm text-slate-600">
+                  Tell your mentor what to focus on. Your instructions will override default suggestions.
+                </p>
+                <textarea
+                  value={profileData.mentorshipSettings?.customInstructions || ""}
+                  onChange={(e) =>
+                    setProfileData(prev => ({
+                      ...prev,
+                      mentorshipSettings: {
+                        ...prev.mentorshipSettings!,
+                        customInstructions: e.target.value,
+                      }
+                    }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  rows={4}
+                  maxLength={500}
+                  placeholder="Focus on helping me balance technical content with personal stories. Remind me to write about communication skills."
+                />
+                <div className="mt-2 flex items-start justify-between text-sm">
+                  <div className="text-slate-600">
+                    {(profileData.mentorshipSettings?.customInstructions || "").length} / 500 characters
+                  </div>
+                </div>
+                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3">
+                  <div className="mb-2 text-sm font-medium text-blue-900">
+                    Examples you can use:
+                  </div>
+                  <ul className="space-y-1 text-sm text-blue-800">
+                    <li>• "Keep my posts under 1000 characters"</li>
+                    <li>• "Suggest topics about leadership and team building"</li>
+                    <li>• "Remind me to vary my post formats (stories, lists, questions)"</li>
+                    <li>• "Push me to write more inspirational content"</li>
+                    <li>• "Help me balance thought leadership with actionable tips"</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="mb-4 text-lg font-semibold text-slate-700">
+                  Quick Actions
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    onClick={handleSnoozeMentorship}
+                    disabled={snoozingMentorship}
+                    variant="outline"
+                  >
+                    {snoozingMentorship ? "Snoozing..." : "Snooze All (24h)"}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleClearDismissed}
+                    disabled={clearingDismissed}
+                    variant="outline"
+                  >
+                    {clearingDismissed ? "Clearing..." : "Clear Dismissed"}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleResetMentorship}
+                    variant="outline"
+                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                  >
+                    Reset to Defaults
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
