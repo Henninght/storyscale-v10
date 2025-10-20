@@ -39,7 +39,10 @@
       "Bash(cat:*)",
       "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_ygUniw/**)",
       "Bash(test -f vercel.json)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Read(//Users/henningtorp/Library/Application Support/Claude/**)",
+      "Read(//Users/henningtorp/Library/**)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
