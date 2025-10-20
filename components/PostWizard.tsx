@@ -7,6 +7,8 @@ import { ChevronLeft, ChevronRight, Check, Save, ChevronDown, ChevronUp, Info, B
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { WizardStepTransition } from '@/components/WizardStepTransition';
+import { MentorWizardSuggestion } from '@/components/MentorWizardSuggestion';
+import { getStep1Advice, getStep2Advice, getStep3Advice, getStep4Advice } from '@/lib/mentorWizardAdvice';
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -208,6 +210,10 @@ export function PostWizard() {
   const [isSaving, setIsSaving] = useState(false);
   const [campaignLoaded, setCampaignLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [mentorshipEnabled, setMentorshipEnabled] = useState(false);
+  const [mentorTemperature, setMentorTemperature] = useState(3);
+  const [mentorName, setMentorName] = useState('Alex');
+  const [userPatterns, setUserPatterns] = useState<{ preferredTone?: string; preferredStyle?: string; avgLength?: number } | undefined>(undefined);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get current user ID on mount
@@ -222,6 +228,61 @@ export function PostWizard() {
     };
     loadUser();
   }, []);
+
+  // Load mentorship settings and user patterns
+  useEffect(() => {
+    const loadMentorshipData = async () => {
+      if (!userId) return;
+
+      try {
+        const db = getFirestore();
+
+        // Load user's mentorship settings
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const settings = userData.profile?.mentorshipSettings;
+
+          if (settings?.enabled) {
+            setMentorshipEnabled(true);
+            setMentorTemperature(settings.temperature || 3);
+            setMentorName(settings.mentorName || 'Alex');
+          }
+        }
+
+        // Analyze recent drafts to understand user patterns
+        const draftsRef = collection(db, 'drafts');
+        const recentDraftsQuery = query(
+          draftsRef,
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc'),
+          limit(10)
+        );
+
+        const draftsSnapshot = await getDocs(recentDraftsQuery);
+        const recentDrafts = draftsSnapshot.docs.map(doc => doc.data());
+
+        // Calculate patterns
+        if (recentDrafts.length > 0) {
+          const tones = recentDrafts.map(d => d.wizardSettings?.tone).filter(Boolean);
+          const styles = recentDrafts.map(d => d.wizardSettings?.style).filter(Boolean);
+          const avgLength = recentDrafts.reduce((sum, d) => sum + (d.content?.length || 0), 0) / recentDrafts.length;
+
+          setUserPatterns({
+            preferredTone: tones.length > 0 ? tones[0] : undefined,
+            preferredStyle: styles.length > 0 ? styles[0] : undefined,
+            avgLength: Math.round(avgLength),
+          });
+        }
+      } catch (error) {
+        console.error('Error loading mentorship data:', error);
+      }
+    };
+
+    loadMentorshipData();
+  }, [userId]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -437,6 +498,11 @@ export function PostWizard() {
               referenceUrls={data.referenceUrls}
               customInstructions={data.customInstructions}
               onUpdate={updateData}
+              mentorshipEnabled={mentorshipEnabled}
+              mentorTemperature={mentorTemperature}
+              mentorName={mentorName}
+              userPatterns={userPatterns}
+              wizardData={data}
             />
           )}
           {currentStep === 2 && (
@@ -446,6 +512,11 @@ export function PostWizard() {
               audience={data.audience}
               style={data.style}
               onUpdate={updateData}
+              mentorshipEnabled={mentorshipEnabled}
+              mentorTemperature={mentorTemperature}
+              mentorName={mentorName}
+              userPatterns={userPatterns}
+              wizardData={data}
             />
           )}
           {currentStep === 3 && (
@@ -455,10 +526,22 @@ export function PostWizard() {
               includeCTA={data.includeCTA}
               emojiUsage={data.emojiUsage}
               onUpdate={updateData}
+              mentorshipEnabled={mentorshipEnabled}
+              mentorTemperature={mentorTemperature}
+              mentorName={mentorName}
+              userPatterns={userPatterns}
+              wizardData={data}
             />
           )}
           {currentStep === 4 && (
-            <Step4 data={data} onGenerate={handleGenerate} isGenerating={isGenerating} />
+            <Step4
+              data={data}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              mentorshipEnabled={mentorshipEnabled}
+              mentorTemperature={mentorTemperature}
+              mentorName={mentorName}
+            />
           )}
         </WizardStepTransition>
       </div>
@@ -510,9 +593,14 @@ interface Step1Props {
   referenceUrls: string[];
   customInstructions?: string;
   onUpdate: (data: Partial<WizardData>) => void;
+  mentorshipEnabled?: boolean;
+  mentorTemperature?: number;
+  mentorName?: string;
+  userPatterns?: { preferredTone?: string; preferredStyle?: string; avgLength?: number };
+  wizardData?: WizardData;
 }
 
-function Step1({ input, referenceUrls, customInstructions, onUpdate }: Step1Props) {
+function Step1({ input, referenceUrls, customInstructions, onUpdate, mentorshipEnabled, mentorTemperature = 3, mentorName = 'Alex', userPatterns, wizardData }: Step1Props) {
   const charCount = input.length;
   const isValid = charCount >= 50 && charCount <= 2000;
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -559,6 +647,9 @@ function Step1({ input, referenceUrls, customInstructions, onUpdate }: Step1Prop
     }
   };
 
+  // Generate mentor advice for Step 1
+  const mentorAdvice = mentorshipEnabled && wizardData ? getStep1Advice(wizardData, mentorTemperature, userPatterns) : null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -567,6 +658,16 @@ function Step1({ input, referenceUrls, customInstructions, onUpdate }: Step1Prop
           Share your main idea, story, or topic. The more details you provide, the better the result.
         </p>
       </div>
+
+      {/* Mentor Advice */}
+      {mentorAdvice && (
+        <MentorWizardSuggestion
+          message={mentorAdvice}
+          temperature={mentorTemperature}
+          mentorName={mentorName}
+          type="strategic"
+        />
+      )}
 
       {/* Campaign Selector */}
       {!loadingCampaigns && campaigns.length > 0 && (
@@ -705,6 +806,11 @@ interface Step2Props {
   audience: string;
   style: string;
   onUpdate: (data: Partial<WizardData>) => void;
+  mentorshipEnabled?: boolean;
+  mentorTemperature?: number;
+  mentorName?: string;
+  userPatterns?: { preferredTone?: string; preferredStyle?: string; avgLength?: number };
+  wizardData?: WizardData;
 }
 
 interface OptionCardProps {
@@ -744,7 +850,10 @@ function OptionCard({ icon: Icon, label, description, value, selected, onClick }
   );
 }
 
-function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
+function Step2({ tone, purpose, audience, style, onUpdate, mentorshipEnabled, mentorTemperature = 3, mentorName = 'Alex', userPatterns, wizardData }: Step2Props) {
+  // Generate mentor advice for Step 2
+  const mentorAdvice = mentorshipEnabled && wizardData ? getStep2Advice(wizardData, mentorTemperature, userPatterns) : null;
+
   const toneOptions = [
     { value: 'professional', label: 'Professional', icon: Briefcase, description: 'Establishes credibility for corporate audiences' },
     { value: 'casual', label: 'Casual', icon: MessageCircle, description: 'Conversational language for authentic connections' },
@@ -779,6 +888,16 @@ function Step2({ tone, purpose, audience, style, onUpdate }: Step2Props) {
         <h2 className="mb-2 text-2xl font-semibold text-secondary">Configure Your Post</h2>
         <p className="text-secondary/70">Choose the tone, purpose, and style for your content.</p>
       </div>
+
+      {/* Mentor Advice */}
+      {mentorAdvice && (
+        <MentorWizardSuggestion
+          message={mentorAdvice}
+          temperature={mentorTemperature}
+          mentorName={mentorName}
+          type="strategic"
+        />
+      )}
 
       <div>
         <div className="mb-3 flex items-center gap-2">
@@ -858,9 +977,16 @@ interface Step3Props {
   includeCTA: boolean;
   emojiUsage: 'none' | 'minimal' | 'moderate';
   onUpdate: (data: Partial<WizardData>) => void;
+  mentorshipEnabled?: boolean;
+  mentorTemperature?: number;
+  mentorName?: string;
+  userPatterns?: { preferredTone?: string; preferredStyle?: string; avgLength?: number };
+  wizardData?: WizardData;
 }
 
-function Step3({ language, length, includeCTA, emojiUsage, onUpdate }: Step3Props) {
+function Step3({ language, length, includeCTA, emojiUsage, onUpdate, mentorshipEnabled, mentorTemperature = 3, mentorName = 'Alex', userPatterns, wizardData }: Step3Props) {
+  // Generate mentor advice for Step 3
+  const mentorAdvice = mentorshipEnabled && wizardData ? getStep3Advice(wizardData, mentorTemperature, userPatterns) : null;
   const lengthOptions = [
     { value: 'short', label: 'Short', desc: '50-150 words', words: 100, width: '33%' },
     { value: 'medium', label: 'Medium', desc: '150-300 words', words: 225, width: '66%' },
@@ -873,6 +999,16 @@ function Step3({ language, length, includeCTA, emojiUsage, onUpdate }: Step3Prop
         <h2 className="mb-2 text-2xl font-semibold text-secondary">Set Your Preferences</h2>
         <p className="text-secondary/70">Customize the language, length, and formatting.</p>
       </div>
+
+      {/* Mentor Advice */}
+      {mentorAdvice && (
+        <MentorWizardSuggestion
+          message={mentorAdvice}
+          temperature={mentorTemperature}
+          mentorName={mentorName}
+          type="best-practice"
+        />
+      )}
 
       <div className="space-y-6">
         {/* Language Selector with Flags */}
@@ -1019,9 +1155,14 @@ interface Step4Props {
   data: WizardData;
   onGenerate: () => void;
   isGenerating: boolean;
+  mentorshipEnabled?: boolean;
+  mentorTemperature?: number;
+  mentorName?: string;
 }
 
-function Step4({ data, isGenerating }: Step4Props) {
+function Step4({ data, isGenerating, mentorshipEnabled, mentorTemperature = 3, mentorName = 'Alex' }: Step4Props) {
+  // Generate mentor advice for Step 4
+  const mentorAdvice = mentorshipEnabled ? getStep4Advice(data, mentorTemperature) : null;
   const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string | null>('input');
 
@@ -1049,6 +1190,16 @@ function Step4({ data, isGenerating }: Step4Props) {
           Check everything looks good before generating your post.
         </p>
       </div>
+
+      {/* Mentor Advice */}
+      {mentorAdvice && (
+        <MentorWizardSuggestion
+          message={mentorAdvice}
+          temperature={mentorTemperature}
+          mentorName={mentorName}
+          type="strategic"
+        />
+      )}
 
       {/* Collapsible Summary Sections */}
       <div className="space-y-3">

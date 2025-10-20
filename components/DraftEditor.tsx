@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getFirestore, doc, updateDoc, collection, addDoc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, collection, addDoc, serverTimestamp, setDoc, getDoc, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VersionHistory } from '@/components/VersionHistory';
-import { FeedbackRating } from '@/types';
+import { FeedbackRating, MentorshipSettings } from '@/types';
+import { MentorChatWidget } from '@/components/MentorChatWidget';
+import { analyzeDraftPatterns } from '@/lib/mentorshipEngine';
 
 interface DraftEditorProps {
   draft: any;
@@ -36,6 +38,10 @@ export function DraftEditor({ draft }: DraftEditorProps) {
   const [originalContent] = useState(draft.content);
   const [feedbackId, setFeedbackId] = useState<string | null>(null);
 
+  // Mentorship state
+  const [mentorshipSettings, setMentorshipSettings] = useState<MentorshipSettings | null>(null);
+  const [userPatterns, setUserPatterns] = useState<{ avgLength: number; preferredTone?: string; preferredStyle?: string } | undefined>(undefined);
+
   const charCount = content.length;
 
   // Load existing feedback on mount
@@ -58,6 +64,62 @@ export function DraftEditor({ draft }: DraftEditorProps) {
     };
 
     loadFeedback();
+  }, [draft.id]);
+
+  // Load mentorship settings and user patterns
+  useEffect(() => {
+    const loadMentorshipData = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const db = getFirestore();
+
+        // Load user's mentorship settings
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const settings = userData.profile?.mentorshipSettings as MentorshipSettings | undefined;
+
+          // Only set if mentorship is enabled
+          if (settings?.enabled) {
+            setMentorshipSettings(settings);
+          }
+        }
+
+        // Analyze recent drafts to understand user patterns
+        const draftsRef = collection(db, 'drafts');
+        const recentDraftsQuery = query(
+          draftsRef,
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc'),
+          limit(10)
+        );
+
+        const draftsSnapshot = await getDocs(recentDraftsQuery);
+        const recentDrafts = draftsSnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+
+        const patterns = analyzeDraftPatterns(recentDrafts as any);
+
+        if (patterns.avgLength > 0) {
+          setUserPatterns({
+            avgLength: patterns.avgLength,
+            preferredTone: patterns.tones.length > 0 ? patterns.tones[0] : undefined,
+            preferredStyle: patterns.styles.length > 0 ? patterns.styles[0] : undefined,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading mentorship data:', error);
+      }
+    };
+
+    loadMentorshipData();
   }, [draft.id]);
 
   const handleCopy = async () => {
@@ -570,6 +632,18 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         onLoadVersion={(versionContent) => setContent(versionContent)}
         currentContent={content}
       />
+
+      {/* Mentor Chat Widget (floating) */}
+      {mentorshipSettings?.enabled && (
+        <MentorChatWidget
+          userId={draft.userId}
+          draftContent={content}
+          draftId={draft.id}
+          userPatterns={userPatterns}
+          temperature={mentorshipSettings.temperature || 3}
+          mentorName={mentorshipSettings.mentorName || 'Alex'}
+        />
+      )}
     </div>
   );
 }
