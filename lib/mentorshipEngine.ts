@@ -276,14 +276,6 @@ function generatePatternSuggestions(
 }
 
 /**
- * Get tone modifier based on temperature
- */
-export function getToneModifier(temperature: number, index: number = 0): string {
-  const modifiers = TONE_MODIFIERS[temperature] || TONE_MODIFIERS[3];
-  return modifiers[index % modifiers.length];
-}
-
-/**
  * Create a mentorship suggestion object
  */
 export function createSuggestion(
