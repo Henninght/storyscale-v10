@@ -8,6 +8,8 @@ export interface MentorshipSettings {
   enabled: boolean;
   temperature: number; // 1-5 scale (1=subtle, 5=proactive)
   customInstructions: string;
+  mentorName?: string; // Customizable mentor name (default: "Alex")
+  mentorStyle?: 'thoughtful' | 'balanced' | 'direct'; // Mentor personality
   snoozedUntil?: Timestamp;
 }
 
@@ -189,7 +191,8 @@ export interface AppFeedback {
 
 // Mentorship Suggestion Types
 export type MentorshipSuggestionType = "identity" | "variety" | "tone" | "engagement" | "custom";
-export type MentorshipSlot = "after_welcome" | "after_drafts";
+export type MentorshipSlot = "after_welcome" | "after_drafts" | "in_editor" | "in_wizard" | "post_publish";
+export type MentorshipInteractionType = "view" | "dismiss" | "try_it" | "tell_more" | "snooze";
 
 export interface MentorshipSuggestion {
   id: string;

@@ -1,10 +1,18 @@
 import { Draft, UserProfile, MentorshipSuggestion, MentorshipSlot } from '@/types';
+import {
+  getMentorVoice,
+  getMentorOpening,
+  getMentorClosing,
+  getMentorGreeting,
+  VOICE_PATTERNS,
+} from './mentorPersonality';
 
 interface MentorshipConfig {
   temperature: number; // 1-5
   customInstructions: string;
   userProfile: UserProfile;
   recentDrafts: Draft[];
+  mentorName?: string;
 }
 
 interface DraftPattern {
@@ -16,14 +24,30 @@ interface DraftPattern {
   languageDistribution: { en: number; no: number };
 }
 
-// Temperature-based tone modifiers
-const TONE_MODIFIERS: Record<number, string[]> = {
-  1: ["You might consider", "Perhaps", "When ready"],
-  2: ["Consider", "What about", "You could try"],
-  3: ["Here's a thought", "What if", "Consider"],
-  4: ["Try", "Your next post could be", "Time to explore"],
-  5: ["Write about", "Focus on", "Challenge yourself with"],
-};
+/**
+ * Create a natural mentor message with personality
+ */
+function createMentorMessage(
+  core: string,
+  temperature: number,
+  mentorName: string = 'Alex'
+): string {
+  const voice = getMentorVoice(temperature);
+  const opening = getMentorOpening(temperature);
+  const closing = getMentorClosing(temperature);
+
+  // Build natural sentence structure
+  if (temperature <= 2) {
+    // Subtle: gentle observation
+    return `${opening} — ${core.toLowerCase()} ${closing}`;
+  } else if (temperature <= 4) {
+    // Balanced: friendly suggestion
+    return `${opening}: ${core} ${closing}`;
+  } else {
+    // Proactive: direct challenge
+    return `${opening} ${core} ${closing}`;
+  }
+}
 
 /**
  * Analyze draft patterns to identify content trends
@@ -113,17 +137,17 @@ function getMostCommon<T>(arr: T[]): T | null {
  * Generate mentorship suggestions based on patterns and config
  */
 export function generateSuggestions(config: MentorshipConfig): string[] {
-  const { temperature, customInstructions, userProfile, recentDrafts } = config;
+  const { temperature, customInstructions, userProfile, recentDrafts, mentorName = 'Alex' } = config;
   const patterns = analyzeDraftPatterns(recentDrafts);
   const suggestions: string[] = [];
 
   // If user has custom instructions, prioritize those
   if (customInstructions.trim()) {
-    suggestions.push(...generateCustomInstructionSuggestions(customInstructions, temperature));
+    suggestions.push(...generateCustomInstructionSuggestions(customInstructions, temperature, mentorName));
   }
 
   // Generate pattern-based suggestions
-  const patternSuggestions = generatePatternSuggestions(patterns, userProfile, temperature);
+  const patternSuggestions = generatePatternSuggestions(patterns, userProfile, temperature, mentorName);
   suggestions.push(...patternSuggestions);
 
   // Limit based on temperature
@@ -136,21 +160,18 @@ export function generateSuggestions(config: MentorshipConfig): string[] {
  */
 function generateCustomInstructionSuggestions(
   instructions: string,
-  temperature: number
+  temperature: number,
+  mentorName: string = 'Alex'
 ): string[] {
   const suggestions: string[] = [];
-  const toneModifier = TONE_MODIFIERS[temperature][0];
-
-  // Parse common patterns in custom instructions
   const lowerInstructions = instructions.toLowerCase();
 
   // Character limit reminder
   if (lowerInstructions.includes('under') && lowerInstructions.includes('character')) {
     const match = instructions.match(/under (\d+) character/i);
     if (match) {
-      suggestions.push(
-        `${toneModifier} keeping your next post under ${match[1]} characters as per your preference.`
-      );
+      const core = `you've set a ${match[1]}-character limit. Your last post was getting close to that`;
+      suggestions.push(createMentorMessage(core, temperature, mentorName));
     }
   }
 
@@ -158,30 +179,27 @@ function generateCustomInstructionSuggestions(
   if (lowerInstructions.includes('suggest') && lowerInstructions.includes('about')) {
     const topicMatch = instructions.match(/about (.+?)(?:\.|$)/i);
     if (topicMatch) {
-      suggestions.push(
-        `${toneModifier} writing about ${topicMatch[1].trim()} — it aligns with your content goals.`
-      );
+      const topic = topicMatch[1].trim();
+      const core = `what about writing on ${topic}? It's been on your list`;
+      suggestions.push(createMentorMessage(core, temperature, mentorName));
     }
   }
 
   // Format variety
   if (lowerInstructions.includes('vary') && lowerInstructions.includes('format')) {
-    suggestions.push(
-      `${toneModifier} trying a different post format to add variety to your feed.`
-    );
+    const core = `time to mix up your post format. You wanted variety, right?`;
+    suggestions.push(createMentorMessage(core, temperature, mentorName));
   }
 
   // Tone suggestions
   if (lowerInstructions.includes('inspirational')) {
-    suggestions.push(
-      `${toneModifier} an inspirational story — your audience would appreciate the motivational shift.`
-    );
+    const core = `share something inspirational. Your audience needs that energy`;
+    suggestions.push(createMentorMessage(core, temperature, mentorName));
   }
 
   if (lowerInstructions.includes('actionable')) {
-    suggestions.push(
-      `${toneModifier} including actionable tips in your next post to balance thought leadership.`
-    );
+    const core = `give your readers something they can actually do. Balance the theory with action`;
+    suggestions.push(createMentorMessage(core, temperature, mentorName));
   }
 
   return suggestions;
@@ -193,10 +211,10 @@ function generateCustomInstructionSuggestions(
 function generatePatternSuggestions(
   patterns: DraftPattern,
   userProfile: UserProfile,
-  temperature: number
+  temperature: number,
+  mentorName: string = 'Alex'
 ): string[] {
   const suggestions: string[] = [];
-  const toneModifier = TONE_MODIFIERS[temperature][0];
 
   // Check tone variety
   if (patterns.tones.length >= 3) {
@@ -209,9 +227,8 @@ function generatePatternSuggestions(
         (t) => t !== mostCommonTone
       );
       const suggestedTone = alternateTones[0];
-      suggestions.push(
-        `${toneModifier} writing in a ${suggestedTone} tone — you've had ${dominantCount} ${mostCommonTone} posts recently.`
-      );
+      const core = `you've written ${dominantCount} ${mostCommonTone} posts in a row. What if you tried a ${suggestedTone} tone next?`;
+      suggestions.push(createMentorMessage(core, temperature, mentorName));
     }
   }
 
@@ -227,12 +244,8 @@ function generatePatternSuggestions(
       );
       const suggestedStyle = alternateStyles[0];
       const styleLabel = suggestedStyle.replace(/-/g, ' ');
-      suggestions.push(
-        `${toneModifier} a ${styleLabel} post — you've written ${dominantCount} ${mostCommonStyle?.replace(
-          /-/g,
-          ' '
-        )} posts lately.`
-      );
+      const core = `I'm seeing a lot of ${mostCommonStyle?.replace(/-/g, ' ')} posts. Try a ${styleLabel} approach for your next one`;
+      suggestions.push(createMentorMessage(core, temperature, mentorName));
     }
   }
 
@@ -240,9 +253,8 @@ function generatePatternSuggestions(
   if (userProfile.expertise && userProfile.expertise.length >= 2) {
     const expertise = userProfile.expertise;
     if (expertise.length >= 2) {
-      suggestions.push(
-        `${toneModifier} exploring your ${expertise[1]} background — you've been focusing heavily on ${expertise[0]} recently.`
-      );
+      const core = `you have a ${expertise[1]} background too. Your audience would love to hear about that side of you`;
+      suggestions.push(createMentorMessage(core, temperature, mentorName));
     }
   }
 
@@ -255,9 +267,8 @@ function generatePatternSuggestions(
     if (dominantCount >= 3 && patterns.lengths.length >= 5) {
       const alternateLengths = ['short', 'medium', 'long'].filter((l) => l !== mostCommonLength);
       const suggestedLength = alternateLengths[0];
-      suggestions.push(
-        `${toneModifier} a ${suggestedLength} post for variety — you've been consistent with ${mostCommonLength} recently.`
-      );
+      const core = `all your recent posts are ${mostCommonLength}. Mix it up with a ${suggestedLength} one`;
+      suggestions.push(createMentorMessage(core, temperature, mentorName));
     }
   }
 
