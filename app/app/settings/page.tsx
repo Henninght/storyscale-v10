@@ -37,7 +37,7 @@ interface ProfileData {
   background: string;
   expertise: string[];
   targetAudience: string;
-  goals: string;
+  goals: string[];
   writingStyle: string;
   brandVoice: string;
   companyName?: string;
@@ -70,6 +70,28 @@ const EXPERTISE_OPTIONS = [
   "Marketing", "Sales", "Technology", "Finance", "Healthcare",
   "Education", "Consulting", "Entrepreneurship", "Product Management",
   "Design", "HR & Recruiting", "Legal", "Real Estate", "Other",
+];
+
+const TARGET_AUDIENCES = [
+  { value: "executives", label: "C-Suite Executives" },
+  { value: "entrepreneurs", label: "Entrepreneurs & Founders" },
+  { value: "professionals", label: "Industry Professionals" },
+  { value: "managers", label: "Managers & Team Leaders" },
+  { value: "specialists", label: "Technical Specialists" },
+  { value: "consultants", label: "Consultants & Advisors" },
+  { value: "job_seekers", label: "Job Seekers & Career Changers" },
+  { value: "students", label: "Students & Recent Graduates" },
+];
+
+const GOALS = [
+  { value: "thought_leadership", label: "Build thought leadership" },
+  { value: "lead_generation", label: "Generate leads & customers" },
+  { value: "brand_awareness", label: "Increase brand awareness" },
+  { value: "network_growth", label: "Grow professional network" },
+  { value: "job_opportunities", label: "Attract job opportunities" },
+  { value: "share_knowledge", label: "Share knowledge & insights" },
+  { value: "promote_business", label: "Promote products/services" },
+  { value: "personal_brand", label: "Build personal brand" },
 ];
 
 const WRITING_STYLES = [
@@ -120,7 +142,7 @@ export default function SettingsPage() {
     background: "",
     expertise: [],
     targetAudience: "",
-    goals: "",
+    goals: [],
     writingStyle: "",
     brandVoice: "",
     companyName: "",
@@ -163,6 +185,9 @@ export default function SettingsPage() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
 
+  // Save error state
+  const [saveError, setSaveError] = useState("");
+
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -199,7 +224,7 @@ export default function SettingsPage() {
             background: userData.profile.background || "",
             expertise: userData.profile.expertise || [],
             targetAudience: userData.profile.targetAudience || "",
-            goals: userData.profile.goals || "",
+            goals: Array.isArray(userData.profile.goals) ? userData.profile.goals : [],
             writingStyle: userData.profile.writingStyle || "",
             brandVoice: userData.profile.brandVoice || "",
             companyName: userData.profile.companyName || "",
@@ -259,28 +284,65 @@ export default function SettingsPage() {
     }));
   };
 
+  const handleGoalsToggle = (value: string) => {
+    setProfileData((prev) => ({
+      ...prev,
+      goals: prev.goals.includes(value)
+        ? prev.goals.filter((g) => g !== value)
+        : [...prev.goals, value],
+    }));
+  };
+
   const handleSave = async () => {
     if (!user) return;
 
     setSaving(true);
     setSaved(false);
+    setSaveError("");
     try {
       const userRef = doc(db, "users", user.uid);
+
+      // Clean up undefined values (Firestore doesn't support undefined)
+      const cleanProfileData = JSON.parse(JSON.stringify(profileData, (key, value) => {
+        return value === undefined ? null : value;
+      }));
+
+      // Remove null snoozedUntil if it exists
+      if (cleanProfileData.mentorshipSettings?.snoozedUntil === null) {
+        delete cleanProfileData.mentorshipSettings.snoozedUntil;
+      }
+
       await setDoc(
         userRef,
         {
-          profile: profileData,
+          profile: cleanProfileData,
           updatedAt: new Date(),
         },
         { merge: true }
       );
+
       setSaved(true);
       setInitialData(profileData);
       setHasUnsavedChanges(false);
       setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save profile:", error);
-      alert("Failed to save profile. Please try again.");
+      console.error("Error details:", error.message, error.code);
+
+      // Set user-friendly error message
+      let errorMessage = "Unable to save your settings. ";
+      if (error.code === 'permission-denied') {
+        errorMessage += "You don't have permission to update your profile. Please try logging out and back in.";
+      } else if (error.code === 'unavailable') {
+        errorMessage += "Connection to the server failed. Please check your internet connection.";
+      } else if (error.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += "Please try again.";
+      }
+
+      setSaveError(errorMessage);
+      setTimeout(() => setSaveError(""), 8000);
     } finally {
       setSaving(false);
     }
@@ -613,6 +675,28 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Error Alert */}
+        {saveError && (
+          <div className="rounded-lg border-2 border-red-200 bg-red-50 p-4 mb-4 animate-in slide-in-from-top-2">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <div className="font-semibold text-red-900 text-sm mb-1">Failed to Save</div>
+                <div className="text-sm text-red-800">{saveError}</div>
+              </div>
+              <button
+                onClick={() => setSaveError("")}
+                className="text-red-600 hover:text-red-800 transition-colors"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sticky Save Button */}
         {hasUnsavedChanges && (
           <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-2">
@@ -639,39 +723,86 @@ export default function SettingsPage() {
         )}
 
         <Tabs defaultValue="account" className="space-y-6">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="account" className="gap-2">
-              <User className="h-4 w-4" />
-              Account
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="content" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Content
-            </TabsTrigger>
-            <TabsTrigger value="mentorship" className="gap-2">
-              <Sparkles className="h-4 w-4" />
-              Mentorship
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2">
-              <Bell className="h-4 w-4" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="gap-2">
-              <Palette className="h-4 w-4" />
-              Appearance
-            </TabsTrigger>
-            <TabsTrigger value="privacy" className="gap-2">
-              <Shield className="h-4 w-4" />
-              Privacy & Security
-            </TabsTrigger>
-            <TabsTrigger value="advanced" className="gap-2">
-              <Sliders className="h-4 w-4" />
-              Advanced
-            </TabsTrigger>
+          <TabsList className="w-full justify-start flex-wrap h-auto gap-1 p-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="account" className="gap-1.5 px-3">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Account</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Account</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="profile" className="gap-1.5 px-3">
+                  <Building2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Profile</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Profile</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="content" className="gap-1.5 px-3">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Content</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Content</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="mentorship" className="gap-1.5 px-3">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mentor</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Mentorship</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="notifications" className="gap-1.5 px-3">
+                  <Bell className="h-4 w-4" />
+                  <span className="hidden sm:inline">Alerts</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Notifications</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="appearance" className="gap-1.5 px-3">
+                  <Palette className="h-4 w-4" />
+                  <span className="hidden sm:inline">Theme</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Appearance</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="privacy" className="gap-1.5 px-3">
+                  <Shield className="h-4 w-4" />
+                  <span className="hidden sm:inline">Privacy</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Privacy & Security</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="advanced" className="gap-1.5 px-3">
+                  <Sliders className="h-4 w-4" />
+                  <span className="hidden sm:inline">More</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">Advanced</TooltipContent>
+            </Tooltip>
           </TabsList>
 
           {/* Account Tab */}
@@ -907,7 +1038,7 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setProfileData({ ...profileData, background: e.target.value })
                   }
-                  className="min-h-[100px]"
+                  className="min-h-[180px]"
                 />
                 <p className="text-xs text-slate-500 mt-1.5">
                   {profileData.background.length} characters
@@ -960,36 +1091,52 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="audience">Target Audience</Label>
-                  <Textarea
-                    id="audience"
-                    placeholder="Describe who you want to reach (e.g., startup founders, marketing professionals)..."
-                    value={profileData.targetAudience}
-                    onChange={(e) =>
-                      setProfileData({
-                        ...profileData,
-                        targetAudience: e.target.value,
-                      })
-                    }
-                    className="min-h-[80px] mt-1.5"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    {profileData.targetAudience.length} characters
+                  <p className="text-xs text-slate-500 mb-2">
+                    Who do you want to reach with your content?
                   </p>
+                  <Select
+                    value={profileData.targetAudience}
+                    onValueChange={(value) =>
+                      setProfileData({ ...profileData, targetAudience: value })
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Select your target audience" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TARGET_AUDIENCES.map((audience) => (
+                        <SelectItem key={audience.value} value={audience.value}>
+                          {audience.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="goals">Your Goals</Label>
-                  <Textarea
-                    id="goals"
-                    placeholder="What do you want to achieve (e.g., build thought leadership, generate leads)..."
-                    value={profileData.goals}
-                    onChange={(e) =>
-                      setProfileData({ ...profileData, goals: e.target.value })
-                    }
-                    className="min-h-[80px] mt-1.5"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    {(profileData.goals || '').length} characters
+                  <Label>Your Goals</Label>
+                  <p className="text-xs text-slate-500 mb-3">
+                    What do you want to achieve? (Select all that apply)
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {GOALS.map((goal) => (
+                      <div key={goal.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`goal-${goal.value}`}
+                          checked={profileData.goals.includes(goal.value)}
+                          onCheckedChange={() => handleGoalsToggle(goal.value)}
+                        />
+                        <label
+                          htmlFor={`goal-${goal.value}`}
+                          className="text-sm text-slate-700 cursor-pointer"
+                        >
+                          {goal.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-3">
+                    {profileData.goals.length} selected
                   </p>
                 </div>
               </div>
