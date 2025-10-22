@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getFirestore, doc, updateDoc, collection, addDoc, serverTimestamp, setDoc, getDoc, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft, ThumbsUp, ThumbsDown, Linkedin } from 'lucide-react';
+import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft, ThumbsUp, ThumbsDown, Linkedin, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VersionHistory } from '@/components/VersionHistory';
-import { FeedbackRating, MentorshipSettings } from '@/types';
+import { FeedbackRating, MentorshipSettings, DraftImage } from '@/types';
 import { MentorChatWidget } from '@/components/MentorChatWidget';
 import { analyzeDraftPatterns } from '@/lib/mentorshipEngine';
+import { ImageManager } from '@/components/ImageManager';
 
 interface DraftEditorProps {
   draft: any;
@@ -44,6 +45,10 @@ export function DraftEditor({ draft }: DraftEditorProps) {
   // Mentorship state
   const [mentorshipSettings, setMentorshipSettings] = useState<MentorshipSettings | null>(null);
   const [userPatterns, setUserPatterns] = useState<{ avgLength: number; preferredTone?: string; preferredStyle?: string } | undefined>(undefined);
+
+  // Image management state
+  const [images, setImages] = useState<DraftImage[]>(draft.images || []);
+  const [showImageManager, setShowImageManager] = useState(false);
 
   const charCount = content.length;
 
@@ -408,6 +413,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         body: JSON.stringify({
           userId: user.uid,
           content: content,
+          images: images,  // Include images in the post request
         }),
       });
 
@@ -604,6 +610,26 @@ export function DraftEditor({ draft }: DraftEditorProps) {
             </>
           )}
         </Button>
+
+        {/* Image Attachment Indicator */}
+        <Button
+          onClick={() => setShowImageManager(!showImageManager)}
+          variant={images.length > 0 ? 'default' : 'outline'}
+          className={`gap-2 ${images.length > 0 ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+        >
+          <ImageIcon className="h-4 w-4" />
+          Images
+          {images.length > 0 && (
+            <span className="ml-1 bg-white/20 px-2 py-0.5 rounded-full text-xs font-semibold">
+              {images.length}
+            </span>
+          )}
+          {showImageManager ? (
+            <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
+        </Button>
       </div>
 
       {/* Feedback Widget */}
@@ -649,6 +675,47 @@ export function DraftEditor({ draft }: DraftEditorProps) {
 
       {/* Main Editor */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-6">
+        {/* Compact Image Preview Bar */}
+        {images.length > 0 && (
+          <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-purple-900">
+                <ImageIcon className="h-4 w-4" />
+                <span>{images.length} {images.length === 1 ? 'Image' : 'Images'} Attached</span>
+              </div>
+              <div className="flex-1 flex gap-2 overflow-x-auto">
+                {images.map((image) => (
+                  <div
+                    key={image.id}
+                    className="relative flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 border-purple-300 hover:border-purple-500 transition-all cursor-pointer"
+                    onClick={() => setShowImageManager(true)}
+                    title={image.alt || 'Click to manage images'}
+                  >
+                    <img
+                      src={image.url}
+                      alt={image.alt || 'Thumbnail'}
+                      className="w-full h-full object-cover"
+                    />
+                    {image.generatedByAI && (
+                      <div className="absolute top-0 right-0 bg-purple-600 rounded-bl-md p-0.5">
+                        <Sparkles className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowImageManager(!showImageManager)}
+                className="text-purple-700 hover:text-purple-900 hover:bg-purple-100"
+              >
+                {showImageManager ? 'Hide' : 'Manage'}
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="mb-4">
           <label className="mb-2 block text-sm font-medium text-secondary">
             Content
@@ -736,6 +803,45 @@ export function DraftEditor({ draft }: DraftEditorProps) {
               </div>
             )}
           </div>
+
+          {/* Image Management - Collapsible */}
+          {showImageManager && (
+            <div className="border-t border-secondary/10 pt-6">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-secondary">
+                  Manage Images
+                </label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowImageManager(false)}
+                  className="gap-2 text-slate-500 hover:text-slate-700"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                  Hide
+                </Button>
+              </div>
+              <ImageManager
+                draftId={draft.id}
+                images={images}
+                onImagesChange={setImages}
+              />
+            </div>
+          )}
+
+          {/* Show Image Manager button when collapsed and no images */}
+          {!showImageManager && images.length === 0 && (
+            <div className="border-t border-secondary/10 pt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowImageManager(true)}
+                className="w-full gap-2 border-dashed"
+              >
+                <ImageIcon className="h-4 w-4" />
+                Add Images to Post
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

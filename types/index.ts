@@ -70,6 +70,17 @@ export interface WizardSettings {
   emojiUsage: EmojiUsage;
 }
 
+// Draft Image
+export interface DraftImage {
+  id: string;
+  url: string;              // Public Firebase Storage URL
+  storagePath: string;      // Firebase Storage path for deletion
+  alt?: string;             // Alt text for accessibility
+  generatedByAI?: boolean;  // Was this AI-generated?
+  prompt?: string;          // DALL-E prompt if AI-generated
+  createdAt: Timestamp;
+}
+
 export interface Draft {
   userId: string;
   content: string;
@@ -79,6 +90,9 @@ export interface Draft {
   scheduledDate?: Timestamp;
   wizardSettings: WizardSettings;
   campaignId?: string;
+  images?: DraftImage[];      // Attached images
+  linkedInPostId?: string;    // LinkedIn post ID when posted
+  postedAt?: Timestamp;       // When posted to LinkedIn
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

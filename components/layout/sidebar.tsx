@@ -21,15 +21,30 @@ import {
   Check,
 } from "lucide-react";
 
-const navigation = [
-  { name: "Workspace", href: "/app", icon: LayoutDashboard },
-  { name: "Dashboard", href: "/app/dashboard", icon: BarChart3 },
-  { name: "Create New Post", href: "/app/create", icon: PenSquare },
-  { name: "Campaigns", href: "/app/campaigns", icon: Megaphone },
-  { name: "Calendar View", href: "/app/calendar", icon: Calendar },
-  { name: "Feedback", href: "/app/feedback", icon: MessageSquare },
-  { name: "Settings", href: "/app/settings", icon: Settings },
-  { name: "Billing", href: "/app/billing", icon: CreditCard },
+const navigationGroups = [
+  {
+    label: "Overview",
+    items: [
+      { name: "Workspace", href: "/app", icon: LayoutDashboard },
+      { name: "Dashboard", href: "/app/dashboard", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Content",
+    items: [
+      { name: "Create New Post", href: "/app/create", icon: PenSquare },
+      { name: "Campaigns", href: "/app/campaigns", icon: Megaphone },
+      { name: "Calendar View", href: "/app/calendar", icon: Calendar },
+    ],
+  },
+  {
+    label: "Manage",
+    items: [
+      { name: "Feedback", href: "/app/feedback", icon: MessageSquare },
+      { name: "Settings", href: "/app/settings", icon: Settings },
+      { name: "Billing", href: "/app/billing", icon: CreditCard },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -104,34 +119,50 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                "text-secondary hover:bg-background hover:text-primary"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.name}</span>
-            </Link>
-          ))}
+        <nav className="flex-1 px-3 py-2">
+          <div className="space-y-2">
+            {navigationGroups.map((group, groupIndex) => (
+              <div key={group.label}>
+                {groupIndex > 0 && (
+                  <div className="border-t border-secondary/10 my-2" />
+                )}
+                <div className="px-2 mb-1">
+                  <span className="text-[11px] font-semibold text-secondary/40 uppercase tracking-wide">
+                    {group.label}
+                  </span>
+                </div>
+                <div className="space-y-0">
+                  {group.items.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2 rounded px-2 py-1 text-[14px] font-medium transition-colors",
+                        "text-secondary hover:bg-background hover:text-primary"
+                      )}
+                    >
+                      <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{item.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </nav>
 
         {/* User Profile Section */}
-        <div className="border-t border-secondary/20 p-4 space-y-3">
-          <div className="flex items-center gap-3">
+        <div className="border-t border-secondary/20 px-4 py-3">
+          <div className="flex items-center gap-2.5 mb-2">
             {user?.photoURL ? (
               <img
                 src={user.photoURL}
                 alt={user.displayName || "User"}
-                className="h-10 w-10 rounded-full flex-shrink-0"
+                className="h-8 w-8 rounded-full flex-shrink-0"
               />
             ) : (
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-semibold text-primary">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-semibold text-primary">
                   {getUserInitials()}
                 </span>
               </div>
@@ -140,31 +171,35 @@ export function Sidebar() {
               <p className="text-sm font-medium text-secondary truncate">
                 {user?.displayName || user?.email?.split("@")[0] || "User"}
               </p>
-              <p className="text-xs text-secondary/60 truncate">Free Plan</p>
+              <div className="flex items-center gap-1.5 text-xs text-secondary/60">
+                <span>Free Plan</span>
+                {linkedInConnected && (
+                  <>
+                    <span>•</span>
+                    <Linkedin className="h-3 w-3 text-blue-600" />
+                  </>
+                )}
+              </div>
             </div>
           </div>
+
+          {!linkedInConnected && (
+            <Link
+              href="/app/settings"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 mb-2 text-xs font-medium rounded-md transition-colors border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+            >
+              <Linkedin className="h-3 w-3" />
+              <span>Connect LinkedIn</span>
+            </Link>
+          )}
+
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-secondary hover:bg-background hover:text-primary rounded-lg transition-colors border border-secondary/20"
+            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-secondary hover:bg-background hover:text-primary rounded-md transition-colors border border-secondary/20"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-3.5 w-3.5" />
             <span>Sign Out</span>
           </button>
-
-          {/* LinkedIn Connection */}
-          <Link
-            href="/app/settings"
-            className={cn(
-              "w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors border",
-              linkedInConnected
-                ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                : "border-secondary/20 text-secondary hover:bg-background hover:text-primary"
-            )}
-          >
-            <Linkedin className="h-4 w-4" />
-            <span>{linkedInConnected ? "Connected" : "Connect to LinkedIn"}</span>
-            {linkedInConnected && <Check className="h-4 w-4 ml-auto" />}
-          </Link>
         </div>
       </aside>
 

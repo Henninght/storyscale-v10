@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
+// Feature flag for LinkedIn image posting (will be enabled when Community Management API is approved)
+const LINKEDIN_IMAGES_ENABLED = false;
+
 export async function POST(request: NextRequest) {
   try {
-    const { userId, content } = await request.json();
+    const { userId, content, images } = await request.json();
 
     if (!userId || !content) {
       return NextResponse.json(
@@ -62,7 +65,86 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Handle images (when Community Management API is approved)
+    let mediaAssets: any[] = [];
+    if (images && images.length > 0) {
+      if (!LINKEDIN_IMAGES_ENABLED) {
+        console.warn("⚠️ Images attached but LinkedIn Community Management API not yet approved");
+        // For now, post text-only. When API is approved, set LINKEDIN_IMAGES_ENABLED = true
+      } else {
+        console.log(`📸 Uploading ${images.length} images to LinkedIn...`);
+
+        // Upload each image to LinkedIn and collect asset URNs
+        for (const image of images) {
+          try {
+            // Step 1: Register upload
+            const registerResponse = await fetch(
+              "https://api.linkedin.com/v2/assets?action=registerUpload",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  registerUploadRequest: {
+                    recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
+                    owner: personUrn,
+                    serviceRelationships: [{
+                      relationshipType: "OWNER",
+                      identifier: "urn:li:userGeneratedContent"
+                    }]
+                  }
+                }),
+              }
+            );
+
+            if (!registerResponse.ok) {
+              console.error("Failed to register image upload:", await registerResponse.text());
+              continue;
+            }
+
+            const registerData = await registerResponse.json();
+            const uploadUrl = registerData.value.uploadMechanism["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"].uploadUrl;
+            const assetUrn = registerData.value.asset;
+
+            // Step 2: Upload image binary
+            const imageResponse = await fetch(image.url);
+            const imageBuffer = await imageResponse.arrayBuffer();
+
+            const uploadResponse = await fetch(uploadUrl, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: imageBuffer,
+            });
+
+            if (!uploadResponse.ok) {
+              console.error("Failed to upload image binary:", await uploadResponse.text());
+              continue;
+            }
+
+            // Add asset to media array
+            mediaAssets.push({
+              status: "READY",
+              media: assetUrn,
+              description: {
+                text: image.alt || ""
+              }
+            });
+
+            console.log(`✅ Uploaded image: ${image.id}`);
+          } catch (imageError) {
+            console.error("Error uploading image:", imageError);
+            // Continue with other images even if one fails
+          }
+        }
+      }
+    }
+
     // Prepare the post request body
+    const hasMedia = mediaAssets.length > 0;
     const postData = {
       author: personUrn,
       lifecycleState: "PUBLISHED",
@@ -71,7 +153,8 @@ export async function POST(request: NextRequest) {
           shareCommentary: {
             text: content,
           },
-          shareMediaCategory: "NONE",
+          shareMediaCategory: hasMedia ? "IMAGE" : "NONE",
+          ...(hasMedia && { media: mediaAssets }),
         },
       },
       visibility: {

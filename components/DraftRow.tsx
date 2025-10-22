@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, MoreVertical, Copy, Edit3, Sparkles, FileText } from 'lucide-react';
+import { Trash2, MoreVertical, Copy, Edit3, Sparkles, FileText, Image as ImageIcon } from 'lucide-react';
 import { getFirestore, doc, deleteDoc, addDoc, collection, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import type { Draft, DraftStatus } from '@/types';
@@ -113,6 +113,12 @@ export function DraftRow({ draft, campaignName, onDelete }: DraftRowProps) {
           {campaignName && (
             <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
               {campaignName}
+            </span>
+          )}
+          {draft.images && draft.images.length > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+              <ImageIcon className="h-3 w-3" />
+              {draft.images.length}
             </span>
           )}
         </div>
