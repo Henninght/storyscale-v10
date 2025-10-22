@@ -24,7 +24,7 @@ import {
   Settings, Save, User, Building2, Check, Lock, Upload, Trash2,
   AlertTriangle, Download, Chrome, Link2, Unlink, Sparkles, Bell,
   Palette, Sliders, Moon, Sun, Monitor, ChevronDown, ChevronUp,
-  Mail, Calendar, BarChart, Shield, Info
+  Mail, Calendar, BarChart, Shield, Info, Linkedin
 } from "lucide-react";
 import { MentorshipTemperatureSlider } from "@/components/MentorshipTemperatureSlider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -208,6 +208,12 @@ export default function SettingsPage() {
   const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
   const [isDeleteSectionOpen, setIsDeleteSectionOpen] = useState(false);
 
+  // LinkedIn integration state
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
+  const [linkedInProfile, setLinkedInProfile] = useState<any>(null);
+  const [linkedInLoading, setLinkedInLoading] = useState(false);
+  const [linkedInError, setLinkedInError] = useState("");
+
   useEffect(() => {
     if (!user) return;
 
@@ -274,6 +280,69 @@ export default function SettingsPage() {
     const hasChanges = JSON.stringify(profileData) !== JSON.stringify(initialData);
     setHasUnsavedChanges(hasChanges);
   }, [profileData, initialData]);
+
+  // Load LinkedIn connection status
+  useEffect(() => {
+    if (!user) return;
+
+    const loadLinkedInConnection = async () => {
+      try {
+        const linkedInDoc = await getDoc(
+          doc(db, "users", user.uid, "integrations", "linkedin")
+        );
+
+        if (linkedInDoc.exists()) {
+          const data = linkedInDoc.data();
+          setLinkedInConnected(true);
+          setLinkedInProfile(data.profile);
+        } else {
+          setLinkedInConnected(false);
+          setLinkedInProfile(null);
+        }
+      } catch (error) {
+        console.error("Failed to load LinkedIn connection:", error);
+      }
+    };
+
+    loadLinkedInConnection();
+  }, [user]);
+
+  // Check for LinkedIn OAuth callback parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linkedInSuccess = params.get("linkedin_connected");
+    const linkedInErrorParam = params.get("linkedin_error");
+
+    if (linkedInSuccess === "true") {
+      setLinkedInError("");
+      // Reload LinkedIn connection status
+      if (user) {
+        getDoc(doc(db, "users", user.uid, "integrations", "linkedin"))
+          .then((linkedInDoc) => {
+            if (linkedInDoc.exists()) {
+              const data = linkedInDoc.data();
+              setLinkedInConnected(true);
+              setLinkedInProfile(data.profile);
+            }
+          });
+      }
+      // Clear URL parameters
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (linkedInErrorParam) {
+      const errorMessages: { [key: string]: string } = {
+        state_mismatch: "Security validation failed. Please try again.",
+        no_user: "User session not found. Please try again.",
+        token_exchange_failed: "Failed to connect to LinkedIn. Please try again.",
+        profile_fetch_failed: "Failed to fetch LinkedIn profile. Please try again.",
+        unexpected_error: "An unexpected error occurred. Please try again.",
+      };
+      setLinkedInError(errorMessages[linkedInErrorParam] || "Failed to connect LinkedIn account");
+      // Clear URL parameters after showing error
+      setTimeout(() => {
+        window.history.replaceState({}, "", window.location.pathname);
+      }, 100);
+    }
+  }, [user]);
 
   const handleExpertiseToggle = (value: string) => {
     setProfileData((prev) => ({
@@ -652,6 +721,60 @@ export default function SettingsPage() {
     }));
   };
 
+  const handleConnectLinkedIn = async () => {
+    if (!user) return;
+
+    setLinkedInLoading(true);
+    setLinkedInError("");
+
+    try {
+      // Get Firebase auth token
+      const token = await user.getIdToken();
+
+      // Redirect to LinkedIn OAuth authorization endpoint
+      window.location.href = `/api/auth/linkedin/authorize?userId=${user.uid}`;
+    } catch (error: any) {
+      console.error("Failed to initiate LinkedIn connection:", error);
+      setLinkedInError(error.message || "Failed to connect LinkedIn account");
+      setLinkedInLoading(false);
+    }
+  };
+
+  const handleDisconnectLinkedIn = async () => {
+    if (!user) return;
+
+    if (!confirm("Are you sure you want to disconnect your LinkedIn account?")) {
+      return;
+    }
+
+    setLinkedInLoading(true);
+    setLinkedInError("");
+
+    try {
+      // Get Firebase auth token
+      const token = await user.getIdToken();
+
+      const response = await fetch("/api/auth/linkedin/disconnect", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to disconnect LinkedIn account");
+      }
+
+      setLinkedInConnected(false);
+      setLinkedInProfile(null);
+    } catch (error: any) {
+      console.error("Failed to disconnect LinkedIn:", error);
+      setLinkedInError(error.message || "Failed to disconnect LinkedIn account");
+    } finally {
+      setLinkedInLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -723,10 +846,13 @@ export default function SettingsPage() {
         )}
 
         <Tabs defaultValue="account" className="space-y-6">
-          <TabsList className="w-full justify-start flex-wrap h-auto gap-1 p-2">
+          <TabsList className="w-full justify-start flex-nowrap overflow-x-auto h-auto gap-1 p-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="account" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="account"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <User className="h-4 w-4" />
                   <span className="hidden sm:inline">Account</span>
                 </TabsTrigger>
@@ -736,7 +862,10 @@ export default function SettingsPage() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="profile" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="profile"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <Building2 className="h-4 w-4" />
                   <span className="hidden sm:inline">Profile</span>
                 </TabsTrigger>
@@ -746,7 +875,10 @@ export default function SettingsPage() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="content" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="content"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">Content</span>
                 </TabsTrigger>
@@ -756,7 +888,10 @@ export default function SettingsPage() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="mentorship" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="mentorship"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <Sparkles className="h-4 w-4" />
                   <span className="hidden sm:inline">Mentor</span>
                 </TabsTrigger>
@@ -766,7 +901,10 @@ export default function SettingsPage() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="notifications" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="notifications"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <Bell className="h-4 w-4" />
                   <span className="hidden sm:inline">Alerts</span>
                 </TabsTrigger>
@@ -776,7 +914,10 @@ export default function SettingsPage() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="appearance" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="appearance"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <Palette className="h-4 w-4" />
                   <span className="hidden sm:inline">Theme</span>
                 </TabsTrigger>
@@ -786,7 +927,10 @@ export default function SettingsPage() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="privacy" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="privacy"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <Shield className="h-4 w-4" />
                   <span className="hidden sm:inline">Privacy</span>
                 </TabsTrigger>
@@ -796,7 +940,10 @@ export default function SettingsPage() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="advanced" className="gap-1.5 px-3">
+                <TabsTrigger
+                  value="advanced"
+                  className="gap-1.5 px-3 transition-all duration-200 hover:scale-105 hover:bg-orange-50 hover:shadow-md hover:border-orange-200"
+                >
                   <Sliders className="h-4 w-4" />
                   <span className="hidden sm:inline">More</span>
                 </TabsTrigger>
@@ -955,6 +1102,55 @@ export default function SettingsPage() {
                     </Button>
                   )}
                 </div>
+
+                {/* LinkedIn Integration */}
+                <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-slate-50 rounded-lg">
+                      <Linkedin className="h-5 w-5 text-[#0A66C2]" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm text-slate-700">LinkedIn</h3>
+                      {linkedInConnected && linkedInProfile ? (
+                        <p className="text-xs text-slate-600">
+                          {linkedInProfile.name} - Connected
+                        </p>
+                      ) : (
+                        <p className="text-xs text-slate-600">Not connected</p>
+                      )}
+                    </div>
+                  </div>
+                  {linkedInConnected ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDisconnectLinkedIn}
+                      disabled={linkedInLoading}
+                      className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 text-xs"
+                    >
+                      <Unlink className="mr-1.5 h-3.5 w-3.5" />
+                      {linkedInLoading ? 'Disconnecting...' : 'Disconnect'}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleConnectLinkedIn}
+                      disabled={linkedInLoading}
+                      className="text-xs"
+                    >
+                      <Link2 className="mr-1.5 h-3.5 w-3.5" />
+                      {linkedInLoading ? 'Connecting...' : 'Connect'}
+                    </Button>
+                  )}
+                </div>
+
+                {/* LinkedIn Error Message */}
+                {linkedInError && (
+                  <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200">
+                    {linkedInError}
+                  </div>
+                )}
 
                 {linkedProviders.includes('password') && (
                   <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">

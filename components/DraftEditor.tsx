@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getFirestore, doc, updateDoc, collection, addDoc, serverTimestamp, setDoc, getDoc, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Copy, Check, RefreshCw, Sparkles, Save, ArrowLeft, ThumbsUp, ThumbsDown, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VersionHistory } from '@/components/VersionHistory';
 import { FeedbackRating, MentorshipSettings } from '@/types';
@@ -31,6 +31,9 @@ export function DraftEditor({ draft }: DraftEditorProps) {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isPostingToLinkedIn, setIsPostingToLinkedIn] = useState(false);
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
+  const [linkedInPostSuccess, setLinkedInPostSuccess] = useState(false);
 
   // Feedback tracking state
   const [feedbackRating, setFeedbackRating] = useState<FeedbackRating>(null);
@@ -65,6 +68,27 @@ export function DraftEditor({ draft }: DraftEditorProps) {
 
     loadFeedback();
   }, [draft.id]);
+
+  // Check LinkedIn connection status
+  useEffect(() => {
+    const checkLinkedInConnection = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const db = getFirestore();
+        const linkedInRef = doc(db, 'users', user.uid, 'integrations', 'linkedin');
+        const linkedInDoc = await getDoc(linkedInRef);
+
+        setLinkedInConnected(linkedInDoc.exists());
+      } catch (error) {
+        console.error('Error checking LinkedIn connection:', error);
+      }
+    };
+
+    checkLinkedInConnection();
+  }, []);
 
   // Load mentorship settings and user patterns
   useEffect(() => {
@@ -353,6 +377,71 @@ export function DraftEditor({ draft }: DraftEditorProps) {
     return 0;
   };
 
+  const handlePostToLinkedIn = async () => {
+    if (!linkedInConnected) {
+      alert('Please connect your LinkedIn account in Settings first.');
+      router.push('/app/settings');
+      return;
+    }
+
+    if (!content.trim()) {
+      alert('Please add some content before posting to LinkedIn.');
+      return;
+    }
+
+    setIsPostingToLinkedIn(true);
+    setLinkedInPostSuccess(false);
+
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch('/api/linkedin/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.uid,
+          content: content,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to post to LinkedIn');
+      }
+
+      const result = await response.json();
+
+      // Update draft status to 'posted'
+      const db = getFirestore();
+      const draftRef = doc(db, 'drafts', draft.id);
+      await updateDoc(draftRef, {
+        status: 'posted',
+        postedAt: new Date(),
+        linkedInPostId: result.postId,
+      });
+
+      setStatus('posted');
+      setLinkedInPostSuccess(true);
+
+      alert('Successfully posted to LinkedIn!');
+
+      // Clear success message after 5 seconds
+      setTimeout(() => setLinkedInPostSuccess(false), 5000);
+    } catch (error) {
+      console.error('LinkedIn posting error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to post to LinkedIn');
+    } finally {
+      setIsPostingToLinkedIn(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Action Buttons */}
@@ -491,6 +580,30 @@ export function DraftEditor({ draft }: DraftEditorProps) {
             )}
           </Button>
         )}
+
+        {/* Post to LinkedIn Button */}
+        <Button
+          onClick={handlePostToLinkedIn}
+          disabled={isPostingToLinkedIn || !content.trim()}
+          className="gap-2 bg-blue-600 hover:bg-blue-700"
+        >
+          {isPostingToLinkedIn ? (
+            <>
+              <Linkedin className="h-4 w-4 animate-pulse" />
+              Posting...
+            </>
+          ) : linkedInPostSuccess ? (
+            <>
+              <Check className="h-4 w-4" />
+              Posted to LinkedIn!
+            </>
+          ) : (
+            <>
+              <Linkedin className="h-4 w-4" />
+              {linkedInConnected ? 'Post to LinkedIn' : 'Connect LinkedIn First'}
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Feedback Widget */}

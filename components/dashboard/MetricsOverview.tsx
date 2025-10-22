@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, CheckCircle2, Clock, Megaphone, TrendingUp, Archive } from "lucide-react";
+import { FileText, CheckCircle2, Clock, Megaphone, TrendingUp, Archive, Linkedin } from "lucide-react";
 import { MetricsCard } from './MetricsCard';
 import { getFirestore, collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
@@ -17,6 +17,9 @@ interface MetricsData {
   totalDrafts: number;
   activeCampaigns: number;
   archivedDrafts: number;
+  linkedInConnected: boolean;
+  linkedInName?: string;
+  linkedInEmail?: string;
 }
 
 export function MetricsOverview() {
@@ -32,6 +35,7 @@ export function MetricsOverview() {
     totalDrafts: 0,
     activeCampaigns: 0,
     archivedDrafts: 0,
+    linkedInConnected: false,
   });
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('free');
 
@@ -96,6 +100,21 @@ export function MetricsOverview() {
           doc => doc.data().status === 'active'
         ).length;
 
+        // Fetch LinkedIn integration
+        const linkedInRef = doc(db, 'users', user.uid, 'integrations', 'linkedin');
+        const linkedInDoc = await getDoc(linkedInRef);
+
+        let linkedInConnected = false;
+        let linkedInName: string | undefined;
+        let linkedInEmail: string | undefined;
+
+        if (linkedInDoc.exists()) {
+          const linkedInData = linkedInDoc.data();
+          linkedInConnected = true;
+          linkedInName = linkedInData.profile?.name;
+          linkedInEmail = linkedInData.profile?.email;
+        }
+
         setMetrics({
           postsUsedThisMonth: postsUsed,
           postsRemaining: typeof postsRemaining === 'number' ? postsRemaining : 0,
@@ -105,6 +124,9 @@ export function MetricsOverview() {
           totalDrafts: draftsSnapshot.size,
           activeCampaigns,
           archivedDrafts: archived,
+          linkedInConnected,
+          linkedInName,
+          linkedInEmail,
         });
       } catch (error) {
         console.error('Error fetching metrics:', error);
@@ -220,6 +242,12 @@ export function MetricsOverview() {
         value={`${metrics.postsUsedThisMonth} / ${metrics.postsLimit}`}
         icon={FileText}
         description={getTierDescription()}
+      />
+      <MetricsCard
+        title="LinkedIn Account"
+        value={metrics.linkedInConnected ? "Connected" : "Not Connected"}
+        icon={Linkedin}
+        description={metrics.linkedInConnected && metrics.linkedInName ? metrics.linkedInName : "Connect in Settings"}
       />
     </div>
   );

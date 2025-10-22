@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 import {
   LayoutDashboard,
   PenSquare,
@@ -16,6 +17,8 @@ import {
   LogOut,
   BarChart3,
   MessageSquare,
+  Linkedin,
+  Check,
 } from "lucide-react";
 
 const navigation = [
@@ -31,7 +34,26 @@ const navigation = [
 
 export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
   const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    const checkLinkedInConnection = async () => {
+      if (!user) return;
+
+      try {
+        const db = getFirestore();
+        const linkedInRef = doc(db, 'users', user.uid, 'integrations', 'linkedin');
+        const linkedInDoc = await getDoc(linkedInRef);
+
+        setLinkedInConnected(linkedInDoc.exists());
+      } catch (error) {
+        console.error("Error checking LinkedIn connection:", error);
+      }
+    };
+
+    checkLinkedInConnection();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -128,6 +150,21 @@ export function Sidebar() {
             <LogOut className="h-4 w-4" />
             <span>Sign Out</span>
           </button>
+
+          {/* LinkedIn Connection */}
+          <Link
+            href="/app/settings"
+            className={cn(
+              "w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors border",
+              linkedInConnected
+                ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                : "border-secondary/20 text-secondary hover:bg-background hover:text-primary"
+            )}
+          >
+            <Linkedin className="h-4 w-4" />
+            <span>{linkedInConnected ? "Connected" : "Connect to LinkedIn"}</span>
+            {linkedInConnected && <Check className="h-4 w-4 ml-auto" />}
+          </Link>
         </div>
       </aside>
 

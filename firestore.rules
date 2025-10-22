@@ -19,6 +19,14 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow update: if isOwner(userId);
       allow delete: if false; // Prevent user deletion through Firestore
+
+      // Integrations subcollection - users can only access their own integrations
+      match /integrations/{integrationId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
     }
 
     // Drafts collection - users can only access their own drafts

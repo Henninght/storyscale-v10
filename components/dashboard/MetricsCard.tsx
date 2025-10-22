@@ -20,6 +20,7 @@ export function MetricsCard({ title, value, icon: Icon, description, trend }: Me
     if (title.includes('Campaigns') || title.includes('Active')) return { bg: 'bg-purple-100', text: 'text-purple-600' };
     if (title.includes('Total')) return { bg: 'bg-blue-100', text: 'text-blue-600' };
     if (title.includes('Archived')) return { bg: 'bg-slate-100', text: 'text-slate-600' };
+    if (title.includes('LinkedIn')) return { bg: 'bg-blue-100', text: 'text-blue-600' };
     return { bg: 'bg-orange-100', text: 'text-orange-600' };
   };
 
