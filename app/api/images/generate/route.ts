@@ -108,7 +108,20 @@ export async function POST(request: NextRequest) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    console.log('✅ Image saved to Firebase Storage and Firestore');
+    // Also save to library_images collection for reusability
+    const libraryImagesRef = db.collection('library_images');
+    const libraryImageData = {
+      userId,
+      url,
+      storagePath,
+      prompt,
+      attachedToDrafts: [draftId],
+      attachedToCampaigns: [],
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+    const libraryDocRef = await libraryImagesRef.add(libraryImageData);
+    console.log('✅ Image saved to Firebase Storage, Firestore, and Library:', libraryDocRef.id);
 
     return NextResponse.json({
       success: true,

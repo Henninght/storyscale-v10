@@ -81,6 +81,30 @@ export interface DraftImage {
   createdAt: Timestamp;
 }
 
+// Image Studio Types
+export type ImageStyle = 'artistic' | 'infographic' | 'photo' | 'illustration';
+
+export interface ImageSubStyles {
+  artistic: 'Modern' | 'Classical' | 'Abstract' | 'Vibrant';
+  infographic: 'Data Chart' | 'Process Flow' | 'Comparison' | 'Timeline';
+  photo: 'Portrait' | 'Landscape' | 'Product' | 'Office';
+  illustration: 'Line Art' | 'Cartoon' | 'Technical' | 'Hand-drawn';
+}
+
+// Library Image (centralized image storage)
+export interface LibraryImage {
+  id: string;
+  userId: string;
+  url: string;
+  storagePath: string;
+  style?: ImageStyle;
+  subStyle?: string;
+  prompt: string;
+  attachedToDrafts: string[];
+  attachedToCampaigns: string[];
+  createdAt: Timestamp;
+}
+
 export interface Draft {
   userId: string;
   content: string;

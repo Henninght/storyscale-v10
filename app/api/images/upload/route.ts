@@ -84,6 +84,21 @@ export async function POST(request: NextRequest) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    // Also save to library_images collection for reusability
+    const libraryImagesRef = db.collection('library_images');
+    const libraryImageData = {
+      userId,
+      url,
+      storagePath,
+      prompt: file.name, // Use filename as prompt for uploaded images
+      attachedToDrafts: [draftId],
+      attachedToCampaigns: [],
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+    const libraryDocRef = await libraryImagesRef.add(libraryImageData);
+    console.log('✅ Image uploaded and saved to Library:', libraryDocRef.id);
+
     return NextResponse.json({
       success: true,
       image: imageData,

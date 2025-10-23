@@ -116,7 +116,7 @@ export function DraftRow({ draft, campaignName, onDelete }: DraftRowProps) {
             </span>
           )}
           {draft.images && draft.images.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
               <ImageIcon className="h-3 w-3" />
               {draft.images.length}
             </span>

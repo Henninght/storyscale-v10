@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Linkedin,
   Check,
+  Image,
 } from "lucide-react";
 
 const navigationGroups = [
@@ -33,6 +34,7 @@ const navigationGroups = [
     label: "Content",
     items: [
       { name: "Create New Post", href: "/app/create", icon: PenSquare },
+      { name: "Image Studio", href: "/app/images", icon: Image },
       { name: "Campaigns", href: "/app/campaigns", icon: Megaphone },
       { name: "Calendar View", href: "/app/calendar", icon: Calendar },
     ],
