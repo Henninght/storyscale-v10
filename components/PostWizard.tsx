@@ -1165,6 +1165,51 @@ function Step4({ data, isGenerating, mentorshipEnabled, mentorTemperature = 3, m
   const mentorAdvice = mentorshipEnabled ? getStep4Advice(data, mentorTemperature) : null;
   const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string | null>('input');
+  const [creditsUsed, setCreditsUsed] = useState<number>(0);
+  const [creditsLimit, setCreditsLimit] = useState<number>(50);
+  const [loadingCredits, setLoadingCredits] = useState<boolean>(true);
+
+  // Fetch actual user credit usage
+  useEffect(() => {
+    const fetchUserCredits = async () => {
+      try {
+        const { getAuth } = await import('firebase/auth');
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        const db = getFirestore();
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const postsUsedThisMonth = userData.postsUsedThisMonth || 0;
+          const subscriptionTier = userData.subscription?.tier || 'free';
+
+          // Match the limits from app/api/generate/route.ts
+          const limits = {
+            free: 5,
+            trial: 50,
+            pro: 50,
+            enterprise: 999, // Display as 999 for infinity
+          };
+
+          const limit = limits[subscriptionTier as keyof typeof limits] || 5;
+
+          setCreditsUsed(postsUsedThisMonth);
+          setCreditsLimit(limit);
+        }
+      } catch (error) {
+        console.error('Error fetching user credits:', error);
+      } finally {
+        setLoadingCredits(false);
+      }
+    };
+
+    fetchUserCredits();
+  }, []);
 
   const handleDeleteDraft = () => {
     if (confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
@@ -1177,9 +1222,6 @@ function Step4({ data, isGenerating, mentorshipEnabled, mentorTemperature = 3, m
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // Calculate credit usage (simplified - would fetch from user data in production)
-  const creditsUsed = 0; // This would come from actual user data
-  const creditsLimit = 50; // This would come from subscription tier
   const creditPercentage = ((creditsUsed + 1) / creditsLimit) * 100;
 
   return (
@@ -1342,24 +1384,33 @@ function Step4({ data, isGenerating, mentorshipEnabled, mentorTemperature = 3, m
 
       {/* Credit Usage Visualization */}
       <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-secondary">Credit Usage</h3>
+        {loadingCredits ? (
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+            <span className="text-sm text-secondary/70">Loading credit usage...</span>
           </div>
-          <div className="text-sm font-medium text-secondary">
-            <span className="text-blue-600">{creditsUsed + 1}</span> / {creditsLimit}
-          </div>
-        </div>
-        <div className="mb-2 h-3 overflow-hidden rounded-full bg-blue-100">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 shadow-sm"
-            style={{ width: `${Math.min(creditPercentage, 100)}%` }}
-          />
-        </div>
-        <p className="text-xs text-secondary/70">
-          This generation will use <strong>1 post credit</strong>. {creditsLimit - creditsUsed - 1} credits remaining after generation.
-        </p>
+        ) : (
+          <>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-secondary">Credit Usage</h3>
+              </div>
+              <div className="text-sm font-medium text-secondary">
+                <span className="text-blue-600">{creditsUsed + 1}</span> / {creditsLimit}
+              </div>
+            </div>
+            <div className="mb-2 h-3 overflow-hidden rounded-full bg-blue-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 shadow-sm"
+                style={{ width: `${Math.min(creditPercentage, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-secondary/70">
+              This generation will use <strong>1 post credit</strong>. {creditsLimit - creditsUsed - 1} credits remaining after generation.
+            </p>
+          </>
+        )}
       </div>
 
       <div className="flex justify-end">

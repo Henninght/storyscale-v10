@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { Chrome, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Chrome, Mail, Lock, User, ArrowRight, Linkedin } from "lucide-react";
 import { PageTransition } from "@/components/PageTransition";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signInWithGoogle, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithLinkedIn, signUpWithEmail } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,6 +26,19 @@ export default function SignupPage() {
       router.push("/onboarding");
     } catch (err: any) {
       setError(err.message || "Failed to sign in with Google");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLinkedInSignIn = async () => {
+    try {
+      setError("");
+      setLoading(true);
+      await signInWithLinkedIn();
+      router.push("/onboarding");
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in with LinkedIn");
     } finally {
       setLoading(false);
     }
@@ -119,6 +132,14 @@ export default function SignupPage() {
             >
               <Chrome className="h-5 w-5" />
               Continue with Google
+            </button>
+            <button
+              onClick={handleLinkedInSignIn}
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-secondary/20 bg-white px-6 py-3 font-semibold text-secondary transition-all hover:border-[#0A66C2] hover:text-[#0A66C2] disabled:opacity-50"
+            >
+              <Linkedin className="h-5 w-5" />
+              Continue with LinkedIn
             </button>
           </div>
 

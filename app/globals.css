@@ -10,6 +10,12 @@
   --color-primary-light: #fb923c;
   --color-primary-dark: #c2410c;
 
+  /* Accent colors from logo gradient */
+  --color-accent-purple: #7c3aed;
+  --color-accent-purple-light: #a855f7;
+  --color-accent-pink: #ec4899;
+  --color-accent-pink-light: #f472b6;
+
   /* Blue system (Information/Navigation) */
   --color-blue: #2563eb;
   --color-blue-hover: #1e40af;
@@ -160,6 +166,43 @@
     transform: scale(1.01);
     box-shadow: var(--shadow-md);
   }
+
+  /* Logo-inspired gradients */
+  .bg-gradient-brand {
+    background: linear-gradient(135deg, var(--color-accent-purple) 0%, var(--color-accent-pink) 50%, var(--color-primary-light) 100%);
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(135deg, var(--color-accent-purple) 0%, var(--color-accent-pink) 50%, var(--color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-gradient {
+    border: 2px solid transparent;
+    background-image: linear-gradient(white, white), linear-gradient(135deg, var(--color-accent-purple-light), var(--color-accent-pink-light), var(--color-primary-light));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  /* Floating animation for logo */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Sparkle animations */
+  .animate-sparkle {
+    animation: sparkle 2s ease-in-out infinite;
+  }
+
+  .animate-sparkle-delay-1 {
+    animation: sparkle 2s ease-in-out infinite 0.5s;
+  }
+
+  .animate-sparkle-delay-2 {
+    animation: sparkle 2s ease-in-out infinite 1s;
+  }
 }
 
 @keyframes fadeIn {
@@ -212,4 +255,24 @@
 
 .animate-confetti {
   animation: confetti 3s ease-out forwards;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
