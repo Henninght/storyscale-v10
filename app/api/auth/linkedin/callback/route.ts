@@ -1,47 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
-export async function GET(request: NextRequest) {
+// Initialize Firebase Admin
+if (!getApps().length) {
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64
+    ? Buffer.from(process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64, "base64").toString("utf-8")
+    : process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      privateKey: privateKey,
+    }),
+  });
+}
+
+export async function GET(req: NextRequest) {
+  const searchParams = req.nextUrl.searchParams;
+  const code = searchParams.get("code");
+  const error = searchParams.get("error");
+
+  if (error) {
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(error)}`, req.url)
+    );
+  }
+
+  if (!code) {
+    return NextResponse.redirect(
+      new URL("/login?error=no_code", req.url)
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const error = searchParams.get("error");
-
-    // Handle OAuth errors
-    if (error) {
-      console.error("LinkedIn OAuth error:", error);
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_error=${error}`
-      );
-    }
-
-    if (!code || !state) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_error=missing_parameters`
-      );
-    }
-
-    // Verify state to prevent CSRF attacks
-    const cookieStore = await cookies();
-    const storedState = cookieStore.get("linkedin_oauth_state")?.value;
-    const userId = cookieStore.get("linkedin_oauth_user")?.value;
-
-    if (!storedState || storedState !== state) {
-      console.error("State mismatch - potential CSRF attack");
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_error=state_mismatch`
-      );
-    }
-
-    if (!userId) {
-      console.error("No user ID found in cookie");
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_error=no_user`
-      );
-    }
-
     // Exchange authorization code for access token
     const tokenResponse = await fetch(
       "https://www.linkedin.com/oauth/v2/accessToken",
@@ -52,10 +45,10 @@ export async function GET(request: NextRequest) {
         },
         body: new URLSearchParams({
           grant_type: "authorization_code",
-          code,
-          client_id: process.env.LINKEDIN_CLIENT_ID || "",
-          client_secret: process.env.LINKEDIN_CLIENT_SECRET || "",
-          redirect_uri: process.env.LINKEDIN_REDIRECT_URI || "",
+          code: code,
+          redirect_uri: process.env.LINKEDIN_AUTH_REDIRECT_URI!,
+          client_id: process.env.LINKEDIN_AUTH_CLIENT_ID!,
+          client_secret: process.env.LINKEDIN_AUTH_CLIENT_SECRET!,
         }),
       }
     );
@@ -64,81 +57,48 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.text();
       console.error("LinkedIn token exchange failed:", errorData);
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_error=token_exchange_failed`
+        new URL(`/login?error=${encodeURIComponent("token_exchange_failed")}`, req.url)
       );
     }
 
-    const tokenData = await tokenResponse.json();
-    console.log("🔑 Token received with scopes:", tokenData.scope);
+    const { access_token } = await tokenResponse.json();
 
-    // Fetch user profile information from LinkedIn
-    const profileResponse = await fetch("https://api.linkedin.com/v2/userinfo", {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-      },
-    });
+    // Fetch user profile from LinkedIn
+    const profileResponse = await fetch(
+      "https://api.linkedin.com/v2/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
 
     if (!profileResponse.ok) {
-      console.error("Failed to fetch LinkedIn profile");
+      const errorData = await profileResponse.text();
+      console.error("LinkedIn profile fetch failed:", errorData);
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_error=profile_fetch_failed`
+        new URL(`/login?error=${encodeURIComponent("profile_fetch_failed")}`, req.url)
       );
     }
 
-    const profileData = await profileResponse.json();
+    const profile = await profileResponse.json();
 
-    // Extract person URN from profile data (sub field contains the person ID)
-    // The 'sub' field from userinfo endpoint contains the person ID
-    let personUrn = null;
-    if (profileData.sub) {
-      // The sub field is the person ID, construct the full URN
-      personUrn = `urn:li:person:${profileData.sub}`;
-      console.log("✅ Successfully extracted person URN from profile:", personUrn);
-    } else {
-      console.error("❌ No 'sub' field found in profile data:", profileData);
-    }
+    // Create custom Firebase token
+    const customToken = await getAuth().createCustomToken(profile.sub, {
+      provider: "linkedin",
+      email: profile.email,
+      name: profile.name,
+      picture: profile.picture,
+    });
 
-    // Calculate token expiration time
-    const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + tokenData.expires_in);
-
-    // Store LinkedIn integration data in Firestore
-    const db = getAdminDb();
-    await db
-      .collection("users")
-      .doc(userId)
-      .collection("integrations")
-      .doc("linkedin")
-      .set({
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token || null,
-        expiresAt: expiresAt.toISOString(),
-        connectedAt: new Date().toISOString(),
-        scope: tokenData.scope,
-        personUrn: personUrn,
-        profile: {
-          sub: profileData.sub,
-          name: profileData.name,
-          given_name: profileData.given_name,
-          family_name: profileData.family_name,
-          picture: profileData.picture,
-          email: profileData.email,
-          email_verified: profileData.email_verified,
-        },
-      });
-
-    // Clear OAuth cookies
-    cookieStore.delete("linkedin_oauth_state");
-    cookieStore.delete("linkedin_oauth_user");
-
-    // Redirect back to settings with success message
+    // Redirect to callback page with custom token
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_connected=true`
+      new URL(`/auth/callback?token=${encodeURIComponent(customToken)}`, req.url)
     );
-  } catch (error) {
-    console.error("LinkedIn callback error:", error);
+  } catch (error: any) {
+    console.error("LinkedIn OAuth callback error:", error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/app/settings?linkedin_error=unexpected_error`
+      new URL(`/login?error=${encodeURIComponent(error.message || "auth_failed")}`, req.url)
     );
   }
 }

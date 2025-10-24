@@ -18,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithLinkedIn: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<User>;
   signOut: () => Promise<void>;
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signInWithGoogle: async () => {},
+  signInWithLinkedIn: async () => {},
   signInWithEmail: async () => {},
   signUpWithEmail: async () => ({} as User),
   signOut: async () => {},
@@ -50,6 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
+  };
+
+  const signInWithLinkedIn = async () => {
+    // Redirect to custom LinkedIn OAuth flow
+    // This uses our backend API to handle the OAuth flow properly
+    window.location.href = "/api/auth/linkedin";
   };
 
   const signInWithEmail = async (email: string, password: string) => {
@@ -76,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         signInWithGoogle,
+        signInWithLinkedIn,
         signInWithEmail,
         signUpWithEmail,
         signOut,
