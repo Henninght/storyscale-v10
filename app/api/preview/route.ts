@@ -5,9 +5,13 @@ import Anthropic from '@anthropic-ai/sdk';
 
 // Use Haiku for fast, cheap previews
 const PREVIEW_MODEL = 'claude-3-5-haiku-20241022';
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+
+// Lazy initialization to avoid build-time errors
+function getAnthropic() {
+  return new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+}
 
 // Simple in-memory cache (5 minutes TTL)
 const previewCache = new Map<string, { content: string; timestamp: number }>();
@@ -75,6 +79,7 @@ export async function POST(req: NextRequest) {
     const userMessage = buildPreviewUserMessage(wizardSettings, referenceContent);
 
     // Call Claude API with Haiku (fast & cheap)
+    const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
       model: PREVIEW_MODEL,
       max_tokens: 400, // Shorter for preview
@@ -209,3 +214,7 @@ function buildPreviewUserMessage(
 
   return message;
 }
+
+// Ensure this route runs server-side only and is not pre-rendered
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
