@@ -1,19 +1,8 @@
-import { PostWizard } from '@/components/PostWizard';
+import { PostWizardV2 } from '@/components/PostWizardV2';
 
-// Force dynamic rendering since PostWizard uses useSearchParams
+// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 export default function CreatePostPage() {
-  return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-800">Create New Post</h1>
-        <p className="mt-1.5 text-slate-600">
-          Use AI to generate engaging LinkedIn content tailored to your voice.
-        </p>
-      </div>
-
-      <PostWizard />
-    </div>
-  );
+  return <PostWizardV2 />;
 }
