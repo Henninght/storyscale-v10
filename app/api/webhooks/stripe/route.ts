@@ -2,15 +2,32 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { adminDb } from '@/lib/firebase-admin'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-})
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+// Lazy initialization to prevent build errors
+let stripeInstance: Stripe | null = null;
+function getStripe() {
+  if (!stripeInstance) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not defined');
+    }
+    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-08-27.basil',
+    });
+  }
+  return stripeInstance;
+}
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
   const body = await req.text()
   const signature = req.headers.get('stripe-signature')!
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return NextResponse.json(
+      { error: 'STRIPE_WEBHOOK_SECRET is not defined' },
+      { status: 500 }
+    );
+  }
 
   let event: Stripe.Event
 
