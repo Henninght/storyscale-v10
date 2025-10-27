@@ -3,8 +3,8 @@ import { adminAuth } from '@/lib/firebase-admin';
 import { fetchMultipleUrls } from '@/lib/urlFetcher';
 import Anthropic from '@anthropic-ai/sdk';
 
-// Use Haiku for fast, cheap previews
-const PREVIEW_MODEL = 'claude-3-5-haiku-20241022';
+// Use same model as generate for consistency (95%+ preview/draft match)
+const PREVIEW_MODEL = 'claude-sonnet-4-20250514';
 
 // Lazy initialization to avoid build-time errors
 function getAnthropic() {
@@ -24,6 +24,11 @@ function getCacheKey(settings: any): string {
     style: settings.style,
     length: settings.length,
     language: settings.language,
+    emojiUsage: settings.emojiUsage,
+    purpose: settings.purpose,
+    audience: settings.audience,
+    includeCTA: settings.includeCTA,
+    customInstructions: settings.customInstructions,
     referenceUrls: settings.referenceUrls,
   });
 }
@@ -82,7 +87,7 @@ export async function POST(req: NextRequest) {
     const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
       model: PREVIEW_MODEL,
-      max_tokens: 400, // Shorter for preview
+      max_tokens: 800, // Match expected preview length
       system: systemPrompt,
       messages: [
         {
@@ -141,6 +146,13 @@ function buildPreviewPrompt(wizardSettings: any): string {
     educational: 'informative and clear',
   };
 
+  const purposeDescriptions: Record<string, string> = {
+    engagement: 'encourage discussion and interaction',
+    lead_generation: 'attract potential clients and showcase expertise',
+    brand_awareness: 'build visibility and establish presence',
+    thought_leadership: 'demonstrate expertise and unique insights',
+  };
+
   const styleDescriptions: Record<string, string> = {
     'story-based': 'Use storytelling with a clear narrative arc',
     list_format: 'Structure as a numbered or bulleted list',
@@ -156,34 +168,44 @@ function buildPreviewPrompt(wizardSettings: any): string {
 
   const emojiGuidelines: Record<string, string> = {
     none: 'Do not use any emojis.',
-    minimal: 'Use 1-2 relevant emojis sparingly to enhance key points.',
-    moderate: 'Use 3-5 emojis strategically throughout the post for engagement.',
+    minimal: 'Use 1-2 relevant emojis sparingly.',
+    moderate: 'Use 3-5 emojis to enhance readability and engagement.',
   };
 
   return `You are an expert LinkedIn content writer creating a PREVIEW of a post.
 
 **Post Requirements:**
 - Tone: ${toneDescriptions[wizardSettings.tone] || wizardSettings.tone}
+- Purpose: ${purposeDescriptions[wizardSettings.purpose] || wizardSettings.purpose}
+- Target Audience: ${wizardSettings.audience}
 - Style: ${styleDescriptions[wizardSettings.style] || wizardSettings.style}
 - Length: ${lengthDescriptions[wizardSettings.length] || wizardSettings.length}
 - Language: ${wizardSettings.language === 'en' ? 'English' : 'Norwegian'}
+- Call-to-Action: ${wizardSettings.includeCTA ? 'Include a compelling CTA that encourages engagement' : 'Do not include a CTA'}
 - Emojis: ${emojiGuidelines[wizardSettings.emojiUsage || 'minimal']}
 
-**Critical Rules:**
+**Critical Writing Rules:**
 1. Write like a human, not a corporate robot
-2. Avoid AI clichés like "delve into", "game-changer", "unlock", etc.
-3. Use specific examples over vague generalizations
-4. Hook the reader in the first line
-5. Format for LinkedIn readability - use line breaks
-6. This is a PREVIEW - show the general direction and tone
-7. IMPORTANT: Follow the emoji usage guideline exactly
+2. Avoid AI clichés and overused phrases like "delve into", "in today's digital age", "game-changer", "unlock", etc.
+3. Use specific, concrete examples over vague generalizations
+4. Keep sentences varied in length - mix short punchy ones with longer explanatory ones
+5. Start strong - hook the reader in the first line
+6. Be authentic and relatable, not salesy or promotional
+7. Format for readability on LinkedIn - use line breaks, not walls of text
+8. Avoid corporate jargon - write like you're talking to a colleague
+9. End with substance, not empty platitudes
+10. IMPORTANT: Follow the emoji usage guideline exactly
 
-**ANTI-HALLUCINATION:**
-⚠️ NEVER invent statistics, numbers, percentages, or facts
-⚠️ If reference content is provided, use ONLY data from it
+**ANTI-HALLUCINATION RULES (CRITICAL):**
+⚠️ NEVER invent, estimate, or make up statistics, numbers, percentages, dates, or facts
+⚠️ If reference content is provided, use ONLY the specific data contained within it
+⚠️ If you don't have verified data for a claim, rephrase to avoid requiring specific numbers
 ⚠️ Better to be general and accurate than specific and wrong
+⚠️ When in doubt, focus on qualitative insights rather than quantitative claims
 
-Generate ONLY the post content. No meta-commentary.`;
+**IMPORTANT:** This preview should match the final draft at 95%+ accuracy. Write the actual post content, not a sketch.
+
+Generate ONLY the post content. Do not include any meta-commentary, explanations, or labels.`;
 }
 
 function buildPreviewUserMessage(

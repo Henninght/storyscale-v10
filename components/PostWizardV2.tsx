@@ -14,7 +14,9 @@ import {
   Check,
   Loader2,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Copy,
+  CheckCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -62,17 +64,29 @@ export function PostWizardV2() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [newUrl, setNewUrl] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load user ID
+  // Load user ID and saved settings
   useEffect(() => {
     const loadUser = async () => {
+      // Load saved settings from localStorage first
+      const savedSettings = localStorage.getItem('storyscale_wizard_settings');
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          setData(prev => ({ ...prev, ...parsed }));
+        } catch (error) {
+          console.error('Failed to load saved settings:', error);
+        }
+      }
+
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
         setUserId(user.uid);
 
-        // Load user language preference
+        // Load user language preference (overrides localStorage)
         const db = getFirestore();
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
@@ -125,6 +139,9 @@ export function PostWizardV2() {
             length: currentData.length,
             language: currentData.language,
             emojiUsage: currentData.emojiUsage,
+            purpose: currentData.purpose,
+            audience: currentData.audience,
+            includeCTA: currentData.includeCTA,
             referenceUrls: currentData.referenceUrls
               .filter(r => r.status === 'success')
               .map(r => r.url),
@@ -163,7 +180,22 @@ export function PostWizardV2() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [data.input, data.tone, data.style, data.length, data.language, data.emojiUsage, data.customInstructions, fetchPreview]);
+  }, [data.input, data.tone, data.style, data.length, data.language, data.emojiUsage, data.customInstructions, data.purpose, data.audience, data.includeCTA, fetchPreview]);
+
+  // Save settings to localStorage (exclude content fields)
+  useEffect(() => {
+    const settingsToSave = {
+      tone: data.tone,
+      style: data.style,
+      length: data.length,
+      language: data.language,
+      purpose: data.purpose,
+      audience: data.audience,
+      includeCTA: data.includeCTA,
+      emojiUsage: data.emojiUsage,
+    };
+    localStorage.setItem('storyscale_wizard_settings', JSON.stringify(settingsToSave));
+  }, [data.tone, data.style, data.length, data.language, data.purpose, data.audience, data.includeCTA, data.emojiUsage]);
 
   const handleAddReferenceUrl = async () => {
     if (!newUrl.trim()) return;
@@ -236,6 +268,16 @@ export function PostWizardV2() {
     }));
   };
 
+  const handleCopyPreview = async () => {
+    try {
+      await navigator.clipboard.writeText(preview);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
   const handleGenerate = async () => {
     if (data.input.length < 50) {
       alert('Please add at least 50 characters to your input.');
@@ -304,6 +346,21 @@ export function PostWizardV2() {
     return Math.ceil(words / 200); // Average reading speed: 200 words/min
   };
 
+  // Keyboard shortcut: Cmd/Ctrl+Enter to generate
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (isValid && !isGenerating) {
+          handleGenerate();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isValid, isGenerating, handleGenerate]);
+
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-6">
@@ -313,7 +370,7 @@ export function PostWizardV2() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[40%_60%]">
+      <div className="grid gap-6 lg:grid-cols-[43%_57%]">
         {/* LEFT PANEL: Unified Form */}
         <div className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-lg">
           {/* Input Section */}
@@ -337,7 +394,7 @@ export function PostWizardV2() {
                 </div>
               </div>
               <div className={`text-sm font-semibold transition-colors ${isValid ? 'text-green-600' : charCount > 2000 ? 'text-red-600' : 'text-slate-500'}`}>
-                {charCount} / 2000
+                {getWordCount(data.input)} words • {charCount} / 2000
               </div>
             </div>
             {charCount < 50 && (
@@ -352,17 +409,19 @@ export function PostWizardV2() {
 
           {/* Settings Grid */}
           <div className="space-y-4">
-            {/* Row 1: Tone, Style, Length */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Row 1: Tone, Style */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tone</label>
                 <select
                   value={data.tone}
                   onChange={(e) => setData(prev => ({ ...prev, tone: e.target.value }))}
+                  title={data.tone.charAt(0).toUpperCase() + data.tone.slice(1).replace('_', ' ')}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="professional">Professional</option>
                   <option value="casual">Casual</option>
+                  <option value="warm_friendly">👋 Warm & Friendly</option>
                   <option value="inspirational">Inspirational</option>
                   <option value="educational">Educational</option>
                 </select>
@@ -373,6 +432,7 @@ export function PostWizardV2() {
                 <select
                   value={data.style}
                   onChange={(e) => setData(prev => ({ ...prev, style: e.target.value }))}
+                  title={data.style === 'story-based' ? 'Story' : data.style === 'list_format' ? 'List' : data.style === 'question-based' ? 'Question' : 'How-To'}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="story-based">Story</option>
@@ -381,12 +441,16 @@ export function PostWizardV2() {
                   <option value="how-to">How-To</option>
                 </select>
               </div>
+            </div>
 
+            {/* Row 2: Length, Language */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Length</label>
                 <select
                   value={data.length}
                   onChange={(e) => setData(prev => ({ ...prev, length: e.target.value as 'short' | 'medium' | 'long' }))}
+                  title={data.length.charAt(0).toUpperCase() + data.length.slice(1)}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="short">Short</option>
@@ -394,27 +458,29 @@ export function PostWizardV2() {
                   <option value="long">Long</option>
                 </select>
               </div>
-            </div>
 
-            {/* Row 2: Language, Audience */}
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Language</label>
                 <select
                   value={data.language}
                   onChange={(e) => setData(prev => ({ ...prev, language: e.target.value as 'en' | 'no' }))}
+                  title={data.language === 'en' ? 'English' : 'Norwegian'}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="en">🇬🇧 English</option>
                   <option value="no">🇳🇴 Norwegian</option>
                 </select>
               </div>
+            </div>
 
+            {/* Row 3: Audience, Purpose */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Audience</label>
                 <select
                   value={data.audience}
                   onChange={(e) => setData(prev => ({ ...prev, audience: e.target.value }))}
+                  title={data.audience.charAt(0).toUpperCase() + data.audience.slice(1).replace('_', ' ')}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="executives">Executives</option>
@@ -423,29 +489,33 @@ export function PostWizardV2() {
                   <option value="industry_specific">Industry-Specific</option>
                 </select>
               </div>
-            </div>
 
-            {/* Row 3: Purpose, Emojis, CTA */}
-            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Purpose</label>
                 <select
                   value={data.purpose}
                   onChange={(e) => setData(prev => ({ ...prev, purpose: e.target.value }))}
+                  title={data.purpose.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="engagement">Engagement</option>
+                  <option value="network_building">🤝 Network Building</option>
+                  <option value="personal_sharing">🌟 Personal Sharing</option>
                   <option value="lead_generation">Lead Generation</option>
                   <option value="brand_awareness">Brand Awareness</option>
                   <option value="thought_leadership">Thought Leadership</option>
                 </select>
               </div>
+            </div>
 
+            {/* Row 4: Emojis, CTA */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Emojis</label>
                 <select
                   value={data.emojiUsage}
                   onChange={(e) => setData(prev => ({ ...prev, emojiUsage: e.target.value as 'none' | 'minimal' | 'moderate' }))}
+                  title={data.emojiUsage === 'minimal' ? 'Minimal (1-2 emojis)' : data.emojiUsage === 'moderate' ? 'Moderate (3-5 emojis)' : 'None'}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="none">None</option>
@@ -589,6 +659,24 @@ export function PostWizardV2() {
                       </div>
                       <span className="font-medium text-slate-600">min read</span>
                     </div>
+                    <div className="h-4 w-px bg-slate-300"></div>
+                    <button
+                      onClick={handleCopyPreview}
+                      className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                      title="Copy preview to clipboard"
+                    >
+                      {copied ? (
+                        <>
+                          <CheckCheck className="h-4 w-4 text-green-600" />
+                          <span className="text-green-600">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
