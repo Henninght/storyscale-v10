@@ -659,15 +659,15 @@ function Step1({ input, referenceUrls, customInstructions, onUpdate, mentorshipE
         </p>
       </div>
 
-      {/* Mentor Advice */}
-      {mentorAdvice && (
+      {/* Mentor Advice - DISABLED */}
+      {/* {mentorAdvice && (
         <MentorWizardSuggestion
           message={mentorAdvice}
           temperature={mentorTemperature}
           mentorName={mentorName}
           type="strategic"
         />
-      )}
+      )} */}
 
       {/* Campaign Selector */}
       {!loadingCampaigns && campaigns.length > 0 && (
@@ -889,15 +889,15 @@ function Step2({ tone, purpose, audience, style, onUpdate, mentorshipEnabled, me
         <p className="text-secondary/70">Choose the tone, purpose, and style for your content.</p>
       </div>
 
-      {/* Mentor Advice */}
-      {mentorAdvice && (
+      {/* Mentor Advice - DISABLED */}
+      {/* {mentorAdvice && (
         <MentorWizardSuggestion
           message={mentorAdvice}
           temperature={mentorTemperature}
           mentorName={mentorName}
           type="strategic"
         />
-      )}
+      )} */}
 
       <div>
         <div className="mb-3 flex items-center gap-2">
@@ -1000,15 +1000,15 @@ function Step3({ language, length, includeCTA, emojiUsage, onUpdate, mentorshipE
         <p className="text-secondary/70">Customize the language, length, and formatting.</p>
       </div>
 
-      {/* Mentor Advice */}
-      {mentorAdvice && (
+      {/* Mentor Advice - DISABLED */}
+      {/* {mentorAdvice && (
         <MentorWizardSuggestion
           message={mentorAdvice}
           temperature={mentorTemperature}
           mentorName={mentorName}
           type="best-practice"
         />
-      )}
+      )} */}
 
       <div className="space-y-6">
         {/* Language Selector with Flags */}
@@ -1233,15 +1233,15 @@ function Step4({ data, isGenerating, mentorshipEnabled, mentorTemperature = 3, m
         </p>
       </div>
 
-      {/* Mentor Advice */}
-      {mentorAdvice && (
+      {/* Mentor Advice - DISABLED */}
+      {/* {mentorAdvice && (
         <MentorWizardSuggestion
           message={mentorAdvice}
           temperature={mentorTemperature}
           mentorName={mentorName}
           type="strategic"
         />
-      )}
+      )} */}
 
       {/* Collapsible Summary Sections */}
       <div className="space-y-3">

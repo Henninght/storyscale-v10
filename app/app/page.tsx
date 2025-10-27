@@ -170,8 +170,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Mentorship Suggestion (after welcome) */}
-        {welcomeSuggestions.length > 0 && (
+        {/* Mentorship Suggestion (after welcome) - DISABLED */}
+        {/* {welcomeSuggestions.length > 0 && (
           <div>
             {welcomeSuggestions.slice(0, 1).map(suggestion => (
               <MentorshipSuggestion
@@ -181,7 +181,7 @@ export default function DashboardPage() {
               />
             ))}
           </div>
-        )}
+        )} */}
 
         {/* Campaign Strip */}
         {campaigns.length > 0 && (
@@ -269,8 +269,8 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Mentorship Suggestion (after drafts) */}
-        {draftsSuggestions.length > 0 && (
+        {/* Mentorship Suggestion (after drafts) - DISABLED */}
+        {/* {draftsSuggestions.length > 0 && (
           <div>
             {draftsSuggestions.slice(0, 1).map(suggestion => (
               <MentorshipSuggestion
@@ -280,7 +280,7 @@ export default function DashboardPage() {
               />
             ))}
           </div>
-        )}
+        )} */}
 
         {/* Parked Ideas (Expandable) */}
         {parkedDrafts.length > 0 && (

@@ -11,6 +11,8 @@ import { FeedbackRating, MentorshipSettings, DraftImage } from '@/types';
 import { MentorChatWidget } from '@/components/MentorChatWidget';
 import { analyzeDraftPatterns } from '@/lib/mentorshipEngine';
 import { ImageManager } from '@/components/ImageManager';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface DraftEditorProps {
   draft: any;
@@ -49,6 +51,9 @@ export function DraftEditor({ draft }: DraftEditorProps) {
   // Image management state
   const [images, setImages] = useState<DraftImage[]>(draft.images || []);
   const [showImageManager, setShowImageManager] = useState(false);
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
 
   const charCount = content.length;
 
@@ -717,15 +722,65 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         )}
 
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-secondary">
-            Content
-          </label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[400px] w-full rounded-lg border border-secondary/20 p-4 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Your LinkedIn post content..."
-          />
+          <div className="mb-3 flex items-center justify-between">
+            <label className="block text-sm font-medium text-secondary">
+              Content
+            </label>
+            <div className="flex gap-2 rounded-lg border border-secondary/20 p-1">
+              <button
+                onClick={() => setViewMode('edit')}
+                className={`rounded px-3 py-1 text-sm font-medium transition-colors ${
+                  viewMode === 'edit'
+                    ? 'bg-primary text-white'
+                    : 'text-secondary/60 hover:text-secondary'
+                }`}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => setViewMode('preview')}
+                className={`rounded px-3 py-1 text-sm font-medium transition-colors ${
+                  viewMode === 'preview'
+                    ? 'bg-primary text-white'
+                    : 'text-secondary/60 hover:text-secondary'
+                }`}
+              >
+                Preview
+              </button>
+            </div>
+          </div>
+
+          {viewMode === 'edit' ? (
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[400px] w-full rounded-lg border border-secondary/20 p-4 text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
+              placeholder="Your LinkedIn post content..."
+            />
+          ) : (
+            <div className="min-h-[400px] w-full rounded-lg border border-secondary/20 bg-white p-6">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                className="prose prose-slate max-w-none"
+                components={{
+                  p: ({ children }) => <p className="mb-4 text-slate-700 leading-relaxed whitespace-pre-wrap">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  ul: ({ children }) => <ul className="mb-4 ml-6 list-disc space-y-2">{children}</ul>,
+                  ol: ({ children }) => <ol className="mb-4 ml-6 list-decimal space-y-2">{children}</ol>,
+                  li: ({ children }) => <li className="text-slate-700">{children}</li>,
+                  h1: ({ children }) => <h1 className="mb-3 text-2xl font-bold text-slate-900">{children}</h1>,
+                  h2: ({ children }) => <h2 className="mb-3 text-xl font-bold text-slate-900">{children}</h2>,
+                  h3: ({ children }) => <h3 className="mb-2 text-lg font-semibold text-slate-900">{children}</h3>,
+                  blockquote: ({ children }) => <blockquote className="border-l-4 border-primary/30 pl-4 italic text-slate-600">{children}</blockquote>,
+                  code: ({ children }) => <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-800">{children}</code>,
+                }}
+              >
+                {content || '*No content yet*'}
+              </ReactMarkdown>
+            </div>
+          )}
+
           <div className="mt-2 text-sm text-secondary/60">
             {charCount} characters
           </div>
@@ -852,8 +907,8 @@ export function DraftEditor({ draft }: DraftEditorProps) {
         currentContent={content}
       />
 
-      {/* Mentor Chat Widget (floating) */}
-      {mentorshipSettings?.enabled && (
+      {/* Mentor Chat Widget (floating) - DISABLED */}
+      {/* {mentorshipSettings?.enabled && (
         <MentorChatWidget
           userId={draft.userId}
           draftContent={content}
@@ -862,7 +917,7 @@ export function DraftEditor({ draft }: DraftEditorProps) {
           temperature={mentorshipSettings.temperature || 3}
           mentorName={mentorshipSettings.mentorName || 'Alex'}
         />
-      )}
+      )} */}
     </div>
   );
 }

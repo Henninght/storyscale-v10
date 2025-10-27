@@ -369,25 +369,25 @@ export default function CampaignDetailPage() {
         </div>
       </div>
 
-      {/* Mentor Advice */}
-      {mentorAdvice && (
+      {/* Mentor Advice - DISABLED */}
+      {/* {mentorAdvice && (
         <MentorWizardSuggestion
           message={mentorAdvice}
           temperature={mentorTemperature}
           mentorName={mentorName}
           type="strategic"
         />
-      )}
+      )} */}
 
-      {/* Completion Advice */}
-      {completionAdvice && (
+      {/* Completion Advice - DISABLED */}
+      {/* {completionAdvice && (
         <MentorWizardSuggestion
           message={completionAdvice}
           temperature={mentorTemperature}
           mentorName={mentorName}
           type="pattern"
         />
-      )}
+      )} */}
 
       {/* Progress Card */}
       <div className="rounded-2xl border border-secondary/10 bg-white p-6">
