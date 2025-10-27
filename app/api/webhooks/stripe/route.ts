@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        await handleCheckoutComplete(session)
+        await handleCheckoutComplete(stripe, session)
         break
       }
 
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
+async function handleCheckoutComplete(stripe: Stripe, session: Stripe.Checkout.Session) {
   const firebaseUID = session.metadata?.firebaseUID
   if (!firebaseUID) {
     console.error('No Firebase UID in checkout session metadata')
