@@ -759,25 +759,26 @@ export function DraftEditor({ draft }: DraftEditorProps) {
             />
           ) : (
             <div className="min-h-[400px] w-full rounded-lg border border-secondary/20 bg-white p-6">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                className="prose prose-slate max-w-none"
-                components={{
-                  p: ({ children }) => <p className="mb-4 text-slate-700 leading-relaxed whitespace-pre-wrap">{children}</p>,
-                  strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
-                  em: ({ children }) => <em className="italic">{children}</em>,
-                  ul: ({ children }) => <ul className="mb-4 ml-6 list-disc space-y-2">{children}</ul>,
-                  ol: ({ children }) => <ol className="mb-4 ml-6 list-decimal space-y-2">{children}</ol>,
-                  li: ({ children }) => <li className="text-slate-700">{children}</li>,
-                  h1: ({ children }) => <h1 className="mb-3 text-2xl font-bold text-slate-900">{children}</h1>,
-                  h2: ({ children }) => <h2 className="mb-3 text-xl font-bold text-slate-900">{children}</h2>,
-                  h3: ({ children }) => <h3 className="mb-2 text-lg font-semibold text-slate-900">{children}</h3>,
-                  blockquote: ({ children }) => <blockquote className="border-l-4 border-primary/30 pl-4 italic text-slate-600">{children}</blockquote>,
-                  code: ({ children }) => <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-800">{children}</code>,
-                }}
-              >
-                {content || '*No content yet*'}
-              </ReactMarkdown>
+              <div className="prose prose-slate max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="mb-4 text-slate-700 leading-relaxed whitespace-pre-wrap">{children}</p>,
+                    strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+                    em: ({ children }) => <em className="italic">{children}</em>,
+                    ul: ({ children }) => <ul className="mb-4 ml-6 list-disc space-y-2">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-4 ml-6 list-decimal space-y-2">{children}</ol>,
+                    li: ({ children }) => <li className="text-slate-700">{children}</li>,
+                    h1: ({ children }) => <h1 className="mb-3 text-2xl font-bold text-slate-900">{children}</h1>,
+                    h2: ({ children }) => <h2 className="mb-3 text-xl font-bold text-slate-900">{children}</h2>,
+                    h3: ({ children }) => <h3 className="mb-2 text-lg font-semibold text-slate-900">{children}</h3>,
+                    blockquote: ({ children }) => <blockquote className="border-l-4 border-primary/30 pl-4 italic text-slate-600">{children}</blockquote>,
+                    code: ({ children }) => <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-800">{children}</code>,
+                  }}
+                >
+                  {content || '*No content yet*'}
+                </ReactMarkdown>
+              </div>
             </div>
           )}
 
