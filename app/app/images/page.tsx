@@ -6,13 +6,16 @@ import { LibraryImage } from '@/types';
 import { StyleBasedGenerator } from '@/components/ImageStudio/StyleBasedGenerator';
 import { StudioGallery } from '@/components/ImageStudio/StudioGallery';
 import { TagImageDialog } from '@/components/ImageStudio/TagImageDialog';
+import { ImageViewer } from '@/components/ImageStudio/ImageViewer';
 import { PageTransition } from '@/components/PageTransition';
+import { getAuth } from 'firebase/auth';
 
 export default function ImageStudioPage() {
   const { user, loading: authLoading } = useAuth();
   const [images, setImages] = useState<LibraryImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<LibraryImage | null>(null);
+  const [viewingImage, setViewingImage] = useState<LibraryImage | null>(null);
+  const [taggingImage, setTaggingImage] = useState<LibraryImage | null>(null);
 
   const fetchImages = async () => {
     if (!user) {
@@ -51,12 +54,51 @@ export default function ImageStudioPage() {
   };
 
   const handleImageClick = (image: LibraryImage) => {
-    setSelectedImage(image);
+    setViewingImage(image);
   };
 
   const handleTagsUpdated = () => {
     // Refresh the images list after tagging
     fetchImages();
+  };
+
+  const handleDeleteImage = async () => {
+    if (!viewingImage || !user) return;
+
+    if (!confirm('Delete this image from your library?')) return;
+
+    try {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch('/api/images/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: currentUser.uid,
+          imageId: viewingImage.id,
+          storagePath: viewingImage.storagePath,
+          isLibraryImage: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete image');
+      }
+
+      handleImageDeleted(viewingImage.id);
+      setViewingImage(null);
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete image');
+    }
   };
 
   if (authLoading || loading) {
@@ -97,11 +139,24 @@ export default function ImageStudioPage() {
           </div>
         </div>
 
+        {/* Image Viewer (Full-Size) */}
+        {viewingImage && (
+          <ImageViewer
+            image={viewingImage}
+            onClose={() => setViewingImage(null)}
+            onTagClick={() => {
+              setTaggingImage(viewingImage);
+              setViewingImage(null);
+            }}
+            onDelete={handleDeleteImage}
+          />
+        )}
+
         {/* Tag Dialog */}
-        {selectedImage && (
+        {taggingImage && (
           <TagImageDialog
-            image={selectedImage}
-            onClose={() => setSelectedImage(null)}
+            image={taggingImage}
+            onClose={() => setTaggingImage(null)}
             onTagsUpdated={handleTagsUpdated}
           />
         )}

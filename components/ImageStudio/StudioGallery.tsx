@@ -70,6 +70,10 @@ export function StudioGallery({ images, onImageDeleted, onImageClick }: StudioGa
         throw new Error('Failed to add image to draft');
       }
 
+      // Show success feedback
+      const draftTitle = recentDrafts.find(d => d.id === draftId)?.content.split('\n')[0].substring(0, 30) || 'draft';
+      alert(`✓ Image added to ${draftTitle}`);
+
       setShowDraftsMenu(null);
     } catch (error) {
       console.error('Error adding image to draft:', error);
@@ -162,7 +166,8 @@ export function StudioGallery({ images, onImageDeleted, onImageClick }: StudioGa
                 {/* Image Thumbnail */}
                 <div
                   onClick={() => onImageClick(image)}
-                  className="aspect-[16/9] w-32 flex-shrink-0 relative bg-slate-100 rounded overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                  className="aspect-[16/9] w-48 flex-shrink-0 relative bg-slate-100 rounded overflow-hidden cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-blue-400 transition-all"
+                  title="Click to view full size"
                 >
                   <img
                     src={image.url}
@@ -213,19 +218,24 @@ export function StudioGallery({ images, onImageDeleted, onImageClick }: StudioGa
                     {isMenuOpen && (
                       <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-lg border border-slate-200 shadow-lg z-10 py-1">
                         {recentDrafts.length > 0 ? (
-                          recentDrafts.map((draft) => (
-                            <button
-                              key={draft.id}
-                              onClick={() => handleAddToDraft(image.id, draft.id)}
-                              disabled={addingToDraft === `${image.id}-${draft.id}`}
-                              className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 transition-colors flex items-center justify-between gap-2 disabled:opacity-50"
-                            >
-                              <span className="truncate">{getDraftTitle(draft)}</span>
-                              {addingToDraft === `${image.id}-${draft.id}` && (
-                                <span className="text-xs text-slate-500">Adding...</span>
-                              )}
-                            </button>
-                          ))
+                          recentDrafts.map((draft) => {
+                            const isAlreadyTagged = image.attachedToDrafts.includes(draft.id);
+                            return (
+                              <button
+                                key={draft.id}
+                                onClick={() => handleAddToDraft(image.id, draft.id)}
+                                disabled={addingToDraft === `${image.id}-${draft.id}` || isAlreadyTagged}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 transition-colors flex items-center justify-between gap-2 disabled:opacity-50"
+                              >
+                                <span className="truncate">{getDraftTitle(draft)}</span>
+                                {addingToDraft === `${image.id}-${draft.id}` ? (
+                                  <span className="text-xs text-slate-500">Adding...</span>
+                                ) : isAlreadyTagged ? (
+                                  <span className="text-xs text-green-600 font-medium">✓ Tagged</span>
+                                ) : null}
+                              </button>
+                            );
+                          })
                         ) : (
                           <div className="px-3 py-2 text-sm text-slate-500">No recent drafts</div>
                         )}

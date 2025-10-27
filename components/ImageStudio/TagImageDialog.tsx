@@ -165,6 +165,12 @@ export function TagImageDialog({ image, onClose, onTagsUpdated }: TagImageDialog
 
       await Promise.all(promises);
 
+      // Show success message
+      const totalChanges = draftsToAttach.length + draftsToDetach.length + campaignsToAttach.length + campaignsToDetach.length;
+      if (totalChanges > 0) {
+        alert(`✓ Successfully updated ${totalChanges} ${totalChanges === 1 ? 'tag' : 'tags'}`);
+      }
+
       onTagsUpdated();
       onClose();
     } catch (error) {
@@ -198,12 +204,23 @@ export function TagImageDialog({ image, onClose, onTagsUpdated }: TagImageDialog
         </div>
 
         {/* Image Preview */}
-        <div className="mb-6 rounded-lg overflow-hidden border border-slate-200">
+        <div className="mb-6 rounded-lg overflow-hidden border border-slate-200 relative group">
           <img
             src={image.url}
             alt={image.prompt || 'Image'}
-            className="w-full h-auto max-h-64 object-contain"
+            className="w-full h-auto max-h-96 object-contain"
           />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <button
+              onClick={() => {
+                // Open in new tab to view full size
+                window.open(image.url, '_blank');
+              }}
+              className="px-4 py-2 bg-white text-slate-800 rounded-lg font-medium hover:bg-slate-100 transition-colors"
+            >
+              View Full Size
+            </button>
+          </div>
         </div>
 
         {loading ? (

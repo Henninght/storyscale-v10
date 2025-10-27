@@ -68,6 +68,52 @@ export async function POST(request: NextRequest) {
 
     await imageRef.update(updateData);
 
+    // Also update the Draft's images array to maintain bidirectional relationship
+    if (draftId) {
+      const draftRef = db.collection('drafts').doc(draftId);
+      const draftDoc = await draftRef.get();
+
+      if (!draftDoc.exists) {
+        console.warn(`⚠️ Draft ${draftId} not found, skipping draft update`);
+      } else {
+        if (action === 'attach') {
+          // Create DraftImage object to add to draft
+          const draftImage = {
+            id: imageId,
+            url: imageData.url,
+            storagePath: imageData.storagePath,
+            generatedByAI: true,
+            prompt: imageData.prompt || '',
+            createdAt: FieldValue.serverTimestamp()
+          };
+
+          await draftRef.update({
+            images: FieldValue.arrayUnion(draftImage),
+            updatedAt: FieldValue.serverTimestamp()
+          });
+
+          console.log(`✅ Image added to draft.images array`);
+        } else if (action === 'detach') {
+          // Remove image from draft's images array
+          const draftData = draftDoc.data();
+          const images = draftData?.images || [];
+          const updatedImages = images.filter((img: any) => img.id !== imageId);
+
+          await draftRef.update({
+            images: updatedImages,
+            updatedAt: FieldValue.serverTimestamp()
+          });
+
+          console.log(`✅ Image removed from draft.images array`);
+        }
+      }
+    }
+
+    // Handle campaign image attachments (campaigns don't have images array, just tracking)
+    if (campaignId) {
+      console.log(`✅ Image ${action === 'attach' ? 'attached to' : 'detached from'} campaign ${campaignId}`);
+    }
+
     console.log(`✅ Image ${action === 'attach' ? 'attached to' : 'detached from'} ${draftId ? 'draft' : 'campaign'}`);
 
     return NextResponse.json({
