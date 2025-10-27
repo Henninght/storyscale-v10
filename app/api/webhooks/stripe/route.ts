@@ -67,13 +67,13 @@ export async function POST(req: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
-        await handlePaymentSucceeded(invoice)
+        await handlePaymentSucceeded(stripe, invoice)
         break
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
-        await handlePaymentFailed(invoice)
+        await handlePaymentFailed(stripe, invoice)
         break
       }
 
@@ -168,7 +168,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log(`Subscription canceled for user ${firebaseUID}`)
 }
 
-async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
+async function handlePaymentSucceeded(stripe: Stripe, invoice: Stripe.Invoice) {
   const subscriptionId = (invoice as any).subscription as string
   if (!subscriptionId) return
 
@@ -195,7 +195,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log(`Payment succeeded and usage reset for user ${firebaseUID}`)
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice) {
+async function handlePaymentFailed(stripe: Stripe, invoice: Stripe.Invoice) {
   const subscriptionId = (invoice as any).subscription as string
   if (!subscriptionId) return
 
