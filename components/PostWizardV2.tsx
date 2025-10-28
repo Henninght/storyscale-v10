@@ -419,11 +419,11 @@ export function PostWizardV2() {
                   title={data.tone.charAt(0).toUpperCase() + data.tone.slice(1).replace('_', ' ')}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="professional">Professional</option>
-                  <option value="casual">Casual</option>
+                  <option value="professional">💼 Professional</option>
+                  <option value="casual">👕 Casual</option>
                   <option value="warm_friendly">👋 Warm & Friendly</option>
-                  <option value="inspirational">Inspirational</option>
-                  <option value="educational">Educational</option>
+                  <option value="inspirational">✨ Inspirational</option>
+                  <option value="educational">📚 Educational</option>
                 </select>
               </div>
 
@@ -435,10 +435,10 @@ export function PostWizardV2() {
                   title={data.style === 'story-based' ? 'Story' : data.style === 'list_format' ? 'List' : data.style === 'question-based' ? 'Question' : 'How-To'}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="story-based">Story</option>
-                  <option value="list_format">List</option>
-                  <option value="question-based">Question</option>
-                  <option value="how-to">How-To</option>
+                  <option value="story-based">📖 Story</option>
+                  <option value="list_format">📝 List</option>
+                  <option value="question-based">❓ Question</option>
+                  <option value="how-to">🔧 How-To</option>
                 </select>
               </div>
             </div>
@@ -453,9 +453,9 @@ export function PostWizardV2() {
                   title={data.length.charAt(0).toUpperCase() + data.length.slice(1)}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="short">Short</option>
-                  <option value="medium">Medium</option>
-                  <option value="long">Long</option>
+                  <option value="short">📄 Short</option>
+                  <option value="medium">📃 Medium</option>
+                  <option value="long">📜 Long</option>
                 </select>
               </div>
 
@@ -483,10 +483,10 @@ export function PostWizardV2() {
                   title={data.audience.charAt(0).toUpperCase() + data.audience.slice(1).replace('_', ' ')}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="executives">Executives</option>
-                  <option value="entrepreneurs">Entrepreneurs</option>
-                  <option value="professionals">Professionals</option>
-                  <option value="industry_specific">Industry-Specific</option>
+                  <option value="executives">👔 Executives</option>
+                  <option value="entrepreneurs">🚀 Entrepreneurs</option>
+                  <option value="professionals">💼 Professionals</option>
+                  <option value="industry_specific">🏭 Industry-Specific</option>
                 </select>
               </div>
 
@@ -498,12 +498,12 @@ export function PostWizardV2() {
                   title={data.purpose.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="engagement">Engagement</option>
+                  <option value="engagement">💬 Engagement</option>
                   <option value="network_building">🤝 Network Building</option>
                   <option value="personal_sharing">🌟 Personal Sharing</option>
-                  <option value="lead_generation">Lead Generation</option>
-                  <option value="brand_awareness">Brand Awareness</option>
-                  <option value="thought_leadership">Thought Leadership</option>
+                  <option value="lead_generation">🎯 Lead Generation</option>
+                  <option value="brand_awareness">📢 Brand Awareness</option>
+                  <option value="thought_leadership">💡 Thought Leadership</option>
                 </select>
               </div>
             </div>
@@ -518,9 +518,9 @@ export function PostWizardV2() {
                   title={data.emojiUsage === 'minimal' ? 'Minimal (1-2 emojis)' : data.emojiUsage === 'moderate' ? 'Moderate (3-5 emojis)' : 'None'}
                   className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  <option value="none">None</option>
-                  <option value="minimal">Minimal (1-2)</option>
-                  <option value="moderate">Moderate (3-5)</option>
+                  <option value="none">🚫 None</option>
+                  <option value="minimal">😊 Minimal (1-2)</option>
+                  <option value="moderate">🎉 Moderate (3-5)</option>
                 </select>
               </div>
 
