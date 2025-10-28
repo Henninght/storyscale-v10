@@ -142,6 +142,7 @@ function buildPreviewPrompt(wizardSettings: any): string {
   const toneDescriptions: Record<string, string> = {
     professional: 'professional and authoritative',
     casual: 'conversational and approachable',
+    warm_friendly: 'warm and friendly for genuine connection-building',
     inspirational: 'motivating and uplifting',
     educational: 'informative and clear',
   };
@@ -151,6 +152,8 @@ function buildPreviewPrompt(wizardSettings: any): string {
     lead_generation: 'attract potential clients and showcase expertise',
     brand_awareness: 'build visibility and establish presence',
     thought_leadership: 'demonstrate expertise and unique insights',
+    network_building: 'build genuine connections and expand network',
+    personal_sharing: 'share life updates and personal moments authentically',
   };
 
   const styleDescriptions: Record<string, string> = {
@@ -172,6 +175,20 @@ function buildPreviewPrompt(wizardSettings: any): string {
     moderate: 'Use 3-5 emojis to enhance readability and engagement.',
   };
 
+  // Norwegian-specific guidelines for preview consistency
+  const norwegianGuidelines = wizardSettings.language === 'no' ? `
+
+**NORWEGIAN WRITING GUIDELINES (2025):**
+- ❌ Avoid "Siden" (weak opener) → Use "Da" or state directly
+- ❌ Eliminate "men" mid-sentence → Use periods, restart positive
+- ✅ Positive framing: Replace "ikke" with affirmative language
+- ✅ White space: "leseren får tid til å puste" (give reader breathing room)
+- ✅ Authentic 2025 tone: Genuine over polished, vulnerable over perfect
+- ✅ Direct but polite: Norwegian business culture values straightforwardness
+- ✅ Open questions for engagement (algorithm rewards 15+ word comments)
+- ✅ 3-5 hashtags maximum
+` : '';
+
   return `You are an expert LinkedIn content writer creating a PREVIEW of a post.
 
 **Post Requirements:**
@@ -183,7 +200,7 @@ function buildPreviewPrompt(wizardSettings: any): string {
 - Language: ${wizardSettings.language === 'en' ? 'English' : 'Norwegian'}
 - Call-to-Action: ${wizardSettings.includeCTA ? 'Include a compelling CTA that encourages engagement' : 'Do not include a CTA'}
 - Emojis: ${emojiGuidelines[wizardSettings.emojiUsage || 'minimal']}
-
+${norwegianGuidelines}
 **Critical Writing Rules:**
 1. Write like a human, not a corporate robot
 2. Avoid AI clichés and overused phrases like "delve into", "in today's digital age", "game-changer", "unlock", etc.
@@ -195,6 +212,13 @@ function buildPreviewPrompt(wizardSettings: any): string {
 8. Avoid corporate jargon - write like you're talking to a colleague
 9. End with substance, not empty platitudes
 10. IMPORTANT: Follow the emoji usage guideline exactly
+
+**2025 ENGAGEMENT TACTICS:**
+- Personal stories = 4.2x more comments than pure advice
+- Questions in first line = 2.8x more replies
+- Posts under 150 words = 35% higher read rate
+- Vulnerability beats credentials (2x engagement)
+- Dwell time matters: Keep readers engaged longer
 
 **ANTI-HALLUCINATION RULES (CRITICAL):**
 ⚠️ NEVER invent, estimate, or make up statistics, numbers, percentages, dates, or facts

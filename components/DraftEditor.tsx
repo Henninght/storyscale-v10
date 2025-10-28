@@ -71,8 +71,11 @@ export function DraftEditor({ draft }: DraftEditorProps) {
           setRegenerationCount(feedbackData.regenerated || 0);
           setFeedbackId(feedbackDoc.id);
         }
-      } catch (error) {
-        console.error('Error loading feedback:', error);
+      } catch (error: any) {
+        // Silently handle permission-denied errors (no feedback exists yet)
+        if (error?.code !== 'permission-denied') {
+          console.error('Error loading feedback:', error);
+        }
       }
     };
 

@@ -577,6 +577,152 @@ But I'm happier. And that counts for something.
 Sharing this because everyone posts the wins. I want to normalize the messy middle—where you're figuring it out, making mistakes, and still moving forward.
 
 If you're in a transition phase right now, you're not alone. Keep going. 💪`,
+
+  // ===== NORWEGIAN EXAMPLES (2025 AUTHENTIC TONE) =====
+
+  'story-based-professional-no': `For tre måneder siden hadde en klient 40% fall i omsetning. Utfordringen var tydelig: utdaterte systemer som ikke snakket sammen.
+
+Vi bygde om hele arbeidsflyten fra bunnen. Tok 8 uker med intense sprinter.
+
+Resultatet? 40% oppgang i løpet av to måneder.
+
+Lærdommen: Automatisering er ikke "sett og glem". Det krever kontinuerlig vedlikehold og optimalisering.
+
+Hva har vært deres største utfordring med automatisering?`,
+
+  'story-based-casual-no': `Sølt kaffe på tastaturet midt i et kundemøte. 😅
+
+I stedet for å stresse, lo jeg det av og sa "la meg hente backup-en."
+
+Kunden satte pris på ærligheten. Samtalen fortsatte uten stress.
+
+Læringen? Din menneskelighet er din superkraft. Ikke skjul deg bak perfeksjon.
+
+Noen andre som har hatt lignende øyeblikk?`,
+
+  'story-based-inspirational-no': `For to år siden var jeg fast i en jobb som tappet meg for energi. Hver morgen føltes tung.
+
+Én beslutning endret alt: Jeg satset på meg selv.
+
+I dag bygger jeg noe jeg er stolt av. Det er fortsatt skummelt. Jeg gjør fremdeles feil.
+
+Men jeg er her. Og det er det som teller.
+
+Hvis du venter på det "perfekte øyeblikket" for å gjøre en endring – dette er tegnet ditt. Start smått, men start i dag.`,
+
+  'story-based-educational-no': `Forrige kvartal analyserte vi 500+ kundehenvendelser. Det vi oppdaget overrasket oss:
+
+73% av problemene kom fra hull i onboarding-prosessen.
+
+Løsningen? Vi bygde om hele første-ukes-opplevelsen fra bunnen.
+
+Resultat: Kundehenvendelser falt 60% på to måneder.
+
+Lærdommen: Dine største problemer gjemmer seg ofte i det åpenbare. Se etter mønstre.
+
+Hva har overrasket dere mest når dere har dykket inn i kundedata?`,
+
+  'list_format-professional-no': `Rammeverk for kvartalsplanlegging som faktisk fungerer:
+
+1. Gjennomgå forrige kvartals nøkkeltall
+2. Identifiser 3 vekstprioriteringer
+3. Fordel ressurser deretter
+4. Sett målbare milepæler
+5. Planlegg månedlige oppfølginger
+
+Enkelt, men effektivt.
+
+Hva er deres tilnærming til kvartalsplanlegging?`,
+
+  'list_format-educational-no': `5 læringer fra 1000+ LinkedIn-innlegg:
+
+1. Første linje avgjør alt – 3x flere leser videre med god hook
+2. Korte avsnitt slår tekstvegger
+3. Spørsmål gir 2x flere kommentarer
+4. Historier slår statistikk
+5. Tydelig oppfordring til handling øker engasjement 40%
+
+Lagre denne til neste gang du poster.
+
+Hvilken av disse vil du teste først?`,
+
+  'list_format-casual-no': `Mine ikke-diskuterbare daglige vaner:
+
+→ 30 min morgentur (rydder hodet)
+→ Telefon på flymodus til kl 10
+→ Ett dypdykk før lunsj
+→ Ettermiddagsdokkånte = admin-oppgaver
+→ Kveldsrefleksjon: 3 seire fra i dag
+
+Hva er deres #1 produktivitetshack?`,
+
+  'question-based-professional-no': `Spørsmål til ledere: Hvordan balanserer dere innovasjon med operasjonell stabilitet?
+
+I min erfaring fungerer 70-20-10-regelen bra:
+• 70% kjerneoperasjoner
+• 20% iterative forbedringer
+• 10% dristige eksperimenter
+
+Hva er deres tilnærming?`,
+
+  'question-based-casual-no': `Raskt spørsmål: Hvilket verktøy kunne du ikke klart deg uten på jobb? 🤔
+
+For meg er det Notion. Endret måten jeg organiserer alt på.
+
+Del ditt i kommentarene! ⬇️`,
+
+  'how-to-professional-no': `Slik kjører du effektive 1-til-1-møter på 30 minutter:
+
+1. Første 10 min: Deres agenda (hva brenner de på)
+2. Neste 10 min: Din tilbakemelding (konkret, handlingsrettet)
+3. Siste 10 min: Handlingspunkter (dokument beslutningene)
+
+Enkel struktur = bedre samtaler.
+
+Hva er deres beste tips for 1-til-1-møter?`,
+
+  'how-to-casual-no': `Sliter med inbox zero? Her er det som fungerte for meg:
+
+→ Meld deg av ubønsomhemt (10 min investering, stor gevinst)
+→ Bruk mapper (maks 3, ikke overthink)
+→ 2-minutters regel: svar nå eller aldri
+→ Sjekk e-post 3x daglig, ikke 30x
+
+Prøv det i en uke. Du vil takke meg. 😊`,
+
+  'network-building-warm-no': `Jeg utvider nettverket mitt innen bærekraftig teknologi og vil gjerne komme i kontakt med folk som jobber med klimaløsninger. 🌍
+
+Litt om meg: Har tilbrakt de siste 3 årene i cleantech-konsulentbransjen og hjulpet startups med å skalere. Nylig startet for meg selv med fokus på karbonregnskap.
+
+Jeg er genuint nysgjerrig på å lære fra folk som bygger i dette feltet – hvilke utfordringer dere møter, hva som fungerer, hva som holder dere våkne om natten.
+
+Hvis du jobber med klimateknologi, fornybar energi, eller sirkulær økonomi – jeg vil gjerne høre historien din. Legg igjen en kommentar eller send en melding!
+
+Hvem andre bør jeg snakke med i dette feltet?`,
+
+  'personal-sharing-casual-no': `Brukte lørdagen på å lære 8-åringen min å kode. Vi lagde et enkelt spill hvor en katt jager en mus.
+
+Hun insisterte på at musen trengte en "boost power-up." Deretter ville hun ha "trøtt-modus" for katten. Så et poeng-system. Deretter nivåer. Deretter...
+
+Jeg lo fordi dette er nøyaktig slik scope creep skjer på jobb. 😅
+
+Men ærlig talt? Å se henne tenke gjennom logikk, feilsøke, og feire når det endelig fungerte – det er det jeg skulle ønske jeg følte hver dag på jobben.
+
+Kanskje hun lærer meg like mye som jeg lærer henne.
+
+Har andre hatt slike øyeblikk hvor barna eller hobbyer viser dere noe om arbeidslivet?`,
+
+  'thought-leadership-professional-no': `Alle snakker om "datadrevne beslutninger," men her er det de fleste går glipp av:
+
+Data forteller deg hva som skjedde. Den forteller sjelden hvorfor.
+
+Jeg har sett selskaper besatt av metrikker samtidig som de ignorerer de kvalitative signalene – kundeklager, support-tickets, tilbakemeldinger fra salgssamtaler. Det rotete, ustrukturerte som er vanskeligere å analysere, men uendelig mer verdifullt.
+
+Beste beslutning jeg tok i fjor? Krevde at hver leder skulle sitte med på 5 kundesamtaler per måned. Ingen agenda. Bare lytte.
+
+Vi fant 3 store produkthull som metrikker aldri flagget. Fikset dem i Q3. Churn falt 23%.
+
+Data informerer. Lytting veileder. Du trenger begge.`,
 };
 
 // Enhanced helper function to get most relevant example for style/tone/purpose/length combination
@@ -585,12 +731,38 @@ function getExampleForStyle(
   tone: string,
   purpose?: string,
   length?: string,
-  expertise?: string[]
+  expertise?: string[],
+  language?: string
 ): string {
   // Build search keys in order of specificity
   const searchKeys = [];
+  const isNorwegian = language === 'no';
 
-  // 1. Try exact style-tone match first
+  // For Norwegian, prioritize Norwegian examples with -no suffix
+  if (isNorwegian) {
+    // 1. Try Norwegian style-tone match first
+    searchKeys.push(`${style}-${tone}-no`);
+
+    // 2. Try purpose-specific Norwegian examples
+    if (purpose === 'network_building') {
+      searchKeys.push('network-building-warm-no');
+    }
+    if (purpose === 'personal_sharing') {
+      searchKeys.push('personal-sharing-casual-no');
+    }
+    if (purpose === 'thought_leadership') {
+      searchKeys.push('thought-leadership-professional-no');
+    }
+
+    // 3. Try fallback Norwegian examples
+    searchKeys.push(`story-based-professional-no`);
+    searchKeys.push(`list_format-professional-no`);
+    searchKeys.push(`question-based-professional-no`);
+    searchKeys.push(`how-to-professional-no`);
+  }
+
+  // Standard search keys (English or fallback)
+  // 1. Try exact style-tone match
   searchKeys.push(`${style}-${tone}`);
 
   // 2. Try style-tone-purpose combination for specific use cases
@@ -837,7 +1009,8 @@ function buildSystemPrompt(profile: any, wizardSettings: any): string {
     wizardSettings.tone,
     wizardSettings.purpose,
     wizardSettings.length,
-    profile.expertise || []
+    profile.expertise || [],
+    wizardSettings.language
   );
 
   // Build profile context based on account type
@@ -880,6 +1053,54 @@ function buildSystemPrompt(profile: any, wizardSettings: any): string {
 7. Show vulnerability and authenticity when appropriate
 8. Highlight your individual achievements and growth`;
 
+  // Norwegian-specific writing guidelines (2025 research-based)
+  const norwegianGuidelines = wizardSettings.language === 'no' ? `
+**NORWEGIAN WRITING GUIDELINES (2025 Best Practices):**
+
+**1. Sentence Structure & Grammar:**
+- ❌ Avoid "Siden" as sentence opener (weak start) → Use "Da" or state directly
+- ❌ Eliminate "men" mid-sentence (negates everything before) → Use periods instead, restart positive
+- ✅ Use positive framing: Replace "ikke" with affirmative language
+  Example: Instead of "Ikke tenk på elefanter" → "Tenk på mus"
+- ✅ Vary sentence length: Mix short punchy lines with longer flowing ones
+- ✅ Read aloud test: Use periods more frequently for natural pacing
+
+**2. White Space & Readability:**
+- Break text into digestible sections so "leseren får tid til å puste" (reader gets breathing room)
+- Use line breaks liberally - avoid text walls
+- Short paragraphs: 2-3 lines maximum per section
+- Visual breathing space = higher completion rate
+
+**3. Authentic 2025 Tone (Research-backed):**
+- "Authenticity is what works in 2025" - Prioritize genuine over polished
+- Two extremes that work: High professional standard OR authentic & raw
+- For this post: Lean into authentic/raw approach - honest, vulnerable, direct
+- Vulnerability beats credentials: Share struggles alongside successes
+- Write like a human, not a corporate entity
+
+**4. Norwegian Business Culture:**
+- Direct but polite: Norwegians value straightforwardness with respect
+- Minimal jargon: Keep language accessible (hygge principle: simplicity over complexity)
+- Modern approach to Janteloven: Comfortable with business self-promotion if genuine
+- Use "du" (informal you) naturally - Norwegian LinkedIn is less formal than English
+- Avoid excessive corporate language - write like a conversation
+
+**5. Engagement Optimization (Norwegian Algorithm):**
+- Open questions drive discussion: Algorithm rewards 15+ word comments
+- Pose genuine questions that invite multiple perspectives
+- Optimal timing awareness: Tue-Thu, 7-8 AM, 12 PM, 5-6 PM Norwegian time
+- 3-5 hashtags maximum (more dilutes reach)
+- Comment-focused > share-focused (commenting gives better reach)
+
+**6. Cultural Nuances:**
+- Norwegians value: "Hva som kan være interessant og verdifullt for andre" (what's interesting/valuable to others)
+- Start with audience benefit, not your message
+- Show don't tell: Concrete examples over abstract statements
+- Team/collective language natural when appropriate ("vi", "vårt")
+- Celebrate wins but acknowledge challenges (balanced authenticity)
+
+` : '';
+
   return `You are an expert LinkedIn content writer creating posts for a ${isCompany ? 'company' : 'professional individual'}.
 
 ${profileContext}
@@ -893,7 +1114,7 @@ ${profileContext}
 - Language: ${wizardSettings.language === 'en' ? 'English' : 'Norwegian'}
 - Call-to-Action: ${wizardSettings.includeCTA ? 'Include a compelling CTA that encourages engagement' : 'Do not include a CTA'}
 - Emojis: ${emojiGuidelines[wizardSettings.emojiUsage]}
-
+${norwegianGuidelines}
 ${voiceGuidelines}
 
 **Critical Writing Rules:**
@@ -907,6 +1128,24 @@ ${voiceGuidelines}
 8. If telling a story, make it ${isCompany ? 'about the company or team' : 'personal and specific'}
 9. Avoid corporate jargon - write like you're talking to a colleague
 10. End with substance, not empty platitudes
+
+**2025 ENGAGEMENT RESEARCH (Proven Tactics):**
+Based on analysis of 577,180+ LinkedIn posts in 2025:
+- 📊 Personal stories = 4.2x more comments than pure advice posts
+- ❓ Questions in the first line = 2.8x more replies
+- 📏 Posts under 150 words = 35% higher read rate (attention spans decreasing)
+- 💔 Vulnerability beats credentials: Authentic struggles/challenges drive 2x engagement vs expertise-only posts
+- 📈 Carousels = 45.85% engagement rate (highest format, note for future)
+- 🔄 Dwell time matters: LinkedIn algorithm now tracks how long users spend reading your post
+- 💬 15+ word comments = stronger algorithm boost than simple reactions
+- 📅 Weekly posting = 2x lift in engagement compared to sporadic posting
+
+**Apply These Insights:**
+- When appropriate, weave in personal experience or vulnerability
+- Front-load with a question or hook that stops the scroll
+- Keep it scannable: Line breaks every 2-3 lines, short paragraphs
+- Invite substantive comments, not just reactions
+- Focus on quality over length - respect reader's time
 
 ${relevantExample ? `**REFERENCE EXAMPLE (${wizardSettings.style} style, ${wizardSettings.tone} tone):**
 
