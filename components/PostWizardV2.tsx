@@ -412,7 +412,7 @@ export function PostWizardV2() {
             {/* Row 1: Tone, Style */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tone</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">🎭 Tone</label>
                 <select
                   value={data.tone}
                   onChange={(e) => setData(prev => ({ ...prev, tone: e.target.value }))}
@@ -428,7 +428,7 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Style</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">✨ Style</label>
                 <select
                   value={data.style}
                   onChange={(e) => setData(prev => ({ ...prev, style: e.target.value }))}
@@ -446,7 +446,7 @@ export function PostWizardV2() {
             {/* Row 2: Length, Language */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Length</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">📏 Length</label>
                 <select
                   value={data.length}
                   onChange={(e) => setData(prev => ({ ...prev, length: e.target.value as 'short' | 'medium' | 'long' }))}
@@ -460,7 +460,7 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Language</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">🌐 Language</label>
                 <select
                   value={data.language}
                   onChange={(e) => setData(prev => ({ ...prev, language: e.target.value as 'en' | 'no' }))}
@@ -476,7 +476,7 @@ export function PostWizardV2() {
             {/* Row 3: Audience, Purpose */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Audience</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">👥 Audience</label>
                 <select
                   value={data.audience}
                   onChange={(e) => setData(prev => ({ ...prev, audience: e.target.value }))}
@@ -491,7 +491,7 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Purpose</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">🎯 Purpose</label>
                 <select
                   value={data.purpose}
                   onChange={(e) => setData(prev => ({ ...prev, purpose: e.target.value }))}
@@ -511,7 +511,7 @@ export function PostWizardV2() {
             {/* Row 4: Emojis, CTA */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Emojis</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">😊 Emojis</label>
                 <select
                   value={data.emojiUsage}
                   onChange={(e) => setData(prev => ({ ...prev, emojiUsage: e.target.value as 'none' | 'minimal' | 'moderate' }))}
@@ -525,7 +525,7 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Call-to-Action</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">📣 Call-to-Action</label>
                 <label className="flex h-10 items-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
