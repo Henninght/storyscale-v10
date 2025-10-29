@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { fetchMultipleUrls } from '@/lib/urlFetcher';
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic';
+import {
+  generateEmbedding,
+  findSimilarPosts,
+  shouldRegenerateContent,
+  extractTopics,
+  type SimilarPost,
+} from '@/lib/embeddings';
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,6 +70,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch user's recent posts for duplication detection
+    console.log('Fetching recent posts for duplication detection...');
+    const recentPostsSnapshot = await adminDb
+      .collection('drafts')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .limit(10)
+      .get();
+
+    const recentPosts = recentPostsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      content: doc.data().content || '',
+      embedding: doc.data().embedding || null,
+    }));
+
+    console.log(`Found ${recentPosts.length} recent posts for comparison`);
+
     // Fetch reference URL content if provided
     let referenceContent: Array<{ url: string; content: string; error?: string }> = [];
     if (wizardSettings.referenceUrls?.some((url: string) => url.trim())) {
@@ -70,8 +94,8 @@ export async function POST(req: NextRequest) {
       referenceContent = await fetchMultipleUrls(validUrls);
     }
 
-    // Build system prompt with user profile
-    const systemPrompt = buildSystemPrompt(profile, wizardSettings);
+    // Build system prompt with user profile and recent posts for context
+    const systemPrompt = buildSystemPrompt(profile, wizardSettings, recentPosts);
 
     // Build user message with fetched reference content
     const userMessage = buildUserMessage(wizardSettings, referenceContent);
@@ -105,19 +129,86 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate content' }, { status: 500 });
     }
 
+    // Duplication detection: Generate embedding and check for similar posts
+    console.log('Generating embedding for duplication detection...');
+    let embedding: number[] = [];
+    let similarPosts: SimilarPost[] = [];
+    let topics: string[] = [];
+    let wasRegenerated = false;
+    let finalGeneratedContent = generatedContent;
+
+    try {
+      const embeddingResult = await generateEmbedding(finalGeneratedContent);
+      embedding = embeddingResult.embedding;
+
+      // Extract topics/keywords from content
+      topics = extractTopics(finalGeneratedContent);
+
+      // Find similar posts
+      similarPosts = findSimilarPosts(embedding, recentPosts, 3);
+
+      console.log(`Found ${similarPosts.length} similar posts. Highest similarity: ${similarPosts[0]?.score || 0}%`);
+
+      // If content is too similar (>85%), regenerate with stronger anti-duplication instruction
+      if (shouldRegenerateContent(similarPosts)) {
+        console.log('⚠️ High similarity detected (>85%). Auto-regenerating with anti-duplication instructions...');
+        wasRegenerated = true;
+
+        // Build enhanced prompt with explicit duplication warning
+        const enhancedSystemPrompt = buildSystemPrompt(profile, wizardSettings, recentPosts, true);
+
+        // Regenerate content
+        const regeneratedMessage = await anthropic.messages.create({
+          model: CLAUDE_MODEL,
+          max_tokens: 2000,
+          system: enhancedSystemPrompt,
+          messages: [
+            {
+              role: 'user',
+              content: userMessage + '\n\n⚠️ CRITICAL: Your previous attempt was too similar to existing posts. Create completely NEW content with different angles, examples, and insights.',
+            },
+          ],
+        });
+
+        const regeneratedContent = regeneratedMessage.content[0].type === 'text' ? regeneratedMessage.content[0].text : '';
+
+        if (regeneratedContent) {
+          // Update final content
+          finalGeneratedContent = regeneratedContent;
+
+          // Generate new embedding for regenerated content
+          const newEmbeddingResult = await generateEmbedding(finalGeneratedContent);
+          embedding = newEmbeddingResult.embedding;
+          topics = extractTopics(finalGeneratedContent);
+          similarPosts = findSimilarPosts(embedding, recentPosts, 3);
+
+          console.log('✅ Content regenerated successfully. New similarity: ' + (similarPosts[0]?.score || 0) + '%');
+        }
+      }
+    } catch (embeddingError) {
+      console.error('Embedding generation error:', embeddingError);
+      // Continue without duplication detection if embedding fails
+      console.log('⚠️ Continuing without duplication detection due to error');
+    }
+
     // Create draft in Firestore
     const draftRef = adminDb.collection('drafts').doc();
     const now = new Date();
 
     await draftRef.set({
       userId,
-      content: generatedContent,
+      content: finalGeneratedContent,
       status: 'in_progress',
       language: wizardSettings.language,
       tags: [],
       scheduledDate: null,
       wizardSettings,
       campaignId: wizardSettings.campaignId || null,
+      embedding: embedding.length > 0 ? embedding : null,
+      topics: topics.length > 0 ? topics : [],
+      similarPosts: similarPosts.map(p => ({ id: p.id, score: p.score, preview: p.preview })),
+      similarityChecked: true,
+      wasRegenerated,
       createdAt: now,
       updatedAt: now,
     });
@@ -147,7 +238,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       draftId: draftRef.id,
-      content: generatedContent,
+      content: finalGeneratedContent,
+      duplicationCheck: {
+        checked: true,
+        similarPosts: similarPosts.map(p => ({ id: p.id, score: p.score, preview: p.preview })),
+        wasRegenerated,
+        highestSimilarity: similarPosts[0]?.score || 0,
+      },
     });
   } catch (error) {
     console.error('Generate API error:', error);
@@ -723,6 +820,95 @@ Beste beslutning jeg tok i fjor? Krevde at hver leder skulle sitte med på 5 kun
 Vi fant 3 store produkthull som metrikker aldri flagget. Fikset dem i Q3. Churn falt 23%.
 
 Data informerer. Lytting veileder. Du trenger begge.`,
+
+  // ===== DIRECT COMMUNICATION / ANNOUNCEMENT EXAMPLES =====
+
+  'direct-professional-beta-recruitment': `Looking for 5-10 LinkedIn users who post 2-3x weekly to test StoryScale beta.
+
+What you get: Free lifetime access, priority feature requests, direct line to product team.
+
+Ideal tester: Active on LinkedIn, struggles with consistent content creation, wants AI assistance.
+
+Interested? Comment below or DM me.`,
+
+  'direct-professional-product-launch': `Launching StoryScale today - AI tool that creates LinkedIn posts 10x faster.
+
+Built it because I spent 4+ hours weekly on content. Now it takes 20 minutes.
+
+Early access: Free for first 100 users. Link in bio.`,
+
+  'direct-casual-seeking-feedback': `Built a thing. Need honest feedback. 🙏
+
+StoryScale helps create LinkedIn content using AI. Currently testing with 20 users.
+
+If you post on LinkedIn regularly, I'd love to hear: What's your biggest content struggle?
+
+Drop a comment. All insights help.`,
+
+  'direct-network-building-collaboration': `Expanding my network in B2B SaaS space. Looking to connect with:
+
+- Founders building content tools
+- Growth marketers focused on LinkedIn
+- Anyone experimenting with AI for content
+
+Building StoryScale and always learning from peers. Let's connect if this resonates.`,
+
+  'direct-announcement-milestone': `Hit 1,000 users on StoryScale this week. 🎉
+
+Most requested feature: Campaign planning for sequential posts.
+
+Shipping it next week. Beta testers wanted—DM me.`,
+
+  'direct-professional-very-short': `Testing LinkedIn algorithm changes. Who's seeing lower reach lately?
+
+Drop your recent post performance below. Comparing data.`,
+
+  'direct-casual-update': `Quick update: StoryScale now supports Norwegian content. 🇳🇴
+
+Thanks to everyone who requested this. Early access live now.`,
+
+  'direct-network-building-short': `Moving to Oslo next month for StoryScale expansion.
+
+Know anyone in the Norwegian startup scene? Would love intros. 🙏`,
+
+  'announcement-very-short-professional': `Seeking 3 beta testers for StoryScale.
+
+Requirements: Post weekly on LinkedIn.
+Benefit: Free lifetime access.
+
+DM to apply.`,
+
+  'announcement-very-short-casual': `Built StoryScale. Need testers who hate writing LinkedIn posts.
+
+Free access. DM me.`,
+
+  'direct-professional-event': `Hosting a LinkedIn content workshop next Thursday, 2 PM CET.
+
+Topic: Creating engaging posts without spending hours writing.
+
+Free for StoryScale users. 15 spots. Link in comments.`,
+
+  'direct-casual-question': `Honest question: Would you use AI to write your LinkedIn posts?
+
+Building StoryScale and hearing mixed opinions. Some say it's the future. Others say it kills authenticity.
+
+Where do you stand?`,
+
+  'network-building-professional-short': `Connecting with founders building AI tools for content creators.
+
+I'm building StoryScale - helps with LinkedIn posts. Always curious to learn from others solving similar problems.
+
+What are you working on?`,
+
+  'network-building-casual-short': `New to the AI content space. Building StoryScale but honestly still figuring things out.
+
+Who else is in early stages? Let's share lessons learned.`,
+
+  'announcement-professional-short': `StoryScale hit Product Hunt today. 🚀
+
+Simple tool: Write a few sentences, get a polished LinkedIn post.
+
+Early feedback welcome. Link in bio.`,
 };
 
 // Enhanced helper function to get most relevant example for style/tone/purpose/length combination
@@ -829,7 +1015,73 @@ function getExampleForStyle(
   return '';
 }
 
-function buildSystemPrompt(profile: any, wizardSettings: any): string {
+/**
+ * Get context-aware word count range based on purpose, style, and length setting
+ * Makes "Short" mean different things for announcements vs thought leadership
+ */
+function getContextAwareLength(
+  length: string,
+  purpose?: string,
+  style?: string
+): string {
+  // Very Short - for quick announcements and updates
+  if (length === 'very_short') {
+    if (purpose === 'network_building' || style === 'announcement') {
+      return '30-50 words (2-3 very short sentences)';
+    }
+    return '40-60 words (3-4 short sentences)';
+  }
+
+  // Short - contextual based on purpose
+  if (length === 'short') {
+    // Direct/announcement style - keep it VERY concise
+    if (purpose === 'direct_communication' || style === 'announcement') {
+      return '30-60 words (ultra-concise, 3-5 short sentences)';
+    }
+    // Network building - slightly more room for context
+    if (purpose === 'network_building') {
+      return '60-100 words (concise but with context, 4-7 sentences)';
+    }
+    // Thought leadership - needs more substance even when "short"
+    if (purpose === 'thought_leadership') {
+      return '80-120 words (compact insight, 6-9 sentences)';
+    }
+    // Default short
+    return '50-100 words (brief and focused, 4-7 sentences)';
+  }
+
+  // Medium - standard range with some variation
+  if (length === 'medium') {
+    if (purpose === 'direct_communication' || style === 'announcement') {
+      return '80-120 words (clear and complete, 6-9 sentences)';
+    }
+    if (purpose === 'thought_leadership' || purpose === 'lead_generation') {
+      return '120-180 words (developed idea, 10-14 sentences)';
+    }
+    return '100-150 words (balanced depth, 8-12 sentences)';
+  }
+
+  // Long - for detailed content
+  if (length === 'long') {
+    if (purpose === 'thought_leadership') {
+      return '200-300 words (comprehensive insight, 16-24 sentences)';
+    }
+    if (style === 'story') {
+      return '180-250 words (full narrative arc, 14-20 sentences)';
+    }
+    return '150-250 words (detailed exploration, 12-20 sentences)';
+  }
+
+  // Fallback
+  return '100-150 words (balanced depth, 8-12 sentences)';
+}
+
+function buildSystemPrompt(
+  profile: any,
+  wizardSettings: any,
+  recentPosts: Array<{ id: string; content: string; embedding?: number[] | null }> = [],
+  antiDuplication: boolean = false
+): string {
   // Enhanced, actionable tone descriptions with specific voice characteristics
   const toneDescriptions: Record<string, string> = {
     professional: `Professional and authoritative tone:
@@ -1101,16 +1353,31 @@ function buildSystemPrompt(profile: any, wizardSettings: any): string {
 
 ` : '';
 
+  // Build previous posts context for duplication avoidance
+  let previousPostsContext = '';
+  if (recentPosts.length > 0) {
+    const postsToShow = recentPosts.slice(0, 5); // Show max 5 most recent posts
+    previousPostsContext = `\n**PREVIOUS POSTS (Avoid repeating these topics/themes):**\n\n`;
+
+    postsToShow.forEach((post, index) => {
+      const preview = post.content.substring(0, 300) + (post.content.length > 300 ? '...' : '');
+      previousPostsContext += `[Post ${index + 1}]\n${preview}\n\n`;
+    });
+
+    previousPostsContext += `${antiDuplication ? '⚠️ CRITICAL ANTI-DUPLICATION WARNING:\nYour previous attempt was flagged as too similar to existing posts above. Create COMPLETELY NEW content with:\n- Different angle or perspective\n- New examples and insights\n- Fresh storytelling approach\n- Unique takeaways\n\nDo NOT repeat themes, examples, or structures from previous posts.\n\n' : 'IMPORTANT: Review the previous posts above. Create content that explores NEW angles, different perspectives, or untouched topics. Avoid repeating themes, examples, or insights from previous posts. If the user\'s input is similar to previous topics, find a fresh angle or unique perspective.\n\n'}`;
+  }
+
   return `You are an expert LinkedIn content writer creating posts for a ${isCompany ? 'company' : 'professional individual'}.
 
 ${profileContext}
-
+${previousPostsContext}
 **Post Requirements:**
 - Tone: ${toneDescriptions[wizardSettings.tone] || wizardSettings.tone}
 - Purpose: ${purposeDescriptions[wizardSettings.purpose] || wizardSettings.purpose}
 - Target Audience: ${wizardSettings.audience}
 - Style: ${styleDescriptions[wizardSettings.style] || wizardSettings.style}
-- Length: ${lengthDescriptions[wizardSettings.length] || wizardSettings.length}
+- Length: ${getContextAwareLength(wizardSettings.length, wizardSettings.purpose, wizardSettings.style)}
+  ⚠️ CRITICAL: Respect this word count range strictly. ${wizardSettings.length === 'short' || wizardSettings.length === 'very_short' ? 'Short means SHORT - do not exceed the upper limit. Be concise and direct.' : ''}
 - Language: ${wizardSettings.language === 'en' ? 'English' : 'Norwegian'}
 - Call-to-Action: ${wizardSettings.includeCTA ? 'Include a compelling CTA that encourages engagement' : 'Do not include a CTA'}
 - Emojis: ${emojiGuidelines[wizardSettings.emojiUsage]}
@@ -1129,7 +1396,40 @@ ${voiceGuidelines}
 9. Avoid corporate jargon - write like you're talking to a colleague
 10. End with substance, not empty platitudes
 
-**2025 ENGAGEMENT RESEARCH (Proven Tactics):**
+**⛔ ABSOLUTELY FORBIDDEN PHRASES (Will result in rejection):**
+The following phrases are BANNED and must NEVER appear in your output:
+- "Here's the thing"
+- "But here's where I need help"
+- "But here's the kicker"
+- "Think of it as"
+- "Worth exploring if"
+- "Just finished building something I've been working on for months"
+- "I've watched too many professionals struggle"
+- "Been there myself"
+- "Let me tell you"
+- "Plot twist"
+- "Here's what changed everything"
+- "Game changer"
+- "Unlock"
+- "Delve into"
+- "Leverage"
+- "Synergy"
+
+If you use ANY of these phrases, the post will be rejected. Use direct, natural language instead.
+
+${antiDuplication ? `**🚨 CRITICAL ANTI-DUPLICATION MODE:**
+Your previous attempt was flagged as TOO SIMILAR to existing posts. You MUST create COMPLETELY NEW content:
+
+Requirements:
+- Different angle or perspective than previous posts
+- New examples and concrete details (not recycled ones)
+- Fresh storytelling approach or structure
+- Unique takeaways or insights
+- Do NOT repeat themes, examples, or sentence patterns from previous attempts
+
+Focus on originality and fresh thinking. This is your second chance - make it count.
+
+` : ''}**2025 ENGAGEMENT RESEARCH (Proven Tactics):**
 Based on analysis of 577,180+ LinkedIn posts in 2025:
 - 📊 Personal stories = 4.2x more comments than pure advice posts
 - ❓ Questions in the first line = 2.8x more replies

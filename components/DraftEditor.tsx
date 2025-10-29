@@ -11,6 +11,7 @@ import { FeedbackRating, MentorshipSettings, DraftImage } from '@/types';
 import { MentorChatWidget } from '@/components/MentorChatWidget';
 import { analyzeDraftPatterns } from '@/lib/mentorshipEngine';
 import { ImageManager } from '@/components/ImageManager';
+import { SimilarPostsWarning } from '@/components/SimilarPostsWarning';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -639,6 +640,15 @@ export function DraftEditor({ draft }: DraftEditorProps) {
           )}
         </Button>
       </div>
+
+      {/* Similar Posts Warning */}
+      {draft.similarPosts && draft.similarPosts.length > 0 && (
+        <SimilarPostsWarning
+          similarPosts={draft.similarPosts}
+          wasRegenerated={draft.wasRegenerated || false}
+          onViewPost={(postId) => router.push(`/app/drafts/${postId}`)}
+        />
+      )}
 
       {/* Feedback Widget */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-blue-50 to-purple-50 p-5">
