@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { fetchMultipleUrls } from '@/lib/urlFetcher';
-import Anthropic from '@anthropic-ai/sdk';
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic';
 import { buildPrompt, buildUserMessage } from '@/lib/promptBuilder';
 import { getContentHash } from '@/lib/contentHash';
-
-// Use same model as generate for consistency (95%+ preview/draft match)
-const PREVIEW_MODEL = 'claude-sonnet-4-20250514';
-
-// Lazy initialization to avoid build-time errors
-function getAnthropic() {
-  return new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
-}
 
 // Simple in-memory cache (5 minutes TTL)
 const previewCache = new Map<string, { content: string; timestamp: number; hash: string }>();
@@ -93,9 +83,8 @@ export async function POST(req: NextRequest) {
     const userMessage = buildUserMessage(wizardSettings, referenceContent);
 
     // Call Claude API with same model as Generate for consistency
-    const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
-      model: PREVIEW_MODEL,
+      model: CLAUDE_MODEL,
       max_tokens: 2000, // Match Generate API for consistent output length
       system: systemPrompt,
       messages: [
