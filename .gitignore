@@ -35,3 +35,8 @@ next-env.d.ts
 
 # playwright
 .playwright-mcp/
+
+# backups (local storage only - NEVER commit)
+*.zip
+backup/
+backup-*.zip

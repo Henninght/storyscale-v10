@@ -52,5 +52,31 @@ if git diff --cached | grep -E "(sk-ant-[a-zA-Z0-9]{20,}|sk_live_[a-zA-Z0-9]{20,
     exit 1
 fi
 
+# Check for backup ZIP files (can contain .env.local)
+if git diff --cached --name-only | grep -E "\.zip$" > /dev/null 2>&1; then
+    echo "❌❌❌ CRITICAL ERROR ❌❌❌"
+    echo ""
+    echo "ZIP files detected in staged changes!"
+    echo "Backup files can contain .env.local and must NEVER be committed."
+    echo ""
+    echo "Files detected:"
+    git diff --cached --name-only | grep -E "\.zip$"
+    echo ""
+    echo "To fix this:"
+    echo "  git restore --staged <filename.zip>"
+    echo ""
+    echo "Backups should remain local only."
+    echo ""
+    exit 1
+fi
+
+# Check for backup directory
+if git diff --cached --name-only | grep -E "^backup/" > /dev/null 2>&1; then
+    echo "⚠️  WARNING: Files from backup/ directory detected"
+    echo ""
+    echo "Ensure backup files don't contain sensitive data before committing."
+    echo ""
+fi
+
 echo "✅ Security checks passed - no sensitive files detected"
 echo ""

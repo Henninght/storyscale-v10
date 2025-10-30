@@ -7,8 +7,10 @@ Deploy the application to Vercel with full safety checks.
 1. **Pre-deployment Security Checks**
    - Verify .env.local is NOT staged for commit
    - Verify .env.local is in .gitignore
+   - **Verify NO backup ZIP files are staged** (can contain .env.local)
    - Check for any accidentally committed secrets
    - Scan staged files for actual API key values
+   - Ensure backup/ directory files don't contain sensitive data
 
 2. **Git Commit & Push**
    - Stage all changes: `git add -A`
@@ -25,13 +27,20 @@ Deploy the application to Vercel with full safety checks.
 ## Safety Features
 
 **Multi-Layer Protection:**
-- ✅ `.gitignore` excludes `.env.local` and `.env*.local`
+- ✅ `.gitignore` excludes `.env.local`, `.env*.local`, and backup files
 - ✅ **Pre-commit hook** (`.husky/pre-commit`) automatically blocks:
   - `.env.local` files
   - Any `.env*.local` files
-  - Actual API key values (sk-ant-, sk_live_, sk_test-)
+  - **ZIP files** (can contain .env.local)
+  - **Backup directory** files (warns if detected)
+  - Actual API key values (sk-ant-, sk_live_, sk_test_)
 - ✅ Clear error messages with fix instructions
 - ✅ Will ABORT commit if any secrets detected
+
+**⚠️ CRITICAL: Backup Files**
+- NEVER commit backup ZIP files - they can contain .env.local
+- Keep backups local only (already excluded in .gitignore)
+- If you created backups, ensure they're not staged for commit
 
 **If .env.local is accidentally staged:**
 ```bash
@@ -69,18 +78,27 @@ If secrets were accidentally committed:
 1. **Remove from staging:**
    ```bash
    git restore --staged .env.local
+   git restore --staged *.zip
    ```
 
 2. **Remove from last commit:**
    ```bash
    git reset --soft HEAD~1
    git restore --staged .env.local
+   git restore --staged *.zip
    git commit -m "Your commit message"
    ```
 
-3. **Rotate ALL exposed keys immediately:**
+3. **Remove backup ZIPs from git:**
+   ```bash
+   git rm backup/*.zip backup-*.zip
+   git commit -m "security: Remove backup files containing secrets"
+   ```
+
+4. **Rotate ALL exposed keys immediately:**
    - See `SECURITY_INCIDENT.md` for detailed instructions
    - Anthropic API key
+   - OpenAI API key
    - Stripe keys
    - Firebase Admin credentials
 
