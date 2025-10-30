@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getContentHashClient } from '@/lib/contentHash';
 import {
   ChevronDown,
   ChevronUp,
@@ -61,14 +62,30 @@ const initialData: WizardData = {
 export function PostWizardV2() {
   const router = useRouter();
   const [data, setData] = useState<WizardData>(initialData);
-  const [preview, setPreview] = useState<string>('');
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewState, setPreviewState] = useState<{
+    content: string | null;
+    hash: string | null;
+    timestamp: number | null;
+    loading: boolean;
+    error: string | null;
+  }>({
+    content: null,
+    hash: null,
+    timestamp: null,
+    loading: false,
+    error: null,
+  });
+  const [currentHash, setCurrentHash] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newUrl, setNewUrl] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Backwards compatibility aliases
+  const preview = previewState.content || '';
+  const previewLoading = previewState.loading;
+  const previewError = previewState.error;
 
   // Load user ID and saved settings
   useEffect(() => {
@@ -107,16 +124,72 @@ export function PostWizardV2() {
     loadUser();
   }, []);
 
+  // Calculate current hash whenever settings/input changes
+  useEffect(() => {
+    const calculateHash = async () => {
+      if (data.input.length < 50) {
+        setCurrentHash(null);
+        return;
+      }
+
+      try {
+        const hash = await getContentHashClient({
+          input: data.input,
+          settings: {
+            tone: data.tone,
+            style: data.style,
+            length: data.length,
+            language: data.language,
+            purpose: data.purpose,
+            audience: data.audience,
+            emojiUsage: data.emojiUsage,
+            includeCTA: data.includeCTA,
+            customInstructions: data.customInstructions,
+          },
+          referenceContent: data.referenceUrls
+            .filter(r => r.status === 'success')
+            .map(r => ({ url: r.url, content: r.content || '', error: r.error })),
+        });
+        setCurrentHash(hash);
+      } catch (error) {
+        console.error('Hash calculation error:', error);
+        setCurrentHash(null);
+      }
+    };
+
+    calculateHash();
+  }, [
+    data.input,
+    data.tone,
+    data.style,
+    data.length,
+    data.language,
+    data.purpose,
+    data.audience,
+    data.emojiUsage,
+    data.includeCTA,
+    data.customInstructions,
+    data.referenceUrls,
+  ]);
+
   // Debounced preview fetch
   const fetchPreview = useCallback(async (currentData: WizardData) => {
     if (currentData.input.length < 50) {
-      setPreview('');
-      setPreviewError('Please add at least 50 characters to see a preview.');
+      setPreviewState({
+        content: null,
+        hash: null,
+        timestamp: null,
+        loading: false,
+        error: 'Please add at least 50 characters to see a preview.',
+      });
       return;
     }
 
-    setPreviewLoading(true);
-    setPreviewError(null);
+    setPreviewState(prev => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
 
     try {
       const auth = getAuth();
@@ -159,12 +232,22 @@ export function PostWizardV2() {
       }
 
       const result = await response.json();
-      setPreview(result.preview);
+      setPreviewState({
+        content: result.preview,
+        hash: result.hash,
+        timestamp: Date.now(),
+        loading: false,
+        error: null,
+      });
     } catch (error) {
       console.error('Preview error:', error);
-      setPreviewError(error instanceof Error ? error.message : 'Failed to generate preview');
-    } finally {
-      setPreviewLoading(false);
+      setPreviewState({
+        content: null,
+        hash: null,
+        timestamp: null,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to generate preview',
+      });
     }
   }, []);
 
@@ -311,6 +394,9 @@ export function PostWizardV2() {
               .filter(r => r.status === 'success')
               .map(r => r.url),
           },
+          // Send preview content and hash if available and valid
+          previewContent: previewState.hash === currentHash ? previewState.content : null,
+          previewHash: previewState.hash === currentHash ? previewState.hash : null,
         }),
       });
 
@@ -320,6 +406,13 @@ export function PostWizardV2() {
       }
 
       const result = await response.json();
+
+      if (result.reusedPreview) {
+        console.log('✅ Draft created from preview (no API call)');
+      } else {
+        console.log('🔄 Draft regenerated (hash mismatch or quality check)');
+      }
+
       router.push(`/app/drafts/${result.draftId}`);
     } catch (error) {
       console.error('Generation failed:', error);
@@ -332,6 +425,18 @@ export function PostWizardV2() {
   const charCount = data.input.length;
   const isValid = charCount >= 50 && charCount <= 2000;
   const charPercentage = (charCount / 2000) * 100;
+
+  // Check if draft creation is allowed (preview must match current settings)
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  const canCreateDraft =
+    previewState.content !== null &&
+    previewState.hash !== null &&
+    currentHash !== null &&
+    previewState.hash === currentHash &&
+    previewState.timestamp !== null &&
+    Date.now() - previewState.timestamp < CACHE_TTL &&
+    !previewState.loading &&
+    !previewState.error;
 
   const getCharColor = () => {
     if (charCount < 50) return 'bg-slate-400';
@@ -752,8 +857,15 @@ export function PostWizardV2() {
                 </Button>
                 <Button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !isValid}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-10 text-sm font-semibold shadow-md"
+                  disabled={isGenerating || !isValid || !canCreateDraft}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-10 text-sm font-semibold shadow-md disabled:bg-slate-400 disabled:cursor-not-allowed"
+                  title={
+                    !canCreateDraft && isValid
+                      ? 'Waiting for preview to match current settings...'
+                      : !isValid
+                      ? 'Input must be 50-2000 characters'
+                      : 'Create draft from preview'
+                  }
                 >
                   {isGenerating ? (
                     <>
