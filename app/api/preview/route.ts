@@ -157,6 +157,7 @@ function buildPreviewPrompt(wizardSettings: any): string {
   };
 
   const styleDescriptions: Record<string, string> = {
+    direct: 'Direct and conversational—straight to the point, 2-4 sentences, no buildup',
     'story-based': 'Use storytelling with a clear narrative arc',
     list_format: 'Structure as a numbered or bulleted list',
     'question-based': 'Open with a compelling question to hook readers',
@@ -164,6 +165,7 @@ function buildPreviewPrompt(wizardSettings: any): string {
   };
 
   const lengthDescriptions: Record<string, string> = {
+    very_short: '30-60 words (2-4 sentences)',
     short: '50-150 words',
     medium: '150-300 words',
     long: '300-500 words',

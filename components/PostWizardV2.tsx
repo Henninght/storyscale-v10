@@ -19,6 +19,9 @@ import {
   CheckCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InputGuidance } from '@/components/InputGuidance';
+import { ExamplesPanel } from '@/components/ExamplesPanel';
+import { StyleMismatchWarning } from '@/components/StyleMismatchWarning';
 
 interface WizardData {
   input: string;
@@ -32,7 +35,7 @@ interface WizardData {
   customInstructions: string;
   tone: string;
   style: string;
-  length: 'short' | 'medium' | 'long';
+  length: 'very_short' | 'short' | 'medium' | 'long';
   language: 'en' | 'no';
   purpose: string;
   audience: string;
@@ -374,8 +377,8 @@ export function PostWizardV2() {
         {/* LEFT PANEL: Unified Form */}
         <div className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-lg">
           {/* Input Section */}
-          <div className="space-y-3">
-            <label className="block text-base font-semibold text-slate-800">
+          <div className="space-y-2.5">
+            <label className="block text-sm font-semibold text-slate-800">
               📝 What do you want to write about?
             </label>
             <textarea
@@ -404,20 +407,56 @@ export function PostWizardV2() {
             )}
           </div>
 
+          {/* Input Quality Guidance */}
+          {charCount >= 20 && (
+            <div className="space-y-2.5">
+              <InputGuidance
+                input={data.input}
+                settings={{
+                  style: data.style,
+                  purpose: data.purpose,
+                  tone: data.tone,
+                  length: data.length,
+                }}
+              />
+
+              <ExamplesPanel
+                settings={{
+                  style: data.style,
+                  purpose: data.purpose,
+                  tone: data.tone,
+                }}
+              />
+
+              <StyleMismatchWarning
+                input={data.input}
+                settings={{
+                  style: data.style,
+                  purpose: data.purpose,
+                  tone: data.tone,
+                  length: data.length,
+                }}
+                onApplyRecommendations={(recommendations) => {
+                  setData(prev => ({ ...prev, ...recommendations }));
+                }}
+              />
+            </div>
+          )}
+
           {/* Divider */}
-          <div className="my-6 border-t border-slate-200" />
+          <div className="my-4 border-t border-slate-200" />
 
           {/* Settings Grid */}
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             {/* Row 1: Tone, Style */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">🎭 Tone</label>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">🎭 Tone</label>
                 <select
                   value={data.tone}
                   onChange={(e) => setData(prev => ({ ...prev, tone: e.target.value }))}
                   title={data.tone.charAt(0).toUpperCase() + data.tone.slice(1).replace('_', ' ')}
-                  className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full h-9 rounded-lg border-2 border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="professional">💼 Professional</option>
                   <option value="casual">👕 Casual</option>
@@ -428,13 +467,14 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">✨ Style</label>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">✨ Style</label>
                 <select
                   value={data.style}
                   onChange={(e) => setData(prev => ({ ...prev, style: e.target.value }))}
-                  title={data.style === 'story-based' ? 'Story' : data.style === 'list_format' ? 'List' : data.style === 'question-based' ? 'Question' : 'How-To'}
-                  className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  title={data.style === 'direct' ? 'Direct' : data.style === 'story-based' ? 'Story' : data.style === 'list_format' ? 'List' : data.style === 'question-based' ? 'Question' : 'How-To'}
+                  className="w-full h-9 rounded-lg border-2 border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
+                  <option value="direct">💬 Direct</option>
                   <option value="story-based">📖 Story</option>
                   <option value="list_format">📝 List</option>
                   <option value="question-based">❓ Question</option>
@@ -444,15 +484,16 @@ export function PostWizardV2() {
             </div>
 
             {/* Row 2: Length, Language */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">📏 Length</label>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">📏 Length</label>
                 <select
                   value={data.length}
-                  onChange={(e) => setData(prev => ({ ...prev, length: e.target.value as 'short' | 'medium' | 'long' }))}
+                  onChange={(e) => setData(prev => ({ ...prev, length: e.target.value as 'very_short' | 'short' | 'medium' | 'long' }))}
                   title={data.length.charAt(0).toUpperCase() + data.length.slice(1)}
-                  className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full h-9 rounded-lg border-2 border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
+                  <option value="very_short">📄 Very Short (30-60)</option>
                   <option value="short">📄 Short</option>
                   <option value="medium">📃 Medium</option>
                   <option value="long">📜 Long</option>
@@ -460,12 +501,12 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">🌐 Language</label>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">🌐 Language</label>
                 <select
                   value={data.language}
                   onChange={(e) => setData(prev => ({ ...prev, language: e.target.value as 'en' | 'no' }))}
                   title={data.language === 'en' ? 'English' : 'Norwegian'}
-                  className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full h-9 rounded-lg border-2 border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="en">🇬🇧 English</option>
                   <option value="no">🇳🇴 Norwegian</option>
@@ -474,14 +515,14 @@ export function PostWizardV2() {
             </div>
 
             {/* Row 3: Audience, Purpose */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">👥 Audience</label>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">👥 Audience</label>
                 <select
                   value={data.audience}
                   onChange={(e) => setData(prev => ({ ...prev, audience: e.target.value }))}
                   title={data.audience.charAt(0).toUpperCase() + data.audience.slice(1).replace('_', ' ')}
-                  className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full h-9 rounded-lg border-2 border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="executives">👔 Executives</option>
                   <option value="entrepreneurs">🚀 Entrepreneurs</option>
@@ -491,14 +532,15 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">🎯 Purpose</label>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">🎯 Purpose</label>
                 <select
                   value={data.purpose}
                   onChange={(e) => setData(prev => ({ ...prev, purpose: e.target.value }))}
                   title={data.purpose.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                  className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full h-9 rounded-lg border-2 border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="engagement">💬 Engagement</option>
+                  <option value="direct_communication">📍 Direct Communication</option>
                   <option value="network_building">🤝 Network Building</option>
                   <option value="personal_sharing">🌟 Personal Sharing</option>
                   <option value="lead_generation">🎯 Lead Generation</option>
@@ -509,14 +551,14 @@ export function PostWizardV2() {
             </div>
 
             {/* Row 4: Emojis, CTA */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">😊 Emojis</label>
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">😊 Emojis</label>
                 <select
                   value={data.emojiUsage}
                   onChange={(e) => setData(prev => ({ ...prev, emojiUsage: e.target.value as 'none' | 'minimal' | 'moderate' }))}
                   title={data.emojiUsage === 'minimal' ? 'Minimal (1-2 emojis)' : data.emojiUsage === 'moderate' ? 'Moderate (3-5 emojis)' : 'None'}
-                  className="w-full h-10 rounded-lg border-2 border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full h-9 rounded-lg border-2 border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="none">🚫 None</option>
                   <option value="minimal">😊 Minimal (1-2)</option>
@@ -525,8 +567,8 @@ export function PostWizardV2() {
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">📣 Call-to-Action</label>
-                <label className="flex h-10 items-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 cursor-pointer">
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">📣 Call-to-Action</label>
+                <label className="flex h-9 items-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={data.includeCTA}
@@ -540,19 +582,19 @@ export function PostWizardV2() {
           </div>
 
           {/* Divider */}
-          <div className="my-6 border-t border-slate-200" />
+          <div className="my-4 border-t border-slate-200" />
 
           {/* Optional Features */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-600">🔗 Reference URL (optional)</label>
+              <label className="mb-1.5 block text-[10px] font-medium text-slate-600">🔗 Reference URL (optional)</label>
               <div className="flex gap-2">
                 <input
                   type="url"
                   value={newUrl}
                   onChange={(e) => setNewUrl(e.target.value)}
                   placeholder="https://example.com/article"
-                  className="flex-1 h-9 rounded-lg border border-slate-300 px-3 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="flex-1 h-8 rounded-lg border border-slate-300 px-2.5 text-xs text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleAddReferenceUrl();
@@ -563,7 +605,7 @@ export function PostWizardV2() {
                   onClick={handleAddReferenceUrl}
                   disabled={!newUrl.trim() || data.referenceUrls.length >= 3}
                   size="sm"
-                  className="h-9"
+                  className="h-8 text-xs"
                 >
                   Add
                 </Button>
@@ -573,16 +615,16 @@ export function PostWizardV2() {
                   {data.referenceUrls.map((ref, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs"
+                      className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[10px]"
                     >
-                      {ref.status === 'fetching' && <Loader2 className="h-3 w-3 animate-spin text-blue-500" />}
-                      {ref.status === 'success' && <Check className="h-3 w-3 text-green-500" />}
-                      {ref.status === 'error' && <AlertCircle className="h-3 w-3 text-red-500" />}
+                      {ref.status === 'fetching' && <Loader2 className="h-2.5 w-2.5 animate-spin text-blue-500" />}
+                      {ref.status === 'success' && <Check className="h-2.5 w-2.5 text-green-500" />}
+                      {ref.status === 'error' && <AlertCircle className="h-2.5 w-2.5 text-red-500" />}
                       <a href={ref.url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-blue-600 hover:underline">
                         {ref.url}
                       </a>
                       <button onClick={() => handleRemoveUrl(index)} className="text-slate-400 hover:text-red-500">
-                        <X className="h-3 w-3" />
+                        <X className="h-2.5 w-2.5" />
                       </button>
                     </div>
                   ))}
@@ -591,15 +633,15 @@ export function PostWizardV2() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-600">✏️ Custom Instructions (optional)</label>
+              <label className="mb-1.5 block text-[10px] font-medium text-slate-600">✏️ Custom Instructions (optional)</label>
               <textarea
                 value={data.customInstructions}
                 onChange={(e) => setData(prev => ({ ...prev, customInstructions: e.target.value }))}
                 placeholder="Example: Focus on cost savings. Use a story-based opening."
                 maxLength={500}
-                className="min-h-[60px] w-full rounded-lg border border-slate-300 p-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="min-h-[50px] w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
-              <div className="mt-1 text-right text-xs text-slate-500">
+              <div className="mt-1 text-right text-[10px] text-slate-500">
                 {data.customInstructions.length} / 500
               </div>
             </div>
@@ -607,10 +649,10 @@ export function PostWizardV2() {
         </div>
 
         {/* RIGHT PANEL: Live Preview */}
-        <div className="lg:sticky lg:top-6 lg:self-start">
-          <div className="overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-lg">
+        <div className="lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-8rem)]">
+          <div className="overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-lg h-full flex flex-col">
             {/* Content Area */}
-            <div className="min-h-[500px] p-8">
+            <div className="min-h-[500px] p-8 overflow-y-auto flex-1">
               {previewLoading && (
                 <div className="flex min-h-[450px] items-center justify-center">
                   <div className="text-center">
@@ -697,31 +739,30 @@ export function PostWizardV2() {
             </div>
 
             {/* Actions Footer */}
-            <div className="border-t-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6">
+            <div className="border-t-2 border-slate-200 bg-slate-50 p-4 flex-shrink-0">
               <div className="flex gap-3">
                 <Button
                   variant="outline"
                   onClick={() => fetchPreview(data)}
                   disabled={previewLoading || data.input.length < 50}
-                  className="flex-1 border-2"
+                  className="flex-1 border-2 h-10 text-sm font-medium"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Refresh
+                  Refresh Preview
                 </Button>
                 <Button
                   onClick={handleGenerate}
                   disabled={isGenerating || !isValid}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-base font-semibold shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-indigo-700"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-10 text-sm font-semibold shadow-md"
                 >
                   {isGenerating ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Generating...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Draft...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      Create Draft (1⭐)
+                      Create Draft
                     </>
                   )}
                 </Button>

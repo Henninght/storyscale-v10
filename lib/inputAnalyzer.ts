@@ -45,7 +45,7 @@ export function analyzeInput(
   const wordCount = words.length;
   const lowerInput = input.toLowerCase();
 
-  let score = 5; // Start with neutral score
+  let score = 6; // Start with decent baseline
   const feedback: string[] = [];
   const suggestions: string[] = [];
 
@@ -58,18 +58,30 @@ export function analyzeInput(
   const hasProductName = /\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/.test(input); // CamelCase words
   const isSpecific = hasNumbers || hasProductName || hasSpecificTerms;
 
-  if (hasNumbers) {
+  // Check for metrics (not just any numbers)
+  const hasMetrics = /\d+\s*(x|%|times|percent|hours?|minutes?|days?|weeks?|months?|users?|people|clients?|customers?)|\b(doubled?|tripled?|quadrupled?)\b/i.test(input);
+
+  // Celebrate what's good first!
+  if (hasMetrics) {
     score += 1;
-  } else {
-    feedback.push('Add specific numbers (e.g., "5-10 users", "2x per week")');
-    suggestions.push('Quantify your needs: How many testers? How often should they post?');
+    feedback.push('✓ Great! Specific metrics included');
+  } else if (hasNumbers) {
+    feedback.push('✓ Numbers included');
+    // Only +0.5 for basic numbers (rounded later)
   }
 
-  if (hasProductName) {
+  // Require BOTH product name AND specific terms for full bonus
+  if (hasProductName && hasSpecificTerms) {
     score += 1;
-  } else if (detectedIntent === 'announcement') {
-    feedback.push('No product/project name detected');
-    suggestions.push('Name your product explicitly for clarity');
+    feedback.push('✓ Clear product name and target audience');
+  } else if (hasProductName) {
+    feedback.push('✓ Product name mentioned');
+    suggestions.push('Consider specifying your target audience');
+  } else if (hasSpecificTerms) {
+    feedback.push('✓ Target audience mentioned');
+    suggestions.push('Add your product/project name for clarity');
+  } else {
+    suggestions.push('Add product name and target audience');
   }
 
   // Check for call-to-action
@@ -77,46 +89,48 @@ export function analyzeInput(
   const hasCallToAction = ctaKeywords.test(lowerInput);
 
   if (hasCallToAction) {
-    score += 2;
+    score += 0.5; // Reduced from 1 to make scoring stricter
+    feedback.push('✓ Clear call-to-action included');
   } else if (detectedIntent === 'announcement' || currentSettings?.purpose === 'network_building') {
-    score -= 1;
-    feedback.push('Missing clear call-to-action');
-    suggestions.push('Add how people can engage: "DM me", "Comment below", "Apply here"');
+    suggestions.push('Try adding: "Interested? DM me" or "Comment below"');
   }
 
-  // Check for unique details/value prop
-  const valuePropositions = /(helps?|creates?|enables?|solves?|makes|builds?|improves?|faster|better|easier)/i;
-  const hasUniqueDetails = valuePropositions.test(lowerInput);
+  // Check for unique details/value prop - be stricter
+  const strongValueProps = /(saves?|cuts?|reduces?|increases?|doubles?|improves?|eliminates?|automates?|simplifies?)\s+(time|cost|effort|revenue|efficiency|productivity)/i;
+  const basicValueProps = /(helps?|creates?|enables?|solves?|makes|builds?|faster|better|easier)/i;
+  const hasStrongValue = strongValueProps.test(lowerInput);
+  const hasBasicValue = basicValueProps.test(lowerInput);
 
-  if (hasUniqueDetails) {
-    score += 2;
+  if (hasStrongValue) {
+    score += 1;
+    feedback.push('✓ Strong value proposition with impact');
+  } else if (hasBasicValue) {
+    feedback.push('✓ Value proposition mentioned');
+    suggestions.push('Try quantifying the benefit (e.g., "saves 4 hours" vs "saves time")');
   } else if (detectedIntent === 'announcement') {
-    score -= 1;
-    feedback.push('No value proposition or unique details');
-    suggestions.push('What makes your product different? What problem does it solve?');
+    suggestions.push('What problem does it solve? What benefit do users get?');
   }
 
-  // Check word count appropriateness
-  if (wordCount < 10) {
-    score -= 2;
-    feedback.push('Input is very brief - may produce generic output');
-    suggestions.push('Add 1-2 more sentences with context or specifics');
-  } else if (wordCount > 100) {
-    feedback.push('Input is quite long - consider being more concise');
+  // Check word count appropriateness - be encouraging
+  if (wordCount < 8) {
+    suggestions.push('Add one more sentence with a bit more detail');
+  } else if (wordCount > 120) {
+    suggestions.push('Consider keeping it a bit shorter for better engagement');
   } else {
-    score += 1; // Good length
+    score += 0.5; // Reduced from 1 to make scoring stricter
+    feedback.push('✓ Good input length');
   }
 
-  // Detect mismatch between intent and settings
+  // Detect mismatch between intent and settings - helpful, not critical
   const recommendedSettings = detectSettingsMismatch(detectedIntent, currentSettings);
 
   if (recommendedSettings && Object.keys(recommendedSettings).length > 0) {
-    score -= 1;
-    feedback.push('Settings may not match your input type');
+    // Don't penalize, just inform
+    suggestions.push('Your settings might work better if adjusted (see below)');
   }
 
   // Ensure score is within 0-10 range
-  score = Math.max(0, Math.min(10, Math.round(score)));
+  score = Math.max(5, Math.min(9, Math.round(score))); // Cap at 9/10 - reserve 10 for exceptional
 
   return {
     score,
@@ -127,7 +141,7 @@ export function analyzeInput(
     wordCount,
     hasCallToAction,
     hasNumbers,
-    hasUniqueDetails,
+    hasUniqueDetails: hasStrongValue || hasBasicValue,
     recommendedSettings: Object.keys(recommendedSettings).length > 0 ? recommendedSettings : undefined,
   };
 }
@@ -136,17 +150,18 @@ export function analyzeInput(
  * Detect user's intent from input text
  */
 function detectIntent(lowerInput: string): DetectedIntent {
+  // Story patterns - check FIRST to avoid false positives
+  // Stories with time markers like "months ago", "yesterday" should be detected as story, not announcement
+  if (/(months? ago|years? ago|yesterday|last (week|month|year)|when i|i remember|story|journey)/i.test(lowerInput)) {
+    return 'story';
+  }
+
   // Announcement patterns
   if (/(looking for|seeking|need|want|search for|recruiting|hiring|accepting)\s+(test\s)?users?|beta\s?testers?/i.test(lowerInput)) {
     return 'announcement';
   }
   if (/(launch|built|created|released|shipping|announcing|introducing)/i.test(lowerInput)) {
     return 'announcement';
-  }
-
-  // Story patterns
-  if (/(months? ago|years? ago|yesterday|last (week|month|year)|when i|i remember|story|journey)/i.test(lowerInput)) {
-    return 'story';
   }
 
   // How-to patterns
@@ -190,9 +205,9 @@ function detectSettingsMismatch(
 
   // Announcement intent with Story style = mismatch
   if (detectedIntent === 'announcement') {
-    if (currentSettings.style === 'story') {
-      recommendations.style = 'list_format';
-      recommendations.purpose = 'network_building';
+    if (currentSettings.style === 'story' || currentSettings.style === 'story-based') {
+      recommendations.style = 'direct';
+      recommendations.purpose = 'direct_communication';
       recommendations.length = 'very_short';
     }
     if (currentSettings.length === 'long' || currentSettings.length === 'medium') {
@@ -236,7 +251,7 @@ export function getQualityLabel(score: number): { label: string; color: string; 
 }
 
 /**
- * Get style-specific input examples
+ * Get style-specific input examples - realistic, achievable improvements
  */
 export function getExamplesForSettings(settings: {
   style?: string;
@@ -245,34 +260,34 @@ export function getExamplesForSettings(settings: {
 }): { bad: string; good: string; explanation: string }[] {
   const { style, purpose } = settings;
 
-  // Announcement examples
-  if (purpose === 'network_building' || style === 'announcement') {
+  // Announcement / Direct style examples - small, achievable improvements
+  if (purpose === 'network_building' || purpose === 'direct_communication' || style === 'announcement' || style === 'direct') {
     return [
       {
         bad: 'Looking for test users',
-        good: 'Looking for 5-10 active LinkedIn users who post 2x/week to test StoryScale beta. Free lifetime access + priority support.',
-        explanation: 'Specific numbers, clear criteria, explicit benefits'
+        good: 'Looking for test users for StoryScale. DM me if interested.',
+        explanation: 'Just add product name + how to respond'
       },
       {
         bad: 'I built an app',
-        good: 'Built StoryScale - creates LinkedIn content 10x faster with AI. Seeking testers who struggle with consistent posting.',
-        explanation: 'Product name, value proposition, target audience'
+        good: 'Built StoryScale - helps create LinkedIn content faster.',
+        explanation: 'Add one sentence about what it does'
       }
     ];
   }
 
-  // Story examples
+  // Story examples - realistic improvements
   if (style === 'story') {
     return [
       {
         bad: 'I learned something interesting',
-        good: 'Three months ago, I spent 4 hours writing one LinkedIn post. Yesterday, I created 5 posts in 30 minutes using StoryScale.',
-        explanation: 'Specific timeframes, concrete details, clear transformation'
+        good: 'Last month I spent 4 hours writing one post. Yesterday I created 5 posts in 30 minutes.',
+        explanation: 'Add timeframe and specific outcome'
       },
       {
-        bad: 'Had a good experience with a client',
-        good: 'Client came to me with 40% revenue drop. We rebuilt their workflow. Two months later: 65% revenue increase.',
-        explanation: 'Specific numbers, clear problem-solution-result'
+        bad: 'Had a good client experience',
+        good: 'Client had a revenue drop. We rebuilt their workflow. Two months later they saw a 60% increase.',
+        explanation: 'Add one number to show impact'
       }
     ];
   }
@@ -282,8 +297,8 @@ export function getExamplesForSettings(settings: {
     return [
       {
         bad: 'What do you think?',
-        good: 'You\'re building a SaaS product: Do you prioritize features users request OR features that drive retention? Why?',
-        explanation: 'Specific context, clear choice, invites reasoning'
+        good: 'When building SaaS: user-requested features or retention features? What would you prioritize?',
+        explanation: 'Add context + specific options'
       }
     ];
   }
@@ -293,8 +308,8 @@ export function getExamplesForSettings(settings: {
     return [
       {
         bad: 'Here are some tips',
-        good: '3 mistakes I made launching my first product: pricing too low, launching without email list, ignoring user feedback for 3 months.',
-        explanation: 'Specific number, concrete examples, relatable mistakes'
+        good: '3 mistakes I made launching my product: pricing too low, no email list, ignored feedback.',
+        explanation: 'Add a number + specific examples'
       }
     ];
   }
@@ -302,9 +317,9 @@ export function getExamplesForSettings(settings: {
   // Generic examples
   return [
     {
-      bad: 'Share your thoughts on this',
-      good: 'Spent 6 months testing LinkedIn algorithms. Found that posts with 15+ word comments get 3x more reach than simple reactions. Try this: Ask specific questions that require detailed answers.',
-      explanation: 'Specific data, actionable insight, clear recommendation'
+      bad: 'Share your thoughts',
+      good: 'Tested LinkedIn for 6 months. Posts with longer comments get 3x more reach. Ask specific questions.',
+      explanation: 'Add timeframe + one insight'
     }
   ];
 }

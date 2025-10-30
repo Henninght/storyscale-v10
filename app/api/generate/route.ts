@@ -263,6 +263,20 @@ export async function POST(req: NextRequest) {
 // Few-shot examples for style/tone combinations based on LinkedIn best practices
 // Expanded library: 40 examples covering all major style×tone combinations, purposes, and industries
 const styleExamples: Record<string, string> = {
+  // ===== DIRECT/CONVERSATIONAL EXAMPLES =====
+
+  'direct-professional-beta': `Testing a new app for LinkedIn creators. Free lifetime access for the first 10 beta testers. DM me if you post regularly and want early access.`,
+
+  'direct-casual-launch': `Built a tool that cuts LinkedIn content creation from 4 hours to 30 minutes. Testing phase. Want in? Comment below.`,
+
+  'direct-professional-announcement': `Launching StoryScale next month—helps professionals create authentic LinkedIn content faster. Early access opens Friday. Link in comments.`,
+
+  'direct-casual-seeking': `Looking for 5 founders who struggle with consistent posting. Testing my new content workflow. Free during beta. DM me.`,
+
+  'direct-professional-offer': `Built a framework for LinkedIn content strategy. Tested with 20+ clients. Sharing it free. Grab it here: [link].`,
+
+  'direct-casual-help': `Need design feedback on my landing page. Takes 2 minutes. Drop your email if you want to help, I'll send you the link.`,
+
   // ===== STORY-BASED EXAMPLES =====
 
   'story-based-professional': `Three months ago, a client's revenue was down 40%. Challenge: outdated automation. Action: We rebuilt their workflow using modern tools. Result: 40% revenue increase in 8 weeks. Key lesson: automation isn't set-and-forget—it needs regular optimization.`,
@@ -1026,17 +1040,17 @@ function getContextAwareLength(
 ): string {
   // Very Short - for quick announcements and updates
   if (length === 'very_short') {
-    if (purpose === 'network_building' || style === 'announcement') {
-      return '30-50 words (2-3 very short sentences)';
+    if (purpose === 'direct_communication' || purpose === 'network_building' || style === 'direct' || style === 'announcement') {
+      return '30-50 words (2-3 very short sentences, direct to the point)';
     }
     return '40-60 words (3-4 short sentences)';
   }
 
   // Short - contextual based on purpose
   if (length === 'short') {
-    // Direct/announcement style - keep it VERY concise
-    if (purpose === 'direct_communication' || style === 'announcement') {
-      return '30-60 words (ultra-concise, 3-5 short sentences)';
+    // Direct style - keep it VERY concise
+    if (purpose === 'direct_communication' || style === 'direct' || style === 'announcement') {
+      return '40-70 words (ultra-concise, 3-5 short sentences, no fluff)';
     }
     // Network building - slightly more room for context
     if (purpose === 'network_building') {
@@ -1052,8 +1066,8 @@ function getContextAwareLength(
 
   // Medium - standard range with some variation
   if (length === 'medium') {
-    if (purpose === 'direct_communication' || style === 'announcement') {
-      return '80-120 words (clear and complete, 6-9 sentences)';
+    if (purpose === 'direct_communication' || style === 'direct' || style === 'announcement') {
+      return '70-100 words (clear and complete, 5-7 sentences)';
     }
     if (purpose === 'thought_leadership' || purpose === 'lead_generation') {
       return '120-180 words (developed idea, 10-14 sentences)';
@@ -1188,6 +1202,16 @@ function buildSystemPrompt(
 
   // Enhanced style descriptions with structural templates
   const styleDescriptions: Record<string, string> = {
+    direct: `Direct/Conversational—straight to the point, no buildup:
+• Opening: Start with what you're doing/offering. No story setup, no hook, just direct statement.
+• Format: 2-4 short sentences maximum. Keep it tight: Product/idea → Why it matters → Call to action.
+• Tone: Friendly but efficient. Like a casual DM to a colleague, not a formal announcement.
+• Structure: Fact, fact, CTA. No elaborate intro, no suspense building.
+• Keep it: Honest, specific, human. No hype language, no fluff, no AI clichés.
+• Avoid: Building up suspense, long intros, phrases like "Here's the thing", storytelling elements
+• Example: "Built StoryScale for LinkedIn creators. Testing now. Free access for testers who post 2x/week. DM me."
+• Length: Extremely concise—if you can say it in 3 sentences, don't use 5.`,
+
     'story-based': `Story-based structure with clear narrative arc:
 • Opening: Set the scene in 1-2 sentences—specific time, place, or situation. Hook with tension or curiosity.
 • Challenge/Conflict: What went wrong, what was difficult, what needed solving. Make it relatable.

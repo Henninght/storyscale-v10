@@ -64,7 +64,10 @@
       "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_NDRJ8V/**)",
       "Bash(claude update --force)",
       "Bash(claude migrate-installer:*)",
-      "Bash(claude --version)"
+      "Bash(claude --version)",
+      "Read(//Users/henningtorp/.claude/**)",
+      "Bash(claude restart)",
+      "Read(//var/folders/dl/sdmwhzcd3xs3mlldpx9_kk980000gn/T/TemporaryItems/NSIRD_screencaptureui_xtqlFq/**)"
     ],
     "deny": [],
     "ask": []

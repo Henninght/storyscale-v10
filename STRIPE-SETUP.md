@@ -13,8 +13,9 @@ Complete Stripe billing integration for Storyscale with subscription management,
 3. **`/api/create-portal-session`** - Creates billing portal session for subscribers
 
 ### Features
-- ✅ Subscription tier management (Free, Pro, Enterprise)
-- ✅ Usage limits (5/50/unlimited posts per month)
+- ✅ Subscription tier management (Free Trial, Starter, Pro, Enterprise)
+- ✅ 7-day free trial with automatic conversion
+- ✅ Usage limits (3/25/50/unlimited posts per month)
 - ✅ Stripe Checkout integration
 - ✅ Stripe Customer Portal integration
 - ✅ Webhook handling for subscription lifecycle
@@ -38,18 +39,28 @@ Complete Stripe billing integration for Storyscale with subscription management,
 ### 3. Create Subscription Products
 1. Go to **Products** → **Add product** in Stripe Dashboard
 
+**Starter Plan:**
+- Name: `Storyscale Starter`
+- Description: `25 posts per month with core features`
+- Pricing: `$20/month`
+- Billing period: `Monthly`
+- Free trial: `7 days`
+- Copy the **Price ID** (starts with `price_`)
+
 **Pro Plan:**
 - Name: `Storyscale Pro`
 - Description: `50 posts per month with advanced features`
-- Pricing: `$29/month` (or your preferred price)
+- Pricing: `$40/month`
 - Billing period: `Monthly`
+- Free trial: `7 days`
 - Copy the **Price ID** (starts with `price_`)
 
 **Enterprise Plan:**
 - Name: `Storyscale Enterprise`
 - Description: `Unlimited posts with premium features`
-- Pricing: `$99/month` (or your preferred price)
+- Pricing: `$80/month`
 - Billing period: `Monthly`
+- Free trial: `7 days`
 - Copy the **Price ID** (starts with `price_`)
 
 ### 4. Update Environment Variables
@@ -62,6 +73,8 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
 STRIPE_SECRET_KEY=sk_test_your_secret_key_here
 
 # Stripe Product Price IDs
+NEXT_PUBLIC_STRIPE_PRICE_ID_STARTER=price_your_starter_plan_price_id
+STRIPE_PRICE_ID_STARTER=price_your_starter_plan_price_id
 NEXT_PUBLIC_STRIPE_PRICE_ID_PRO=price_your_pro_plan_price_id
 STRIPE_PRICE_ID_PRO=price_your_pro_plan_price_id
 NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE=price_your_enterprise_plan_price_id
@@ -134,6 +147,8 @@ In Vercel Dashboard:
 2. Add all Stripe-related variables:
    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (Production publishable key)
    - `STRIPE_SECRET_KEY` (Production secret key)
+   - `NEXT_PUBLIC_STRIPE_PRICE_ID_STARTER` (Starter plan price ID)
+   - `STRIPE_PRICE_ID_STARTER` (Starter plan price ID)
    - `NEXT_PUBLIC_STRIPE_PRICE_ID_PRO` (Pro plan price ID)
    - `STRIPE_PRICE_ID_PRO` (Pro plan price ID)
    - `NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE` (Enterprise plan price ID)
@@ -182,11 +197,14 @@ In Vercel Dashboard:
 
 ## 📊 Subscription Tiers
 
-| Tier | Posts/Month | Price | Features |
-|------|-------------|-------|----------|
-| Free | 5 | $0 | Basic AI generation, Community support |
-| Pro | 50 | $29 | Advanced AI, Campaign planning, Priority support |
-| Enterprise | Unlimited | $99 | Advanced AI models, Multi-campaign, Dedicated support |
+| Tier | Posts/Month | Price | Free Trial | Features |
+|------|-------------|-------|------------|----------|
+| Free | 3 | $0 | N/A | Basic AI generation, Community support |
+| Starter | 25 | $20 | 7 days | Core features, Campaign planning, Email support |
+| Pro | 50 | $40 | 7 days | Advanced AI, Multi-campaign, Priority support |
+| Enterprise | Unlimited | $80 | 7 days | Advanced AI models, White-label, Dedicated support |
+
+**Note:** After the 7-day free trial ends, users are automatically converted to the Free tier (3 posts/month) if they don't provide payment details.
 
 ---
 
