@@ -145,10 +145,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Preview API error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      type: error?.constructor?.name,
+    });
+
     return NextResponse.json(
       {
         error: 'Failed to generate preview',
         details: error instanceof Error ? error.message : String(error),
+        errorType: error?.constructor?.name,
       },
       { status: 500 }
     );

@@ -228,7 +228,11 @@ export function PostWizardV2() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate preview');
+        console.error('Preview API error response:', errorData);
+        const errorMessage = errorData.details
+          ? `${errorData.error}: ${errorData.details}`
+          : errorData.error || 'Failed to generate preview';
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
