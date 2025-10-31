@@ -52,11 +52,24 @@ export async function GET(req: NextRequest) {
     }
 
     // Test Firebase Admin initialization
-    let firebaseStatus = { initialized: false, error: null as string | null };
+    let firebaseStatus = {
+      initialized: false,
+      error: null as string | null,
+      firestoreTest: { success: false, error: null as string | null }
+    };
     try {
-      const { getAdminAuth } = await import('@/lib/firebase-admin');
+      const { getAdminAuth, getAdminDb } = await import('@/lib/firebase-admin');
       const auth = getAdminAuth();
       firebaseStatus.initialized = true;
+
+      // Test Firestore access
+      try {
+        const db = getAdminDb();
+        const testDoc = await db.collection('users').limit(1).get();
+        firebaseStatus.firestoreTest.success = true;
+      } catch (firestoreError) {
+        firebaseStatus.firestoreTest.error = firestoreError instanceof Error ? firestoreError.message : String(firestoreError);
+      }
     } catch (error) {
       firebaseStatus.error = error instanceof Error ? error.message : String(error);
     }
